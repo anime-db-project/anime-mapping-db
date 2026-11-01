@@ -2,6 +2,8 @@
 
 Anime Mapping DB is compiled from independent public datasets. This file records the sources and licensing notes used by the builder; it is not a substitute for reading each upstream project's current license and terms.
 
+For the project-wide distinction between Apache-2.0 source code and generated database artifacts, also see [`DATA_LICENSE.md`](DATA_LICENSE.md).
+
 | Source | Role | Licensing / attribution note |
 | --- | --- | --- |
 | Fribb/anime-lists | Required direct | No explicit dataset license is declared by the builder; review the upstream repository before redistribution. |
