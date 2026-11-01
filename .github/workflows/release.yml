@@ -42,6 +42,40 @@ jobs:
       - name: Unit tests
         run: python -m unittest discover -s tests -v
 
+      - name: Seed previous validated dataset when available
+        shell: bash
+        run: |
+          mkdir -p data/mappings
+          base=https://github.com/anime-db-project/anime-mapping-db/releases/latest/download
+          if curl -fsSL "$base/manifest.json" -o previous-manifest.json; then
+            curl -fsSL "$base/mappings.db.zst" -o previous-runtime.zst
+            curl -fsSL "$base/mappings-evidence.db.zst" -o previous-evidence.zst
+            python - <<'PYSEED'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          import zstandard as zstd
+
+          manifest = json.loads(Path("previous-manifest.json").read_text())
+          assets = manifest["assets"]
+          pairs = (
+              ("runtime_zstd", Path("previous-runtime.zst"), Path("data/mappings/mappings.db")),
+              ("evidence_zstd", Path("previous-evidence.zst"), Path("data/mappings/mappings-evidence.db")),
+          )
+          for key, source, destination in pairs:
+              expected = assets[key]["sha256"]
+              actual = hashlib.sha256(source.read_bytes()).hexdigest()
+              if actual != expected:
+                  raise SystemExit(f"seed checksum mismatch for {source.name}")
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              with source.open("rb") as src, destination.open("wb") as dst:
+                  zstd.ZstdDecompressor().copy_stream(src, dst)
+          PYSEED
+          else
+            echo "No previous mapping release; building the initial release from upstream sources."
+          fi
+
       - name: Build fresh databases
         run: python -m anime_mapping_db build --force
 
