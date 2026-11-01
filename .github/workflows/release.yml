@@ -35,20 +35,38 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check whether tagged release already exists
+        id: existing_release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release $GITHUB_REF_NAME already exists; skipping rebuild and publication."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-python@v5
+        if: steps.existing_release.outputs.exists != 'true'
         with:
           python-version: "3.12"
           cache: pip
 
       - name: Install
+        if: steps.existing_release.outputs.exists != 'true'
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
 
       - name: Unit tests
+        if: steps.existing_release.outputs.exists != 'true'
         run: python -m unittest discover -s tests -v
 
       - name: Seed previous validated dataset when available
+        if: steps.existing_release.outputs.exists != 'true'
         shell: bash
         run: |
           mkdir -p data/mappings
@@ -83,10 +101,12 @@ jobs:
           fi
 
       - name: Build fresh databases
+        if: steps.existing_release.outputs.exists != 'true'
         run: python -m anime_mapping_db build --force
 
       - name: Choose release tag
         id: meta
+        if: steps.existing_release.outputs.exists != 'true'
         shell: bash
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
@@ -97,6 +117,7 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Package assets
+        if: steps.existing_release.outputs.exists != 'true'
         run: >-
           python -m anime_mapping_db package-release
           --tag "${{ steps.meta.outputs.tag }}"
@@ -104,6 +125,7 @@ jobs:
 
       - name: Compare with latest published source fingerprint
         id: compare
+        if: steps.existing_release.outputs.exists != 'true'
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -135,10 +157,11 @@ jobs:
           PY
 
       - name: Verify release checksums
+        if: steps.existing_release.outputs.exists != 'true'
         run: cd release && sha256sum --check SHA256SUMS
 
       - name: Publish GitHub Release
-        if: steps.compare.outputs.publish == 'true'
+        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -150,5 +173,9 @@ jobs:
             --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. See manifest.json for source hashes, schemas and counts."
 
       - name: No source changes
-        if: steps.compare.outputs.publish != 'true'
+        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'
         run: echo "Upstream source fingerprint is unchanged; release skipped."
+
+      - name: Existing tagged release
+        if: steps.existing_release.outputs.exists == 'true'
+        run: echo "Release $GITHUB_REF_NAME already exists; tag push is idempotent and no assets were rebuilt."
