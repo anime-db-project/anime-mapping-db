@@ -376,4 +376,4 @@ The bot does not build mapping datasets and does not call a mapping web API.
 
 Project **code** is licensed under Apache-2.0. The generated database combines third-party datasets with their own licenses and attribution/share-alike requirements. In particular, AnimeAPI and anime-offline-database compiled data are ODbL 1.0 + DbCL 1.0.
 
-See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) before redistributing `mappings.db` or a derivative database.
+The licensing boundary for generated database artifacts is documented separately in [`DATA_LICENSE.md`](DATA_LICENSE.md). Source-by-source attribution and upstream license notes are tracked in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Read both before redistributing `mappings.db`, `mappings-evidence.db`, or derivative databases.
