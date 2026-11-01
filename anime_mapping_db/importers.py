@@ -510,6 +510,518 @@ def import_silveryasha(path: Path) -> Iterator[MappingRecord]:
                 yield record
 
 
+def import_animethemes(path: Path) -> Iterator[MappingRecord]:
+    """Import the CC0 AnimeThemes mapping dump mirrored by Rensetsu."""
+    with path.open("rb") as handle:
+        for index, item in enumerate(ijson.items(handle, "item")):
+            if not isinstance(item, dict):
+                continue
+            mappings = item.get("mappings") or {}
+            if not isinstance(mappings, dict):
+                continue
+            kitsu = mappings.get("kitsu")
+            themes = mappings.get("animethemes")
+            kitsu_id = kitsu.get("id") if isinstance(kitsu, dict) else kitsu
+            themes_id = themes.get("id") if isinstance(themes, dict) else themes
+            record = _record(
+                str(item.get("uuid") or index),
+                {
+                    "anidb": _values(mappings.get("anidb"), numeric=True),
+                    "anilist": _values(mappings.get("anilist"), numeric=True),
+                    "ann": _values(mappings.get("animenewsnetwork"), numeric=True),
+                    "animeplanet": _values(mappings.get("animeplanet")),
+                    "animethemes": _values(themes_id, numeric=True),
+                    "kitsu": _values(kitsu_id, numeric=True),
+                    "mal": _values(mappings.get("myanimelist"), numeric=True),
+                },
+                group="animethemes",
+                weight=90,
+            )
+            if record is not None:
+                yield record
+
+
+def import_anime_and_manga_lists(path: Path) -> Iterator[MappingRecord]:
+    """Import the public AniList/MAL/AniDB anime mapping list."""
+    with path.open("rb") as handle:
+        for index, item in enumerate(ijson.items(handle, "item")):
+            if not isinstance(item, dict):
+                continue
+            record = _record(
+                str(index),
+                {
+                    "anilist": _values(item.get("idAL"), numeric=True),
+                    "anidb": _values(item.get("idAniDB"), numeric=True),
+                    "mal": _values(item.get("idMal"), numeric=True),
+                },
+                group="anime-and-manga-lists",
+                weight=78,
+            )
+            if record is not None:
+                yield record
+
+
+def import_shinkro(path: Path) -> Iterator[MappingRecord]:
+    """Import only title-level Shinkro MAL↔TVDB/TMDB mappings.
+
+    Shinkro contains detailed TVDB season/episode routing. Those fields deliberately
+    never enter this title identity graph. The generated JSON also contains AniDB IDs,
+    but those are not used here because the useful independent contribution is the
+    community-maintained MAL↔TVDB/TMDB mapping layer.
+    """
+    with path.open("rb") as handle:
+        for index, item in enumerate(ijson.items(handle, "item")):
+            if not isinstance(item, dict):
+                continue
+            mal = _values(item.get("malid"), numeric=True)
+            if not mal:
+                continue
+            tvdb = _values(item.get("tvdbid"), numeric=True)
+            if tvdb:
+                record = _record(
+                    f"{index}:tvdb",
+                    {"mal": mal, "tvdb": tvdb},
+                    group="shinkro",
+                    weight=78,
+                )
+                if record is not None:
+                    yield record
+            tmdb_movie = _values(item.get("tmdbid"), numeric=True)
+            if tmdb_movie:
+                record = _record(
+                    f"{index}:tmdb-movie",
+                    {"mal": mal, "tmdb_movie": tmdb_movie},
+                    group="shinkro",
+                    weight=78,
+                )
+                if record is not None:
+                    yield record
+
+
+def _runtime_graph_state(
+    runtime_conn: sqlite3.Connection,
+    providers: Iterable[str],
+) -> tuple[
+    dict[tuple[str, str], int],
+    set[tuple[int, int]],
+    set[tuple[int, str]],
+    set[tuple[str, str]],
+]:
+    provider_tuple = tuple(dict.fromkeys(str(provider) for provider in providers))
+    if provider_tuple:
+        placeholders = ",".join("?" for _ in provider_tuple)
+        node_lookup = {
+            (str(provider), str(external_id)): int(node_id)
+            for node_id, provider, external_id in runtime_conn.execute(
+                f"SELECT id, provider, external_id FROM nodes WHERE provider IN ({placeholders})",
+                provider_tuple,
+            )
+        }
+    else:
+        node_lookup = {}
+    accepted_edges = {
+        tuple(sorted((int(a_node), int(b_node))))
+        for a_node, b_node in runtime_conn.execute(
+            "SELECT a_node, b_node FROM edges WHERE status='accepted'"
+        )
+    }
+    conflicts = {
+        (int(source_node), str(target_provider))
+        for source_node, target_provider in runtime_conn.execute(
+            "SELECT source_node, target_provider FROM conflicts"
+        )
+    }
+    existing_nodes = {
+        (str(provider), str(external_id))
+        for provider, external_id in runtime_conn.execute(
+            "SELECT provider, external_id FROM nodes"
+        )
+    }
+    return node_lookup, accepted_edges, conflicts, existing_nodes
+
+
+def _find_trusted_pair(
+    ids: dict[str, tuple[str, ...]],
+    *,
+    node_lookup: dict[tuple[str, str], int],
+    accepted_edges: set[tuple[int, int]],
+    conflicts: set[tuple[int, str]],
+) -> tuple[tuple[str, str, int], tuple[str, str, int]] | None:
+    anchors: list[tuple[str, str, int]] = []
+    for provider, values in ids.items():
+        if len(values) != 1:
+            continue
+        external_id = values[0]
+        node_id = node_lookup.get((provider, external_id))
+        if node_id is not None:
+            anchors.append((provider, external_id, node_id))
+    for left_index, left in enumerate(anchors):
+        for right in anchors[left_index + 1 :]:
+            if _safe_accepted_pair(
+                left,
+                right,
+                accepted_edges=accepted_edges,
+                conflicts=conflicts,
+            ):
+                return left, right
+    return None
+
+
+def _anchor_enrichment_records(
+    *,
+    key: str,
+    trusted_pair: tuple[tuple[str, str, int], tuple[str, str, int]],
+    targets: dict[str, tuple[str, ...]],
+    existing_nodes: set[tuple[str, str]],
+    group: str,
+    weight: int,
+) -> Iterator[MappingRecord]:
+    anchor_providers = {trusted_pair[0][0], trusted_pair[1][0]}
+    for target_provider, target_values in targets.items():
+        # Multiple IDs for one provider on the same source item are ambiguous at the
+        # title layer. Do not guess which one is the canonical target.
+        if len(target_values) != 1 or target_provider in anchor_providers:
+            continue
+        target_id = target_values[0]
+        if (target_provider, target_id) in existing_nodes:
+            continue
+        for anchor_provider, anchor_id, _anchor_node in trusted_pair:
+            yield MappingRecord(
+                record_key=f"{key}:{target_provider}:{target_id}:{anchor_provider}",
+                ids={
+                    anchor_provider: (anchor_id,),
+                    target_provider: (target_id,),
+                },
+                evidence_group=group,
+                weight=weight,
+            )
+
+
+_ANIMETHEMES_ANCHOR_FIELDS: tuple[tuple[str, str, bool], ...] = (
+    ("anidb", "anidb", True),
+    ("anilist", "anilist", True),
+    ("animenewsnetwork", "ann", True),
+    ("animeplanet", "animeplanet", False),
+    ("kitsu", "kitsu", True),
+    ("myanimelist", "mal", True),
+)
+
+
+def import_animethemes_enrichment(
+    path: Path,
+    runtime_conn: sqlite3.Connection,
+) -> Iterator[MappingRecord]:
+    """Attach only AnimeThemes IDs after two trusted base anchors agree."""
+    anchor_providers = tuple(
+        provider for _field, provider, _numeric in _ANIMETHEMES_ANCHOR_FIELDS
+    )
+    node_lookup, accepted_edges, conflicts, existing_nodes = _runtime_graph_state(
+        runtime_conn, anchor_providers
+    )
+    with path.open("rb") as handle:
+        for index, item in enumerate(ijson.items(handle, "item")):
+            if not isinstance(item, dict):
+                continue
+            mappings = item.get("mappings") or {}
+            if not isinstance(mappings, dict):
+                continue
+            anchor_ids: dict[str, tuple[str, ...]] = {}
+            for field, provider, numeric in _ANIMETHEMES_ANCHOR_FIELDS:
+                raw = mappings.get(field)
+                if field == "kitsu" and isinstance(raw, dict):
+                    raw = raw.get("id")
+                values = _values(raw, numeric=numeric)
+                if values:
+                    anchor_ids[provider] = values
+            trusted_pair = _find_trusted_pair(
+                anchor_ids,
+                node_lookup=node_lookup,
+                accepted_edges=accepted_edges,
+                conflicts=conflicts,
+            )
+            if trusted_pair is None:
+                continue
+            themes = mappings.get("animethemes")
+            themes_id = themes.get("id") if isinstance(themes, dict) else themes
+            target = _values(themes_id, numeric=True)
+            if not target:
+                continue
+            yield from _anchor_enrichment_records(
+                key=str(item.get("uuid") or index),
+                trusted_pair=trusted_pair,
+                targets={"animethemes": target},
+                existing_nodes=existing_nodes,
+                group="animethemes-anchor",
+                weight=90,
+            )
+
+
+_ANIMEAGGREGATIONS_ANCHOR_KEYS: tuple[tuple[str, str], ...] = (
+    ("MAL", "mal"),
+    ("ANN", "ann"),
+    ("IMDB", "imdb"),
+    ("SYOBOI", "shoboi"),
+)
+
+_ANIMEAGGREGATIONS_SIMPLE_TARGETS: dict[str, str] = {
+    "MAL": "mal",
+    "ANN": "ann",
+    "IMDB": "imdb",
+    "SYOBOI": "shoboi",
+    "ALL_CINEMA": "allcinema",
+    "ANISON": "anison",
+    "ANIME_NFO": "animenfo",
+    "CRUNCHY_ROLL": "crunchyroll",
+    "BANGUMI": "bangumi",
+    "DOUBAN": "douban",
+    "BILI_BILI": "bilibili",
+    "FUNIMATION": "funimation",
+    "HIDIVE": "hidive",
+    "NETFLIX": "netflix",
+    "MEDIA_ART_DATABASE": "mediaarts",
+    "LAIN": "lain",
+    "ANIMEMORIAL": "animemorial",
+    "MARUMEGANEL": "marumeganel",
+    "TV_ANIMATION_MUSEUM": "tv_animation_museum",
+}
+
+_ANIMEAGGREGATIONS_ENRICHMENT_PROVIDERS = frozenset(
+    {
+        "allcinema",
+        "anison",
+        "animenfo",
+        "crunchyroll",
+        "bangumi",
+        "douban",
+        "bilibili",
+        "funimation",
+        "hidive",
+        "netflix",
+        "mediaarts",
+        "lain",
+        "animemorial",
+        "marumeganel",
+        "tv_animation_museum",
+    }
+)
+
+
+def _animeaggregations_ids(
+    anidb_id: object,
+    resources: dict[str, Any],
+) -> dict[str, tuple[str, ...]]:
+    ids: dict[str, tuple[str, ...]] = {"anidb": _values(anidb_id, numeric=True)}
+    for source_key, provider in _ANIMEAGGREGATIONS_SIMPLE_TARGETS.items():
+        values = resources.get(source_key)
+        numeric = provider in {"mal", "ann", "shoboi", "bangumi", "allcinema", "anison"}
+        cleaned = _values(values, numeric=numeric)
+        if provider == "funimation":
+            cleaned = tuple(value.strip("/") for value in cleaned if value.strip("/"))
+        if cleaned:
+            ids[provider] = cleaned
+
+    tmdb_tv: list[str] = []
+    tmdb_movie: list[str] = []
+    for value in _values(resources.get("TMDB")):
+        kind, sep, external_id = value.partition("/")
+        if not sep or not external_id.isdigit():
+            continue
+        if kind.casefold() == "tv":
+            tmdb_tv.append(external_id)
+        elif kind.casefold() == "movie":
+            tmdb_movie.append(external_id)
+    if tmdb_tv:
+        ids["tmdb_tv"] = _values(tmdb_tv, numeric=True)
+    if tmdb_movie:
+        ids["tmdb_movie"] = _values(tmdb_movie, numeric=True)
+    return ids
+
+
+def import_animeaggregations_enrichment(
+    path: Path,
+    runtime_conn: sqlite3.Connection,
+) -> Iterator[MappingRecord]:
+    """Use AnimeAggregations only to attach missing IDs to trusted base anchors."""
+    anchor_providers = (
+        "anidb",
+        "mal",
+        "ann",
+        "imdb",
+        "shoboi",
+        "tmdb_tv",
+        "tmdb_movie",
+    )
+    node_lookup, accepted_edges, conflicts, existing_nodes = _runtime_graph_state(
+        runtime_conn, anchor_providers
+    )
+    with path.open("rb") as handle:
+        for anidb_id, item in ijson.kvitems(handle, "animes"):
+            if not isinstance(item, dict):
+                continue
+            resources = item.get("resources") or {}
+            if not isinstance(resources, dict):
+                continue
+            ids = _animeaggregations_ids(anidb_id, resources)
+            trusted_pair = _find_trusted_pair(
+                {provider: ids.get(provider, ()) for provider in anchor_providers},
+                node_lookup=node_lookup,
+                accepted_edges=accepted_edges,
+                conflicts=conflicts,
+            )
+            if trusted_pair is None:
+                continue
+            yield from _anchor_enrichment_records(
+                key=str(anidb_id),
+                trusted_pair=trusted_pair,
+                targets={
+                    provider: values
+                    for provider, values in ids.items()
+                    if provider in _ANIMEAGGREGATIONS_ENRICHMENT_PROVIDERS
+                },
+                existing_nodes=existing_nodes,
+                group="animeaggregations-anchor",
+                weight=85,
+            )
+
+
+_WIKIDATA_PROPERTY_FIELDS: dict[str, tuple[str, bool]] = {
+    "P4086": ("mal", True),
+    "P8729": ("anilist", True),
+    "P5646": ("anidb", True),
+    "P11495": ("kitsu", True),
+    "P12477": ("anisearch", True),
+    "P1985": ("ann", True),
+    "P11349": ("animeplanet", False),
+    "P12489": ("livechart", True),
+    "P12427": ("notify", False),
+    "P13424": ("bahamut", True),
+    "P5732": ("bangumi", True),
+    "P5733": ("bilibili", False),
+    "P11330": ("crunchyroll", False),
+    "P5845": ("animeclick", False),
+    "P12005": ("anikore", False),
+    "P7017": ("animecharacters", False),
+    "P9573": ("animefillerlist", False),
+    "P11039": ("animetaizen", False),
+    "P7886": ("mediaarts", False),
+    "P11551": ("nanime", False),
+    "P11176": ("niconico", False),
+}
+_WIKIDATA_ANCHOR_PROVIDERS: tuple[str, ...] = (
+    "mal",
+    "anilist",
+    "anidb",
+    "kitsu",
+    "anisearch",
+    "ann",
+    "animeplanet",
+    "livechart",
+    "notify",
+)
+_WIKIDATA_ENRICHMENT_PROVIDERS = frozenset(
+    {
+        "bangumi",
+        "bilibili",
+        "crunchyroll",
+        "animeclick",
+        "anikore",
+        "animecharacters",
+        "animefillerlist",
+        "animetaizen",
+        "mediaarts",
+        "nanime",
+        "niconico",
+    }
+)
+
+
+def _wikidata_property_code(binding: dict[str, Any]) -> str | None:
+    raw = binding.get("prop")
+    uri = str(raw.get("value") or "") if isinstance(raw, dict) else ""
+    match = re.search(r"P\d+", uri)
+    return match.group(0) if match else None
+
+
+def import_wikidata_enrichment(
+    path: Path,
+    runtime_conn: sqlite3.Connection,
+) -> Iterator[MappingRecord]:
+    """Anchor-validate bulk Wikidata IDs before enriching the title graph."""
+    node_lookup, accepted_edges, conflicts, existing_nodes = _runtime_graph_state(
+        runtime_conn, _WIKIDATA_ANCHOR_PROVIDERS
+    )
+    current_item: str | None = None
+    collected: dict[str, set[str]] = {}
+
+    def emit_item(item: str, values: dict[str, set[str]]) -> Iterator[MappingRecord]:
+        ids = {
+            provider: tuple(
+                sorted(provider_values, key=lambda value: (len(value), value))
+            )
+            for provider, provider_values in values.items()
+            if provider_values
+        }
+        trusted_pair = _find_trusted_pair(
+            {
+                provider: ids.get(provider, ())
+                for provider in _WIKIDATA_ANCHOR_PROVIDERS
+            },
+            node_lookup=node_lookup,
+            accepted_edges=accepted_edges,
+            conflicts=conflicts,
+        )
+        if trusted_pair is None:
+            return
+        targets = {
+            provider: values
+            for provider, values in ids.items()
+            if provider in _WIKIDATA_ENRICHMENT_PROVIDERS
+        }
+        targets["wikidata"] = (item,)
+        yield from _anchor_enrichment_records(
+            key=item,
+            trusted_pair=trusted_pair,
+            targets=targets,
+            existing_nodes=existing_nodes,
+            group="wikidata-anchor",
+            weight=90,
+        )
+
+    with path.open("rb") as handle:
+        for binding in ijson.items(handle, "results.bindings.item"):
+            if not isinstance(binding, dict):
+                continue
+            item_slot = binding.get("item")
+            item_uri = (
+                str(item_slot.get("value") or "").strip()
+                if isinstance(item_slot, dict)
+                else ""
+            )
+            item = item_uri.rsplit("/", 1)[-1]
+            if not re.fullmatch(r"Q\d+", item):
+                continue
+            if current_item is not None and item != current_item:
+                yield from emit_item(current_item, collected)
+                collected = {}
+            current_item = item
+
+            prop_code = _wikidata_property_code(binding)
+            field = _WIKIDATA_PROPERTY_FIELDS.get(prop_code or "")
+            if field is None:
+                continue
+            provider, numeric = field
+            raw = binding.get("id")
+            raw_value = (
+                str(raw.get("value") or "").strip() if isinstance(raw, dict) else ""
+            )
+            values = _values(raw_value, numeric=numeric)
+            if values:
+                collected.setdefault(provider, set()).update(values)
+
+    if current_item is not None:
+        yield from emit_item(current_item, collected)
+
+
 _ANIMEAPI_ANCHOR_FIELDS: tuple[tuple[str, str, bool], ...] = (
     ("myanimelist", "mal", True),
     ("anilist", "anilist", True),
@@ -574,32 +1086,9 @@ def import_animeapi_enrichment(
     anchor_providers = tuple(
         provider for _field, provider, _numeric in _ANIMEAPI_ANCHOR_FIELDS
     )
-    placeholders = ",".join("?" for _ in anchor_providers)
-    node_lookup = {
-        (str(provider), str(external_id)): int(node_id)
-        for node_id, provider, external_id in runtime_conn.execute(
-            f"SELECT id, provider, external_id FROM nodes WHERE provider IN ({placeholders})",
-            anchor_providers,
-        )
-    }
-    accepted_edges = {
-        tuple(sorted((int(a_node), int(b_node))))
-        for a_node, b_node in runtime_conn.execute(
-            "SELECT a_node, b_node FROM edges WHERE status='accepted'"
-        )
-    }
-    conflicts = {
-        (int(source_node), str(target_provider))
-        for source_node, target_provider in runtime_conn.execute(
-            "SELECT source_node, target_provider FROM conflicts"
-        )
-    }
-    existing_nodes = {
-        (str(provider), str(external_id))
-        for provider, external_id in runtime_conn.execute(
-            "SELECT provider, external_id FROM nodes"
-        )
-    }
+    node_lookup, accepted_edges, conflicts, existing_nodes = _runtime_graph_state(
+        runtime_conn, anchor_providers
+    )
 
     with path.open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
@@ -672,4 +1161,14 @@ IMPORTERS = {
     "anitrakt_tv": import_anitrakt_tv,
     "anitrakt_movie": import_anitrakt_movie,
     "silveryasha": import_silveryasha,
+    "animethemes": import_animethemes,
+    "anime_and_manga_lists": import_anime_and_manga_lists,
+    "shinkro": import_shinkro,
+}
+
+SUPPLEMENTAL_IMPORTERS = {
+    "animeapi": import_animeapi_enrichment,
+    "animethemes": import_animethemes_enrichment,
+    "animeaggregations": import_animeaggregations_enrichment,
+    "wikidata_multi": import_wikidata_enrichment,
 }
