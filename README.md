@@ -200,7 +200,7 @@ resolver = MappingResolver("data/mappings/mappings.db")
 print(resolver.resolve({"mal": "1"}))
 ```
 
-A validated build currently resolves MAL `1` to 31 direct targets, including AniDB, AniList, AnimeThemes, Anime-Planet, aniSearch, ANN, Annict, Bangumi, Bilibili Bangumi, Crunchyroll, Anikore, AnimeClick, Anime Characters Database, Niconico, Wikidata, Hikka, IMDb, Kaize, Kitsu, LiveChart, Notify, Shikimori, TMDB TV, Trakt and TVDB.
+A validated build currently resolves MAL `1` to 30 direct targets, including AniDB, AniList, Anime-Planet, aniSearch, ANN, Annict, Bangumi, Bilibili Bangumi, Crunchyroll, Anikore, AnimeClick, Anime Characters Database, Niconico, Wikidata, Hikka, IMDb, Kaize, Kitsu, LiveChart, Notify, Shikimori, TMDB TV, Trakt and TVDB.
 
 Equivalent direct SQL:
 
