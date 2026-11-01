@@ -119,7 +119,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Releases et build locale
 
-Chaque release contient `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, `manifest.json` et `SHA256SUMS`. Automatisation après changement du moteur sur `main`, chaque jour à 03:17 UTC, pour les tags `v*` et manuellement. Aucun release quotidien si le fingerprint des sources est inchangé.
+Chaque release contient `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, ainsi que les exports texte portables `mappings.tsv.zst` et `mappings.jsonl.zst`, plus `manifest.json` et `SHA256SUMS`. Les fichiers texte contiennent des routes dirigées sûres pour le resolver après application des conflits directionnels et des overrides manuels ; SQLite reste le format runtime canonique. Automatisation après changement du moteur sur `main`, chaque jour à 03:17 UTC, pour les tags `v*` et manuellement. Aucun release quotidien si le fingerprint des sources est inchangé.
 
 ```bash
 python -m venv .venv

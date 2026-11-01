@@ -119,7 +119,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Releases и локальная сборка
 
-Release включает `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, `manifest.json`, `SHA256SUMS`. Автоматическая сборка идёт после изменений mapping-engine в `main`, ежедневно в 03:17 UTC, по тегам `v*` и вручную. Ежедневный запуск не публикует новый release, если source fingerprint не изменился.
+Release включает `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, а также переносимые текстовые экспорты `mappings.tsv.zst` и `mappings.jsonl.zst`, плюс `manifest.json` и `SHA256SUMS`. Текстовые файлы содержат направленные безопасные маршруты resolver после применения directional conflicts и manual overrides; SQLite остаётся каноническим runtime-форматом. Автоматическая сборка идёт после изменений mapping-engine в `main`, ежедневно в 03:17 UTC, по тегам `v*` и вручную. Ежедневный запуск не публикует новый release, если source fingerprint не изменился.
 
 ```bash
 python -m venv .venv

@@ -147,7 +147,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "${{ steps.meta.outputs.tag }}" \
-            --notes "Automated Anime Mapping DB build. See manifest.json for source hashes, schema version and counts."
+            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. See manifest.json for source hashes, schemas and counts."
 
       - name: No source changes
         if: steps.compare.outputs.publish != 'true'
