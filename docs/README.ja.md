@@ -119,7 +119,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Release とローカル build
 
-各 release には `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, `manifest.json`, `SHA256SUMS` が含まれます。`main` の engine 変更、毎日 03:17 UTC、`v*` tag、手動実行で build されます。日次チェックで source fingerprint が同じなら新 release は公開されません。
+各 release には `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst` に加えて、移植しやすいテキスト export `mappings.tsv.zst` と `mappings.jsonl.zst`、`manifest.json`, `SHA256SUMS` が含まれます。テキスト export は directional conflict と manual override を適用した後の、resolver で安全な有向 route を収録します。SQLite は引き続き canonical runtime format です。`main` の engine 変更、毎日 03:17 UTC、`v*` tag、手動実行で build されます。日次チェックで source fingerprint が同じなら新 release は公開されません。
 
 ```bash
 python -m venv .venv
