@@ -10,6 +10,7 @@
 [![Release](https://img.shields.io/github/v/release/anime-db-project/anime-mapping-db)](https://github.com/anime-db-project/anime-mapping-db/releases/latest)
 [![Python](https://img.shields.io/badge/Python-3.11--3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/Code-Apache%202.0-D22128.svg)](LICENSE)
+[![Data licensing](https://img.shields.io/badge/Data-Mixed%20upstream-555555.svg)](DATA_LICENSE.md)
 
 **Anime Mapping DB** builds and publishes a compact SQLite database for resolving anime identifiers between many public databases and tracking services.
 
