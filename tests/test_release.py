@@ -50,6 +50,7 @@ class ReleasePackagingTests(unittest.TestCase):
             self.assertEqual(manifest["release_tag"], "v2026.11.01-test")
             self.assertEqual(manifest["schema_version"], 3)
             self.assertEqual(manifest["sources"][0]["sha256"], "source-sha")
+            self.assertEqual(manifest["providers"], {"anidb": 1, "mal": 1})
             self.assertTrue(manifest["source_fingerprint"])
 
             expected = {
