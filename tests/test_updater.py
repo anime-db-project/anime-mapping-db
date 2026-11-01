@@ -123,6 +123,48 @@ class MappingUpdaterTests(unittest.TestCase):
             self.assertIsNone(update_mapping_database(force=False))
         self.assertEqual(self.runtime.stat().st_ino, inode_before)
 
+    def test_initial_wikidata_failure_uses_bundled_bootstrap_snapshot(self) -> None:
+        spec = MappingSourceSpec(
+            name="Wikidata/Bahamut Animation Crazy",
+            url="https://query.wikidata.org/sparql?query=test",
+            importer="wikidata_bahamut",
+            required=False,
+            license_note="Wikidata structured data is CC0 1.0.",
+            check_interval="wikidata",
+        )
+
+        with (
+            patch("anime_mapping_db.updater.SOURCE_SPECS", (spec,)),
+            patch(
+                "anime_mapping_db.updater.mappings_db_path", return_value=self.runtime
+            ),
+            patch(
+                "anime_mapping_db.updater.mappings_evidence_db_path",
+                return_value=self.evidence,
+            ),
+            patch(
+                "anime_mapping_db.updater.mappings_keep_previous", return_value=False
+            ),
+            patch(
+                "anime_mapping_db.updater.mappings_keep_downloads", return_value=False
+            ),
+            patch(
+                "anime_mapping_db.updater._download",
+                side_effect=RuntimeError("WDQS unavailable"),
+            ),
+        ):
+            stats = update_mapping_database(force=True)
+
+        self.assertIsNotNone(stats)
+        assert stats is not None
+        self.assertEqual(stats.datasets, 1)
+        self.assertEqual(stats.records, 777)
+        with closing(sqlite3.connect(self.runtime)) as conn:
+            failures = conn.execute(
+                "SELECT value FROM metadata WHERE key='optional_failures'"
+            ).fetchone()[0]
+        self.assertIn("bundled CC0 bootstrap snapshot used", failures)
+
     def test_wikidata_has_independent_check_interval(self) -> None:
         checked = datetime.fromtimestamp(
             time.time() - 2 * 3600, timezone.utc

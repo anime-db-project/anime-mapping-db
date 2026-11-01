@@ -213,6 +213,8 @@ The builder currently ingests:
 
 Some sources are mandatory for a successful build; some are optional. Exact URLs, importers, required flags and attribution notes live in `anime_mapping_db/config.py` and are copied into the evidence database.
 
+For the very first build only, the repository also ships a small deterministic CC0 bootstrap snapshot for the Wikidata/Bahamut query. It is used only if WDQS is temporarily unavailable and no previous evidence database exists. Once a live Wikidata response succeeds, the normal source replaces that bootstrap dataset automatically. Later scheduled releases seed the previous validated evidence release before refreshes, so temporary optional-source outages do not remove already validated mappings.
+
 See `THIRD_PARTY_NOTICES.md` for licensing/attribution notes.
 
 ## Build locally

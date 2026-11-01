@@ -10,7 +10,7 @@ Anime Mapping DB is compiled from independent upstream datasets. This file recor
 | cplieger/animap | Required | Dataset is distributed under ODbL 1.0 with DbCL 1.0; project code is Apache-2.0. |
 | manami-project/anime-offline-database | Optional | Dataset is distributed under ODbL 1.0 with DbCL 1.0. |
 | anibridge/anibridge-mappings | Optional | Repository is MIT; generated mappings may inherit obligations from upstream datasets. |
-| Wikidata | Optional | Wikidata structured data is CC0 1.0. The builder currently uses it for Bahamut Animation Crazy identifiers linked to MAL/AniList/AniDB. |
+| Wikidata | Optional | Wikidata structured data is CC0 1.0. The builder currently uses it for Bahamut Animation Crazy identifiers linked to MAL/AniList/AniDB. A small bundled CC0 bootstrap snapshot of the same query is retained for first-build availability during WDQS outages. |
 
 The exact URLs and notes embedded into every evidence database are defined in `anime_mapping_db/config.py`.
 

@@ -21,3 +21,6 @@ anime-mapping-db = "anime_mapping_db.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["anime_mapping_db*"]
+
+[tool.setuptools.package-data]
+anime_mapping_db = ["bootstrap/*.json"]

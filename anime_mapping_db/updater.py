@@ -38,6 +38,21 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _bootstrap_path(spec: MappingSourceSpec) -> Path | None:
+    if spec.importer != "wikidata_bahamut":
+        return None
+    path = Path(__file__).resolve().parent / "bootstrap" / "wikidata-bahamut.json"
+    return path if path.is_file() else None
+
+
 def _download(spec: MappingSourceSpec, target: Path) -> str:
     timeout = httpx.Timeout(
         connect=30.0,
@@ -320,7 +335,28 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                             record_count,
                         )
                 elif spec.name in failed_optional:
-                    record_count = 0
+                    bootstrap_path = _bootstrap_path(spec)
+                    if bootstrap_path is None:
+                        record_count = 0
+                    else:
+                        bootstrap_sha = _sha256_file(bootstrap_path)
+                        importer = IMPORTERS[spec.importer]
+                        record_count = builder.ingest_dataset(
+                            spec,
+                            importer(bootstrap_path),
+                            sha256=bootstrap_sha,
+                            downloaded_at=checked_at,
+                        )
+                        if record_count > 0:
+                            failed_optional[spec.name] += (
+                                "; bundled CC0 bootstrap snapshot used"
+                            )
+                            changed_sources.add(spec.name)
+                            logging.warning(
+                                "Mapping source bootstrap fallback used: %s — %d records",
+                                spec.name,
+                                record_count,
+                            )
                 else:
                     download_path = _download_path(work_dir, index, spec)
                     download_path.unlink(missing_ok=True)
