@@ -119,7 +119,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Releases y compilación local
 
-Cada release contiene `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, `manifest.json` y `SHA256SUMS`. Se genera después de cambios del engine en `main`, diariamente a las 03:17 UTC, con tags `v*` o manualmente. Un chequeo diario sin cambios de fingerprint no publica release.
+Cada release contiene `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, además de los exports de texto portables `mappings.tsv.zst` y `mappings.jsonl.zst`, junto con `manifest.json` y `SHA256SUMS`. Los archivos de texto contienen rutas dirigidas y seguras para el resolver después de aplicar conflictos direccionales y overrides manuales; SQLite sigue siendo el formato runtime canónico. Se genera después de cambios del engine en `main`, diariamente a las 03:17 UTC, con tags `v*` o manualmente. Un chequeo diario sin cambios de fingerprint no publica release.
 
 ```bash
 python -m venv .venv
