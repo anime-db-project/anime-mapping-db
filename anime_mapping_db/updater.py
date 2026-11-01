@@ -45,7 +45,6 @@ def _download(spec: MappingSourceSpec, target: Path) -> str:
         write=30.0,
         pool=30.0,
     )
-    digest = hashlib.sha256()
     headers = {
         "User-Agent": USER_AGENT,
         "Accept": "application/sparql-results+json"
@@ -55,14 +54,42 @@ def _download(spec: MappingSourceSpec, target: Path) -> str:
     with httpx.Client(
         timeout=timeout, follow_redirects=True, headers=headers
     ) as client:
-        with client.stream("GET", spec.url) as response:
-            response.raise_for_status()
-            with target.open("wb") as handle:
-                for chunk in response.iter_bytes(chunk_size=1024 * 1024):
-                    if not chunk:
-                        continue
-                    digest.update(chunk)
-                    handle.write(chunk)
+        last_error: httpx.HTTPStatusError | None = None
+        for attempt in range(3):
+            digest = hashlib.sha256()
+            target.unlink(missing_ok=True)
+            try:
+                with client.stream("GET", spec.url) as response:
+                    response.raise_for_status()
+                    with target.open("wb") as handle:
+                        for chunk in response.iter_bytes(chunk_size=1024 * 1024):
+                            if not chunk:
+                                continue
+                            digest.update(chunk)
+                            handle.write(chunk)
+                last_error = None
+                break
+            except httpx.HTTPStatusError as exc:
+                last_error = exc
+                status = exc.response.status_code
+                retryable = status == 429 or 500 <= status < 600
+                if not retryable or attempt == 2:
+                    raise
+                retry_after = exc.response.headers.get("Retry-After", "").strip()
+                try:
+                    delay = float(retry_after)
+                except ValueError:
+                    delay = 65.0 if status == 429 else 5.0 * (attempt + 1)
+                delay = max(1.0, min(delay, 65.0))
+                logging.warning(
+                    "Mapping source returned HTTP %d; retrying %s in %.1fs",
+                    status,
+                    spec.name,
+                    delay,
+                )
+                time.sleep(delay)
+        if last_error is not None:
+            raise last_error
 
         actual = digest.hexdigest()
         if spec.checksum_url:
