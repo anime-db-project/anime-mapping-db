@@ -60,6 +60,15 @@ def _sources(evidence_path: Path) -> list[dict[str, object]]:
     ]
 
 
+def _providers(runtime_path: Path) -> dict[str, int]:
+    uri = f"file:{runtime_path.resolve().as_posix()}?mode=ro"
+    with closing(sqlite3.connect(uri, uri=True, timeout=5.0)) as conn:
+        rows = conn.execute(
+            "SELECT provider, COUNT(*) FROM nodes GROUP BY provider ORDER BY provider"
+        ).fetchall()
+    return {str(provider): int(count) for provider, count in rows}
+
+
 def source_fingerprint(sources: list[dict[str, object]]) -> str:
     payload = [
         [str(item["name"]), str(item["sha256"])]
@@ -151,6 +160,7 @@ def package_release(
         "last_source_check_at": runtime_meta.get("last_source_check_at", ""),
         "source_fingerprint": source_fingerprint(sources),
         "counts": counts,
+        "providers": _providers(runtime_path),
         "assets": assets,
         "sources": sources,
     }
