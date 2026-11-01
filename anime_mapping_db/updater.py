@@ -30,7 +30,7 @@ from anime_mapping_db.database import (
     MappingDatabase,
     MappingDatabaseBuilder,
 )
-from anime_mapping_db.importers import IMPORTERS
+from anime_mapping_db.importers import IMPORTERS, import_animeapi_enrichment
 from anime_mapping_db.resolver import copy_mapping_overrides
 
 
@@ -281,6 +281,36 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                     exc,
                 )
 
+        # Supplemental aggregates depend on the accepted base graph. If any direct
+        # source changed, refresh/reprocess them even when their normal check interval
+        # has not expired so anchor validation always uses the current graph.
+        base_changed = any(
+            spec.name in changed_sources and not spec.supplemental
+            for spec in SOURCE_SPECS
+        )
+        if base_changed:
+            for spec in SOURCE_SPECS:
+                if not spec.supplemental or spec.name in staged:
+                    continue
+                index = SOURCE_SPECS.index(spec)
+                download_path = _download_path(work_dir, index, spec)
+                download_path.unlink(missing_ok=True)
+                logging.info("Supplemental mapping source refresh: %s", spec.name)
+                try:
+                    sha256 = _download(spec, download_path)
+                    staged[spec.name] = (download_path, sha256)
+                    previous = state.get(spec.name)
+                    if previous is None or previous[0].casefold() != sha256.casefold():
+                        changed_sources.add(spec.name)
+                except Exception as exc:
+                    download_path.unlink(missing_ok=True)
+                    failed_optional[spec.name] = f"{type(exc).__name__}: {exc}"
+                    logging.warning(
+                        "Supplemental mapping source unavailable during base refresh: %s: %s",
+                        spec.name,
+                        exc,
+                    )
+
         successful_checks = set(staged)
         if (
             db_path.is_file()
@@ -302,7 +332,8 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
         with MappingDatabaseBuilder(
             new_path, evidence_path=evidence_new_path
         ) as builder:
-            for index, spec in enumerate(SOURCE_SPECS):
+
+            def ingest_regular_source(index: int, spec: MappingSourceSpec) -> int:
                 record_count = 0
                 staged_item = staged.get(spec.name)
                 if staged_item is not None:
@@ -336,9 +367,7 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                         )
                 elif spec.name in failed_optional:
                     bootstrap_path = _bootstrap_path(spec)
-                    if bootstrap_path is None:
-                        record_count = 0
-                    else:
+                    if bootstrap_path is not None:
                         bootstrap_sha = _sha256_file(bootstrap_path)
                         importer = IMPORTERS[spec.importer]
                         record_count = builder.ingest_dataset(
@@ -380,8 +409,19 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                     )
                     if spec.required:
                         required_loaded.add(spec.name)
+                return record_count
 
-            expected_required = {spec.name for spec in SOURCE_SPECS if spec.required}
+            # Phase 1: independent/direct sources establish the accepted graph.
+            for index, spec in enumerate(SOURCE_SPECS):
+                if spec.supplemental:
+                    continue
+                ingest_regular_source(index, spec)
+
+            expected_required = {
+                spec.name
+                for spec in SOURCE_SPECS
+                if spec.required and not spec.supplemental
+            }
             missing_required = expected_required - required_loaded
             if missing_required:
                 raise RuntimeError(
@@ -389,12 +429,60 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                     + ", ".join(sorted(missing_required))
                 )
 
+            # Materialize a provisional runtime graph. Supplemental aggregate rows are
+            # allowed to enrich only rows backed by two accepted, conflict-free anchors.
+            builder.finalize(built_at=checked_at)
+
+            # Phase 2: supplemental aggregates. They never create evidence between
+            # pre-existing provider IDs; they only attach new namespaces to trusted anchors.
+            for index, spec in enumerate(SOURCE_SPECS):
+                if not spec.supplemental:
+                    continue
+                record_count = 0
+                staged_item = staged.get(spec.name)
+                if staged_item is not None:
+                    download_path, sha256 = staged_item
+                    if spec.importer != "animeapi":
+                        raise RuntimeError(
+                            f"Unsupported supplemental importer: {spec.importer}"
+                        )
+                    record_count = builder.ingest_dataset(
+                        spec,
+                        import_animeapi_enrichment(download_path, builder.conn),
+                        sha256=sha256,
+                        downloaded_at=checked_at,
+                    )
+                    if record_count <= 0:
+                        failed_optional[spec.name] = (
+                            "supplemental source produced zero anchor-validated records"
+                        )
+                    elif mappings_keep_downloads():
+                        downloads_dir.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(download_path, downloads_dir / download_path.name)
+                elif (
+                    evidence_path.is_file() and spec.name in state and not base_changed
+                ):
+                    # Safe only when the base graph is unchanged. If it changed and the
+                    # supplemental source is unavailable, omit old enrichment rather than
+                    # preserve mappings whose anchors can no longer be revalidated.
+                    record_count = builder.copy_dataset_from(evidence_path, spec.name)
+                elif spec.name in failed_optional:
+                    record_count = 0
+
+                if record_count > 0:
+                    logging.info(
+                        "Supplemental mapping source indexed: %s — %d records",
+                        spec.name,
+                        record_count,
+                    )
+
             override_count = copy_mapping_overrides(db_path, builder.conn)
             if override_count:
                 logging.info(
                     "Mapping overrides preserved in rebuild: %d", override_count
                 )
 
+            # Re-materialize with supplemental evidence included.
             stats = builder.finalize(built_at=checked_at)
             for conn in (builder.conn, builder.evidence_conn):
                 conn.execute(
