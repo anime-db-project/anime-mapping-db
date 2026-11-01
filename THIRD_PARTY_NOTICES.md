@@ -12,18 +12,23 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 | cplieger/animap | Required direct | Dataset is ODbL 1.0 + DbCL 1.0; project code is Apache-2.0. |
 | cedya77/anime-offline-database | Optional direct | Compiled database is ODbL 1.0 + DbCL 1.0. This maintained fork replaces the old manami-project download in the builder while retaining the `manami` evidence lineage. |
 | anibridge/anibridge-mappings | Optional direct | Repository is MIT; generated mappings may inherit obligations from upstream datasets. |
-| Wikidata | Optional direct | Wikidata structured data is CC0 1.0. Used for Bahamut Animation Crazy identifiers. A small bundled CC0 bootstrap snapshot is kept for first-build WDQS outages. |
+| Wikidata | Optional direct + supplemental | Wikidata structured data is CC0 1.0. QLever is the primary bulk SPARQL backend with WDQS fallback; both query the same Wikidata lineage. Bahamut retains a bundled CC0 bootstrap snapshot for first-build endpoint outages. |
 | rensetsu/db.notify.rensetsu-mirai | Optional direct | Repository is MIT. Builder consumes the public GitHub JSON dump, not Notify or another external API. |
 | kawaiioverflow/arm | Optional direct | Package metadata declares MIT. Builder consumes `arm.json` from GitHub. |
 | rensetsu/db.trakt.extended-anitrakt | Optional direct | Repository is MIT (archived but public). TV and movie JSON dumps are separate dataset inputs; season IDs are intentionally excluded. |
 | rensetsu/db.rensetsu.public-dump / SilverYasha | Optional direct | Repository is CC0-1.0. Builder consumes the public SilverYasha JSON dump and does not scrape the site. |
+| rensetsu/db.rensetsu.public-dump / AnimeThemes | Supplemental | Repository is CC0-1.0. Builder consumes the converted AnimeThemes GitHub dump and does not call AnimeThemes APIs. |
+| anime-and-manga/lists | Optional corroborating | Public GitHub mapping dump with no explicit dataset license in the repository; review upstream terms before redistribution. Its weight is below the single-source acceptance threshold. |
+| shinkro/community-mapping | Optional corroborating | Repository is MIT. Only title-level MAL↔TVDB-series and MAL↔TMDB-movie mappings are imported; season/episode routing and generated AniDB fields are excluded. |
+| notseteve/AnimeAggregations | Supplemental | Repository uses the Unlicense, but the aggregate contains external/upstream identifiers. It is used only after two trusted anchors agree, and generic/adaptation resources are excluded. |
+| Wikidata multi-ID | Supplemental | Same CC0 Wikidata lineage as above. Adds only anchor-validated missing IDs/QIDs; QLever and WDQS are query backends, not separate evidence sources. |
 | nattadasu/animeApi | Supplemental | Compiled database is ODbL 1.0 + DbCL 1.0; software code is MIT. Builder consumes only the GitHub-hosted `v3/database/animeapi.tsv`, never AnimeAPI's REST service. |
 
-## AnimeAPI lineage policy
+## Supplemental lineage policy
 
-AnimeAPI aggregates several projects that Anime Mapping DB also consumes directly. It is therefore **not** counted as a normal independent evidence source for relationships already present in the base graph.
+AnimeAPI and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
 
-AnimeAPI rows are accepted only as supplemental namespace enrichment after two existing, conflict-free accepted anchors agree. Existing exact target IDs are not given a duplicate AnimeAPI vote. Season-only fields and AnimeAPI rows marked as potentially invalid for Trakt are excluded.
+A supplemental item must contain at least two exact base IDs that are already connected by an accepted direct edge with no directional conflict. Only then may missing targets be attached. Ambiguous multiple IDs for the same target provider are skipped. AnimeAPI also excludes season-only fields and rows marked potentially invalid for Trakt; AnimeAggregations excludes VNDB and generic website/social/adaptation relationships.
 
 AnimeAPI's generator can also use live scrapers and an external Geckyzz API. Anime Mapping DB does **not** call those services. Hikka, Kaize, Nautiljon and Otak-Otaku identifiers may enter through AnimeAPI's already-published GitHub TSV, but this project does not scrape those sites itself.
 

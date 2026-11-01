@@ -18,8 +18,8 @@ There is no mapping HTTP API in this project. Consumers download `mappings.db` (
 
 ## Highlights
 
-- **31 provider namespaces** in the current build, from MAL/AniList/AniDB to Annict, Shikimori, Hikka, Notify, Trakt and others.
-- **13 dataset inputs** from public mapping projects and GitHub-hosted dumps.
+- **55 provider namespaces** in the current build, from MAL/AniList/AniDB to Annict, Shikimori, Hikka, Notify, Trakt and others.
+- **18 dataset inputs** from public mapping projects and GitHub-hosted dumps.
 - **Direct-only runtime resolution**: no unsafe transitive graph walking across season/grouping boundaries.
 - **Evidence-aware confidence**: correlated datasets do not automatically become independent votes.
 - **Directional conflicts**: ambiguous source → target-provider routes are suppressed without discarding safe reverse routes.
@@ -30,22 +30,25 @@ There is no mapping HTTP API in this project. Consumers download `mappings.db` (
 
 ## Latest build snapshot
 
-The figures below come from the feature build used to validate the AnimeAPI expansion on 2026-11-01. Every release also publishes the same machine-readable counts in `manifest.json`.
+The figures below come from the source-expansion validation build on 2026-11-01/02. Every release also publishes the same machine-readable counts in `manifest.json`.
 
 | Metric | Value |
 | --- | ---: |
-| Dataset inputs | 13 |
-| Provider namespaces | 31 |
-| Unique provider/ID nodes | 371,128 |
-| Source records | 654,827 |
-| Evidence edges | 2,169,089 |
-| Runtime edges | 1,111,505 |
-| Accepted runtime edges | 1,104,610 |
-| Directional conflicts | 19,724 |
-| `mappings.db` | 109,547,520 B (~104.5 MiB) |
-| `mappings.db.zst` | 18,808,357 B (~17.9 MiB) |
-| `mappings-evidence.db` | 126,738,432 B (~120.9 MiB) |
-| `mappings-evidence.db.zst` | 31,557,064 B (~30.1 MiB) |
+| Dataset inputs | 18 |
+| Provider namespaces | 55 |
+| Unique provider/ID nodes | 429,740 |
+| Source records | 803,456 |
+| Evidence edges | 2,343,467 |
+| Runtime edges | 1,231,762 |
+| Accepted runtime edges | 1,223,386 |
+| Directional conflicts | 21,860 |
+| Resolver-safe text routes | 2,382,990 |
+| `mappings.db` | 122,363,904 B (~116.7 MiB) |
+| `mappings.db.zst` | 21,132,735 B (~20.2 MiB) |
+| `mappings-evidence.db` | 148,525,056 B (~141.6 MiB) |
+| `mappings-evidence.db.zst` | 37,151,582 B (~35.4 MiB) |
+| `mappings.tsv.zst` | 17,311,985 B (~16.5 MiB) |
+| `mappings.jsonl.zst` | 20,795,700 B (~19.8 MiB) |
 
 ## Databases inside `mappings.db`
 
@@ -53,43 +56,67 @@ A provider namespace is the key used by the resolver. Some services intentionall
 
 | Namespace | Database / identifier | IDs in validated build |
 | --- | --- | ---: |
+| `allcinema` | AllCinema | 9,752 |
 | `anidb` | AniDB | 16,341 |
-| `anilist` | AniList | 22,415 |
+| `anikore` | Anikore | 655 |
+| `anilist` | AniList | 22,435 |
+| `animecharacters` | Anime Characters Database | 2,363 |
+| `animeclick` | AnimeClick | 2,153 |
 | `animecountdown` | AnimeCountdown | 14,711 |
+| `animefillerlist` | Anime Filler List | 88 |
+| `animemorial` | Anime Memorial | 376 |
+| `animenfo` | AnimeNfo | 4,868 |
 | `animeplanet` | Anime-Planet | 25,126 |
+| `animetaizen` | Anime Taizen | 3,252 |
+| `animethemes` | AnimeThemes | 5,017 |
 | `anisearch` | aniSearch | 20,042 |
+| `anison` | Anison | 8,226 |
 | `ann` | Anime News Network | 12,402 |
 | `annict` | Annict | 13,353 |
 | `bahamut` | Bahamut Animation Crazy | 783 |
+| `bangumi` | Bangumi | 4,268 |
+| `bilibili` | Bilibili Bangumi | 829 |
+| `crunchyroll` | Crunchyroll series | 2,427 |
+| `douban` | Douban | 850 |
+| `funimation` | Funimation | 534 |
+| `hidive` | HIDIVE | 490 |
 | `hikka` | Hikka | 27,157 |
 | `imdb` | IMDb | 7,162 |
 | `kaize` | Kaize slug | 23,233 |
 | `kaize_id` | Kaize numeric ID | 9,956 |
 | `kitsu` | Kitsu | 21,692 |
+| `lain` | Lain MediaDB | 521 |
 | `letterboxd_lid` | Letterboxd LID | 1,269 |
 | `letterboxd_slug` | Letterboxd slug | 1,269 |
 | `letterboxd_uid` | Letterboxd UID | 1,269 |
 | `livechart` | LiveChart.me | 12,367 |
-| `mal` | MyAnimeList | 28,119 |
+| `mal` | MyAnimeList | 28,231 |
+| `marumeganel` | Marumegane | 464 |
+| `mediaarts` | Media Arts Database | 971 |
+| `nanime` | N-Anime | 536 |
 | `nautiljon` | Nautiljon slug | 8,979 |
 | `nautiljon_id` | Nautiljon numeric ID | 9,002 |
+| `netflix` | Netflix | 328 |
+| `niconico` | Niconico | 842 |
 | `notify` | Notify.moe | 16,861 |
 | `otakotaku` | Otak Otaku | 3,131 |
 | `shikimori` | Shikimori | 27,711 |
 | `shoboi` | Shoboi / Syoboi Calendar | 6,525 |
 | `silveryasha` | SilverYasha | 5,703 |
 | `simkl` | SIMKL | 14,711 |
-| `tmdb_movie` | TMDB movie | 3,304 |
+| `tmdb_movie` | TMDB movie | 4,660 |
 | `tmdb_tv` | TMDB TV | 4,465 |
 | `trakt` | Trakt title | 6,100 |
+| `tv_animation_museum` | TV Animation Museum | 38 |
 | `tvdb` | TVDB series | 4,854 |
 | `tvdb_movie` | TVDB movie | 1,116 |
+| `wikidata` | Wikidata QID | 7,276 |
 
 `manifest.json` contains a `providers` object with these counts for each published build, so consumers do not need to query SQLite just to inspect coverage.
 
 ## Upstream datasets
 
-The current builder has 13 dataset inputs. All newly added AnimeAPI-related inputs are consumed as GitHub-hosted files; the pre-existing Wikidata/Bahamut integration remains the only SPARQL query source.
+The current builder has 18 dataset inputs. Most are immutable/versioned GitHub-hosted bulk files. Wikidata is the exception: it is queried in bulk through QLever, with WDQS as a fallback, rather than through per-title requests.
 
 | Dataset input | Role | Access path | Evidence group / note |
 | --- | --- | --- | --- |
@@ -99,15 +126,28 @@ The current builder has 13 dataset inputs. All newly added AnimeAPI-related inpu
 | `cplieger/animap` | Required direct source | GitHub Release JSON | `animap` |
 | `cedya77/anime-offline-database` | Optional direct source | GitHub Release JSONL | `manami`; maintained fork replacing the old Manami URL |
 | `anibridge/anibridge-mappings` | Optional direct source | GitHub Release JSON | `anibridge` |
-| Wikidata / Bahamut | Optional direct source | WDQS + bundled CC0 bootstrap fallback | `wikidata-bahamut` |
+| Wikidata / Bahamut | Optional direct source | QLever bulk SPARQL → WDQS fallback → bundled CC0 bootstrap | `wikidata-bahamut` |
 | `rensetsu/db.notify.rensetsu-mirai` | Optional direct source | GitHub raw JSON | `notify-rensetsu` |
 | `kawaiioverflow/arm` | Optional direct source | GitHub raw JSON | `arm` |
 | `rensetsu/db.trakt.extended-anitrakt` TV | Optional direct source | GitHub raw JSON | `anitrakt` |
 | `rensetsu/db.trakt.extended-anitrakt` Movies | Optional direct source | GitHub raw JSON | `anitrakt` |
 | `rensetsu/db.rensetsu.public-dump` SilverYasha | Optional direct source | GitHub raw JSON | `silveryasha` |
+| `rensetsu/db.rensetsu.public-dump` AnimeThemes | Supplemental enrichment | GitHub raw JSON | `animethemes` |
+| `anime-and-manga/lists` | Optional corroborating source | GitHub raw JSON | `anime-and-manga-lists`; weight below single-source acceptance threshold |
+| `shinkro/community-mapping` | Optional corroborating source | GitHub generated JSON | `shinkro`; title-level MAL↔TVDB/TMDB only |
+| `notseteve/AnimeAggregations` | Supplemental enrichment | GitHub raw JSON | `animeaggregations-anchor`; two-anchor validation |
+| Wikidata multi-ID | Supplemental enrichment | QLever bulk SPARQL + WDQS fallback | `wikidata-anchor`; two-anchor validation |
 | `nattadasu/animeApi` | Supplemental enrichment | GitHub raw `database/animeapi.tsv` | `animeapi-anchor` |
 
 Exact URLs, importer names and license notes are defined in `anime_mapping_db/config.py` and copied into `mappings-evidence.db` plus every release manifest.
+
+## Anchor-validated supplemental sources
+
+`rensetsu/db.rensetsu.public-dump` AnimeThemes, `notseteve/AnimeAggregations`, Wikidata multi-ID and AnimeAPI run **after** the direct-source graph has been finalized once. They cannot establish a new title identity from scratch. A supplemental row/item must expose at least two exact IDs already present in the provisional runtime graph, and those anchors must already be joined by an accepted direct edge with no directional conflict.
+
+Only then may the source attach missing IDs. This protects the graph from season/franchise flattening while still allowing broad catalogues to add namespaces that the direct sources do not cover. Ambiguous multi-ID targets are skipped. AnimeAggregations excludes adaptation/non-identity resources such as VNDB and generic website/social links. Shinkro is corroborating evidence below the single-source acceptance threshold; only its title-level TVDB-series and TMDB-movie mappings are imported; its season/episode routing never enters the graph.
+
+The Wikidata bulk source adds validated QIDs and identifiers such as Bangumi, Bilibili Bangumi, Crunchyroll, AnimeClick, Anikore, Anime Characters Database, Anime Filler List, Anime Taizen, Media Arts Database, N-Anime and Niconico. QLever is the primary bulk backend; WDQS is only a fallback and both represent the same Wikidata evidence lineage.
 
 ## How AnimeAPI is used
 
@@ -160,7 +200,7 @@ resolver = MappingResolver("data/mappings/mappings.db")
 print(resolver.resolve({"mal": "1"}))
 ```
 
-A validated build currently resolves MAL `1` to IDs including AniDB, AniList, Anime-Planet, aniSearch, ANN, Annict, Hikka, IMDb, Kaize, Kitsu, LiveChart, Notify, Otak Otaku, Shikimori, Shoboi, SilverYasha, SIMKL, TMDB TV, Trakt and TVDB.
+A validated build currently resolves MAL `1` to 31 direct targets, including AniDB, AniList, AnimeThemes, Anime-Planet, aniSearch, ANN, Annict, Bangumi, Bilibili Bangumi, Crunchyroll, Anikore, AnimeClick, Anime Characters Database, Niconico, Wikidata, Hikka, IMDb, Kaize, Kitsu, LiveChart, Notify, Shikimori, TMDB TV, Trakt and TVDB.
 
 Equivalent direct SQL:
 
@@ -199,9 +239,10 @@ Validation run on the same Linux host, 1,200 common IDs × 3 rounds (3,600 looku
 | Database | Median | p95 |
 | --- | ---: | ---: |
 | Previous 7-source schema-v3 build | 0.418 ms | 0.749 ms |
-| Expanded 13-dataset build | **0.403 ms** | **0.552 ms** |
+| Expanded 13-dataset build | 0.403 ms | 0.552 ms |
+| Expanded 18-dataset / 55-provider build | **0.380 ms** | **0.516 ms** |
 
-A separate sample across the expanded database measured median **0.446 ms**, mean **0.437 ms**, p95 **0.551 ms**, p99 **0.604 ms**.
+The 18-dataset validation sample measured mean **0.394 ms**, p99 **0.575 ms** and mean **5.48 direct targets** per sampled lookup.
 
 These are microbenchmarks, not a latency guarantee. They measure local SQLite resolution including opening a read-only resolver connection. Hardware, filesystem cache and OS will change the exact numbers. The important result is that the much larger provider set did not introduce an observable lookup regression in the validation run.
 
@@ -382,7 +423,7 @@ CI and release builds verify:
 - non-empty accepted graph;
 - direct-only resolution and directional conflicts;
 - correlated evidence behavior;
-- AnimeAPI two-anchor enrichment and invalid/season-field exclusions;
+- AnimeAPI, AnimeAggregations and Wikidata two-anchor enrichment plus invalid/season-field exclusions;
 - release compression and SHA-256 integrity.
 
 ## Relationship to anime-db-bot

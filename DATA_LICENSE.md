@@ -38,7 +38,7 @@ Because Anime Mapping DB combines data from sources under these terms, redistrib
 
 ### CC0 1.0
 
-Some sources, including Wikidata structured data and the SilverYasha public dump used by this project, are published under CC0. CC0 is intentionally permissive and is designed to waive applicable copyright/database rights to the extent possible.
+Some sources, including Wikidata structured data and the Rensetsu SilverYasha/AnimeThemes public dumps used by this project, are published under CC0. CC0 is intentionally permissive and is designed to waive applicable copyright/database rights to the extent possible.
 
 ### MIT / Apache-2.0 repositories
 
@@ -48,7 +48,7 @@ For that reason this project records both the immediate source and known upstrea
 
 ### Sources without an explicit dataset license
 
-Some upstream repositories do not clearly declare a standalone license for their dataset. Public availability on GitHub does not itself grant unrestricted redistribution rights.
+Some upstream repositories, including `anime-and-manga/lists`, do not clearly declare a standalone license for their dataset. Public availability on GitHub does not itself grant unrestricted redistribution rights.
 
 Anime Mapping DB therefore records these sources explicitly in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) rather than assigning them a license that their authors did not state.
 

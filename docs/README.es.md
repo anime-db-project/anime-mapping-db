@@ -10,7 +10,7 @@
 
 ## Características
 
-- 31 namespaces de proveedores y 13 datasets de entrada.
+- 55 namespaces de proveedores y 18 datasets de entrada.
 - Resolución directa de un solo salto, sin recorrido transitivo inseguro.
 - Confidence basada en evidence sin duplicar votos de fuentes correlacionadas.
 - Runtime separado de la base de procedencia/evidence.
@@ -21,54 +21,78 @@
 
 | Metric | Value |
 | --- | ---: |
-| Dataset inputs | 13 |
-| Provider namespaces | 31 |
-| Unique provider/ID nodes | 371,128 |
-| Source records | 654,827 |
-| Evidence edges | 2,169,089 |
-| Runtime edges | 1,111,505 |
-| Accepted runtime edges | 1,104,610 |
-| Directional conflicts | 19,724 |
-| `mappings.db` | ~104.5 MiB |
-| `mappings.db.zst` | ~17.9 MiB |
+| Dataset inputs | 18 |
+| Provider namespaces | 55 |
+| Unique provider/ID nodes | 429,740 |
+| Source records | 803,456 |
+| Evidence edges | 2,343,467 |
+| Runtime edges | 1,231,762 |
+| Accepted runtime edges | 1,223,386 |
+| Directional conflicts | 21,860 |
+| `mappings.db` | ~116.7 MiB |
+| `mappings.db.zst` | ~20.2 MiB |
 
 ## Bases presentes en `mappings.db`
 
-Los 31 namespaces de la compilación validada. Variantes como `tmdb_tv` y `tmdb_movie` se separan intencionadamente por su semántica.
+Los 55 namespaces de la compilación validada. Variantes como `tmdb_tv` y `tmdb_movie` se separan intencionadamente por su semántica.
 
 | Namespace | Database / ID | Count |
 | --- | --- | ---: |
+| `allcinema` | AllCinema | 9,752 |
 | `anidb` | AniDB | 16,341 |
-| `anilist` | AniList | 22,415 |
+| `anikore` | Anikore | 655 |
+| `anilist` | AniList | 22,435 |
+| `animecharacters` | Anime Characters Database | 2,363 |
+| `animeclick` | AnimeClick | 2,153 |
 | `animecountdown` | AnimeCountdown | 14,711 |
+| `animefillerlist` | Anime Filler List | 88 |
+| `animemorial` | Anime Memorial | 376 |
+| `animenfo` | AnimeNfo | 4,868 |
 | `animeplanet` | Anime-Planet | 25,126 |
+| `animetaizen` | Anime Taizen | 3,252 |
+| `animethemes` | AnimeThemes | 5,017 |
 | `anisearch` | aniSearch | 20,042 |
+| `anison` | Anison | 8,226 |
 | `ann` | Anime News Network | 12,402 |
 | `annict` | Annict | 13,353 |
 | `bahamut` | Bahamut Animation Crazy | 783 |
+| `bangumi` | Bangumi | 4,268 |
+| `bilibili` | Bilibili Bangumi | 829 |
+| `crunchyroll` | Crunchyroll series | 2,427 |
+| `douban` | Douban | 850 |
+| `funimation` | Funimation | 534 |
+| `hidive` | HIDIVE | 490 |
 | `hikka` | Hikka | 27,157 |
 | `imdb` | IMDb | 7,162 |
 | `kaize` | Kaize slug | 23,233 |
 | `kaize_id` | Kaize numeric ID | 9,956 |
 | `kitsu` | Kitsu | 21,692 |
+| `lain` | Lain MediaDB | 521 |
 | `letterboxd_lid` | Letterboxd LID | 1,269 |
 | `letterboxd_slug` | Letterboxd slug | 1,269 |
 | `letterboxd_uid` | Letterboxd UID | 1,269 |
 | `livechart` | LiveChart.me | 12,367 |
-| `mal` | MyAnimeList | 28,119 |
+| `mal` | MyAnimeList | 28,231 |
+| `marumeganel` | Marumegane | 464 |
+| `mediaarts` | Media Arts Database | 971 |
+| `nanime` | N-Anime | 536 |
 | `nautiljon` | Nautiljon slug | 8,979 |
 | `nautiljon_id` | Nautiljon numeric ID | 9,002 |
+| `netflix` | Netflix | 328 |
+| `niconico` | Niconico | 842 |
 | `notify` | Notify.moe | 16,861 |
 | `otakotaku` | Otak Otaku | 3,131 |
 | `shikimori` | Shikimori | 27,711 |
 | `shoboi` | Shoboi / Syoboi Calendar | 6,525 |
 | `silveryasha` | SilverYasha | 5,703 |
 | `simkl` | SIMKL | 14,711 |
-| `tmdb_movie` | TMDB movie | 3,304 |
+| `tmdb_movie` | TMDB movie | 4,660 |
 | `tmdb_tv` | TMDB TV | 4,465 |
 | `trakt` | Trakt title | 6,100 |
+| `tv_animation_museum` | TV Animation Museum | 38 |
 | `tvdb` | TVDB series | 4,854 |
 | `tvdb_movie` | TVDB movie | 1,116 |
+| `wikidata` | Wikidata QID | 7,276 |
 
 `manifest.json` contains the same provider counts for every release.
 
@@ -82,13 +106,24 @@ Los 31 namespaces de la compilación validada. Variantes como `tmdb_tv` y `tmdb_
 | cplieger/animap | fuente directa obligatoria, GitHub Release |
 | cedya77/anime-offline-database | opcional, GitHub Release JSONL; fork mantenido de la línea Manami |
 | anibridge/anibridge-mappings | opcional, GitHub Release |
-| Wikidata / Bahamut | opcional, WDQS + bootstrap CC0 local en caso de caída |
+| Wikidata / Bahamut | opcional, QLever bulk SPARQL → WDQS fallback → bootstrap CC0 local |
 | rensetsu/db.notify.rensetsu-mirai | opcional, GitHub JSON |
 | kawaiioverflow/arm | opcional, GitHub JSON |
 | rensetsu/db.trakt.extended-anitrakt TV | opcional, GitHub JSON |
 | rensetsu/db.trakt.extended-anitrakt Movies | opcional, GitHub JSON |
 | rensetsu/db.rensetsu.public-dump SilverYasha | opcional, GitHub JSON, CC0 |
+| rensetsu/db.rensetsu.public-dump AnimeThemes | supplemental, GitHub JSON, CC0 |
+| anime-and-manga/lists | optional corroborating, GitHub JSON |
+| shinkro/community-mapping | optional corroborating, GitHub JSON; title-level TVDB/TMDB only |
+| notseteve/AnimeAggregations | supplemental, GitHub JSON, two-anchor validation |
+| Wikidata multi-ID | supplemental, QLever bulk + WDQS fallback, two-anchor validation |
 | nattadasu/animeApi | suplementario, solo GitHub `database/animeapi.tsv` |
+
+## Fuentes suplementarias validadas por anchors
+
+AnimeAggregations, Wikidata multi-ID y AnimeAPI se procesan solo después de construir el grafo provisional con las fuentes directas. Un ID ausente solo puede añadirse cuando existen al menos dos anchors exactos ya conocidos unidos por una arista directa aceptada y sin conflicto. Por tanto, estas fuentes amplias no pueden crear por sí solas una nueva identidad de título.
+
+AnimeAggregations se consume únicamente como archivo bulk de GitHub; VNDB y enlaces genéricos de sitios/redes sociales se excluyen. Wikidata se descarga con una sola consulta SPARQL bulk mediante QLever y WDQS como fallback. De Shinkro solo se importan las relaciones title-level MAL↔TVDB series y MAL↔TMDB movie; el routing de temporadas/episodios queda fuera del grafo.
 
 ## Cómo se usa AnimeAPI
 
@@ -102,7 +137,7 @@ Direct datasets → provisional accepted graph → AnimeAPI TSV → anchor valid
 
 ## Rendimiento
 
-Benchmark reproducible: `python scripts/benchmark_lookup.py --db data/mappings/mappings.db --samples 1200 --rounds 3`. En el mismo host Linux: base anterior de 7 fuentes median 0.418 ms / p95 0.749 ms; nueva base de 13 datasets **0.403 ms / 0.552 ms**. Otra muestra de la base nueva dio median 0.446 ms / p95 0.551 ms. Es un microbenchmark, no una garantía de latencia.
+Benchmark reproducible: `python scripts/benchmark_lookup.py --db data/mappings/mappings.db --samples 1200 --rounds 3`. En el mismo host Linux: base anterior de 7 fuentes median 0.418 ms / p95 0.749 ms; nueva base de 18 datasets / 55 providers **0.380 ms / 0.516 ms**. La build de 18 datasets también dio mean 0.394 ms / p99 0.575 ms. Es un microbenchmark, no una garantía de latencia.
 
 ## Runtime y evidence
 

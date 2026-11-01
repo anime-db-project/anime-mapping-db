@@ -218,9 +218,9 @@ class MappingUpdaterTests(unittest.TestCase):
             ),
             patch("anime_mapping_db.updater._download", side_effect=fake_download),
             patch.dict("anime_mapping_db.updater.IMPORTERS", {"base": base_importer}),
-            patch(
-                "anime_mapping_db.updater.import_animeapi_enrichment",
-                side_effect=aggregate_importer,
+            patch.dict(
+                "anime_mapping_db.updater.SUPPLEMENTAL_IMPORTERS",
+                {"animeapi": aggregate_importer},
             ),
         ):
             stats = update_mapping_database(force=True)

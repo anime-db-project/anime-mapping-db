@@ -30,7 +30,7 @@ from anime_mapping_db.database import (
     MappingDatabase,
     MappingDatabaseBuilder,
 )
-from anime_mapping_db.importers import IMPORTERS, import_animeapi_enrichment
+from anime_mapping_db.importers import IMPORTERS, SUPPLEMENTAL_IMPORTERS
 from anime_mapping_db.resolver import copy_mapping_overrides
 
 
@@ -63,50 +63,72 @@ def _download(spec: MappingSourceSpec, target: Path) -> str:
     headers = {
         "User-Agent": USER_AGENT,
         "Accept": "application/sparql-results+json"
-        if spec.importer == "wikidata_bahamut"
+        if spec.importer.startswith("wikidata_")
         else "*/*",
     }
+    urls = (spec.url, *spec.fallback_urls)
     with httpx.Client(
         timeout=timeout, follow_redirects=True, headers=headers
     ) as client:
-        last_error: httpx.HTTPStatusError | None = None
-        for attempt in range(3):
-            digest = hashlib.sha256()
-            target.unlink(missing_ok=True)
-            try:
-                with client.stream("GET", spec.url) as response:
-                    response.raise_for_status()
-                    with target.open("wb") as handle:
-                        for chunk in response.iter_bytes(chunk_size=1024 * 1024):
-                            if not chunk:
-                                continue
-                            digest.update(chunk)
-                            handle.write(chunk)
-                last_error = None
-                break
-            except httpx.HTTPStatusError as exc:
-                last_error = exc
-                status = exc.response.status_code
-                retryable = status == 429 or 500 <= status < 600
-                if not retryable or attempt == 2:
-                    raise
-                retry_after = exc.response.headers.get("Retry-After", "").strip()
+        errors: list[str] = []
+        actual = ""
+        for url_index, url in enumerate(urls):
+            last_error: Exception | None = None
+            for attempt in range(3):
+                digest = hashlib.sha256()
+                target.unlink(missing_ok=True)
                 try:
-                    delay = float(retry_after)
-                except ValueError:
-                    delay = 65.0 if status == 429 else 5.0 * (attempt + 1)
-                delay = max(1.0, min(delay, 65.0))
-                logging.warning(
-                    "Mapping source returned HTTP %d; retrying %s in %.1fs",
-                    status,
-                    spec.name,
-                    delay,
-                )
-                time.sleep(delay)
-        if last_error is not None:
-            raise last_error
+                    with client.stream("GET", url) as response:
+                        response.raise_for_status()
+                        with target.open("wb") as handle:
+                            for chunk in response.iter_bytes(chunk_size=1024 * 1024):
+                                if not chunk:
+                                    continue
+                                digest.update(chunk)
+                                handle.write(chunk)
+                    actual = digest.hexdigest()
+                    last_error = None
+                    break
+                except httpx.HTTPStatusError as exc:
+                    last_error = exc
+                    status = exc.response.status_code
+                    retryable = status == 429 or 500 <= status < 600
+                    if not retryable or attempt == 2:
+                        break
+                    retry_after = exc.response.headers.get("Retry-After", "").strip()
+                    try:
+                        delay = float(retry_after)
+                    except ValueError:
+                        delay = 65.0 if status == 429 else 5.0 * (attempt + 1)
+                    delay = max(1.0, min(delay, 65.0))
+                    logging.warning(
+                        "Mapping source returned HTTP %d; retrying %s endpoint %d/%d in %.1fs",
+                        status,
+                        spec.name,
+                        url_index + 1,
+                        len(urls),
+                        delay,
+                    )
+                    time.sleep(delay)
+                except Exception as exc:
+                    last_error = exc
+                    break
+            if last_error is None and actual:
+                if url_index:
+                    logging.warning(
+                        "Mapping source fallback endpoint used: %s (%d/%d)",
+                        spec.name,
+                        url_index + 1,
+                        len(urls),
+                    )
+                break
+            target.unlink(missing_ok=True)
+            errors.append(f"{url}: {type(last_error).__name__}: {last_error}")
+        else:
+            raise RuntimeError(
+                f"All endpoints failed for {spec.name}: " + " | ".join(errors)
+            )
 
-        actual = digest.hexdigest()
         if spec.checksum_url:
             checksum_response = client.get(spec.checksum_url)
             checksum_response.raise_for_status()
@@ -442,13 +464,14 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                 staged_item = staged.get(spec.name)
                 if staged_item is not None:
                     download_path, sha256 = staged_item
-                    if spec.importer != "animeapi":
+                    supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
+                    if supplemental_importer is None:
                         raise RuntimeError(
                             f"Unsupported supplemental importer: {spec.importer}"
                         )
                     record_count = builder.ingest_dataset(
                         spec,
-                        import_animeapi_enrichment(download_path, builder.conn),
+                        supplemental_importer(download_path, builder.conn),
                         sha256=sha256,
                         downloaded_at=checked_at,
                     )
