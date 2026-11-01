@@ -17,6 +17,7 @@ class MappingSourceSpec:
     license_note: str
     checksum_url: str | None = None
     check_interval: str = "default"
+    supplemental: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,11 +113,11 @@ SOURCE_SPECS: tuple[MappingSourceSpec, ...] = (
         checksum_url="https://github.com/cplieger/animap/releases/latest/download/animap.json.sha256",
     ),
     MappingSourceSpec(
-        name="manami-project/anime-offline-database",
-        url="https://github.com/manami-project/anime-offline-database/releases/latest/download/anime-offline-database.jsonl",
+        name="cedya77/anime-offline-database",
+        url="https://github.com/cedya77/anime-offline-database/releases/latest/download/anime-offline-database.jsonl",
         importer="manami",
         required=False,
-        license_note="ODbL-1.0 + DbCL-1.0.",
+        license_note="ODbL-1.0 + DbCL-1.0; maintained fork of manami-project/anime-offline-database.",
     ),
     MappingSourceSpec(
         name="anibridge/anibridge-mappings",
@@ -132,6 +133,49 @@ SOURCE_SPECS: tuple[MappingSourceSpec, ...] = (
         required=False,
         license_note="Wikidata structured data is CC0 1.0.",
         check_interval="wikidata",
+    ),
+    MappingSourceSpec(
+        name="rensetsu/db.notify.rensetsu-mirai",
+        url="https://raw.githubusercontent.com/rensetsu/db.notify.rensetsu-mirai/main/notify_min.json",
+        importer="notify_rensetsu",
+        required=False,
+        license_note="MIT repository; Notify-derived mapping data is consumed from the GitHub dump only.",
+    ),
+    MappingSourceSpec(
+        name="kawaiioverflow/arm",
+        url="https://raw.githubusercontent.com/kawaiioverflow/arm/master/arm.json",
+        importer="arm",
+        required=False,
+        license_note="MIT package metadata; public GitHub JSON mapping dump.",
+    ),
+    MappingSourceSpec(
+        name="rensetsu/db.trakt.extended-anitrakt TV",
+        url="https://raw.githubusercontent.com/rensetsu/db.trakt.extended-anitrakt/main/json/output/tv_ex.json",
+        importer="anitrakt_tv",
+        required=False,
+        license_note="MIT repository; public GitHub JSON mapping dump.",
+    ),
+    MappingSourceSpec(
+        name="rensetsu/db.trakt.extended-anitrakt Movies",
+        url="https://raw.githubusercontent.com/rensetsu/db.trakt.extended-anitrakt/main/json/output/movies_ex.json",
+        importer="anitrakt_movie",
+        required=False,
+        license_note="MIT repository; public GitHub JSON mapping dump.",
+    ),
+    MappingSourceSpec(
+        name="rensetsu/db.rensetsu.public-dump SilverYasha",
+        url="https://raw.githubusercontent.com/rensetsu/db.rensetsu.public-dump/main/Silveryasha/silveryasha_raw.json",
+        importer="silveryasha",
+        required=False,
+        license_note="CC0-1.0 public GitHub dump.",
+    ),
+    MappingSourceSpec(
+        name="nattadasu/animeApi",
+        url="https://raw.githubusercontent.com/nattadasu/animeApi/v3/database/animeapi.tsv",
+        importer="animeapi",
+        required=False,
+        license_note="Compiled database: ODbL-1.0 + DbCL-1.0; consumed as a GitHub-hosted TSV, never via the AnimeAPI HTTP service.",
+        supplemental=True,
     ),
 )
 

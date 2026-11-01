@@ -165,6 +165,75 @@ class MappingUpdaterTests(unittest.TestCase):
             ).fetchone()[0]
         self.assertIn("bundled CC0 bootstrap snapshot used", failures)
 
+    def test_supplemental_source_runs_after_provisional_base_graph(self) -> None:
+        base = MappingSourceSpec(
+            name="base",
+            url="https://example.invalid/base.json",
+            importer="base",
+            required=True,
+            license_note="test",
+        )
+        supplemental = MappingSourceSpec(
+            name="aggregate",
+            url="https://example.invalid/aggregate.tsv",
+            importer="animeapi",
+            required=False,
+            license_note="test",
+            supplemental=True,
+        )
+
+        def fake_download(spec: MappingSourceSpec, target: Path) -> str:
+            target.write_text(spec.name, encoding="utf-8")
+            return f"sha-{spec.name}"
+
+        def base_importer(_path: Path):
+            yield MappingRecord("1", {"mal": ("1",), "anilist": ("2",)}, "base", 95)
+
+        def aggregate_importer(_path: Path, runtime_conn: sqlite3.Connection):
+            row = runtime_conn.execute(
+                "SELECT COUNT(*) FROM edges WHERE status='accepted'"
+            ).fetchone()
+            self.assertEqual(row[0], 1)
+            yield MappingRecord(
+                "aggregate",
+                {"mal": ("1",), "hikka": ("cowboy",)},
+                "animeapi-anchor",
+                85,
+            )
+
+        with (
+            patch("anime_mapping_db.updater.SOURCE_SPECS", (base, supplemental)),
+            patch(
+                "anime_mapping_db.updater.mappings_db_path", return_value=self.runtime
+            ),
+            patch(
+                "anime_mapping_db.updater.mappings_evidence_db_path",
+                return_value=self.evidence,
+            ),
+            patch(
+                "anime_mapping_db.updater.mappings_keep_previous", return_value=False
+            ),
+            patch(
+                "anime_mapping_db.updater.mappings_keep_downloads", return_value=False
+            ),
+            patch("anime_mapping_db.updater._download", side_effect=fake_download),
+            patch.dict("anime_mapping_db.updater.IMPORTERS", {"base": base_importer}),
+            patch(
+                "anime_mapping_db.updater.import_animeapi_enrichment",
+                side_effect=aggregate_importer,
+            ),
+        ):
+            stats = update_mapping_database(force=True)
+
+        self.assertIsNotNone(stats)
+        assert stats is not None
+        self.assertEqual(stats.datasets, 2)
+        with closing(sqlite3.connect(self.runtime)) as conn:
+            providers = {
+                row[0] for row in conn.execute("SELECT DISTINCT provider FROM nodes")
+            }
+        self.assertIn("hikka", providers)
+
     def test_wikidata_has_independent_check_interval(self) -> None:
         checked = datetime.fromtimestamp(
             time.time() - 2 * 3600, timezone.utc
