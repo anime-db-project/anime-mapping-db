@@ -11,6 +11,12 @@ on:
   schedule:
     - cron: "17 3 * * *"
   push:
+    branches:
+      - main
+    paths:
+      - "anime_mapping_db/**"
+      - "pyproject.toml"
+      - ".github/workflows/release.yml"
     tags:
       - "v*"
 
@@ -86,7 +92,7 @@ jobs:
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             tag="$GITHUB_REF_NAME"
           else
-            tag="v$(date -u +%Y.%m.%d-%H%M)"
+            tag="v$(date -u +%Y.%m.%d).${GITHUB_RUN_NUMBER}"
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
@@ -116,11 +122,16 @@ jobs:
           previous_path = Path("previous-manifest.json")
           previous = json.loads(previous_path.read_text()) if previous_path.is_file() else {}
           explicit_tag = os.environ.get("REF_TYPE") == "tag"
+          engine_push = (
+              os.environ.get("EVENT_NAME") == "push"
+              and os.environ.get("REF_TYPE") == "branch"
+          )
           force = os.environ.get("FORCE_RELEASE", "").casefold() == "true"
           changed = current.get("source_fingerprint") != previous.get("source_fingerprint")
-          publish = explicit_tag or force or changed or not previous
+          publish = explicit_tag or engine_push or force or changed or not previous
           print(f"publish={'true' if publish else 'false'}")
           print(f"changed={'true' if changed else 'false'}")
+          print(f"engine_push={'true' if engine_push else 'false'}")
           PY
 
       - name: Verify release checksums
