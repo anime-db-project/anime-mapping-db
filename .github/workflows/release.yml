@@ -1,0 +1,109 @@
+name: Build mapping release
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: Publish even when upstream source fingerprints are unchanged
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "17 3 * * *"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: anime-mapping-db-release
+  cancel-in-progress: false
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build fresh databases
+        run: python -m anime_mapping_db build --force
+
+      - name: Choose release tag
+        id: meta
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="v$(date -u +%Y.%m.%d-%H%M)"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Package assets
+        run: >-
+          python -m anime_mapping_db package-release
+          --tag "${{ steps.meta.outputs.tag }}"
+          --output release
+
+      - name: Compare with latest published source fingerprint
+        id: compare
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          FORCE_RELEASE: ${{ inputs.force_release }}
+        run: |
+          curl -fsSL \
+            https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json \
+            -o previous-manifest.json || true
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          from pathlib import Path
+
+          current = json.loads(Path("release/manifest.json").read_text())
+          previous_path = Path("previous-manifest.json")
+          previous = json.loads(previous_path.read_text()) if previous_path.is_file() else {}
+          explicit_tag = os.environ.get("REF_TYPE") == "tag"
+          force = os.environ.get("FORCE_RELEASE", "").casefold() == "true"
+          changed = current.get("source_fingerprint") != previous.get("source_fingerprint")
+          publish = explicit_tag or force or changed or not previous
+          print(f"publish={'true' if publish else 'false'}")
+          print(f"changed={'true' if changed else 'false'}")
+          PY
+
+      - name: Verify release checksums
+        run: cd release && sha256sum --check SHA256SUMS
+
+      - name: Publish GitHub Release
+        if: steps.compare.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "${{ steps.meta.outputs.tag }}" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.meta.outputs.tag }}" \
+            --notes "Automated Anime Mapping DB build. See manifest.json for source hashes, schema version and counts."
+
+      - name: No source changes
+        if: steps.compare.outputs.publish != 'true'
+        run: echo "Upstream source fingerprint is unchanged; release skipped."
