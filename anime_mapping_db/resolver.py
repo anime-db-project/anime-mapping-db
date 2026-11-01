@@ -1,0 +1,568 @@
+from __future__ import annotations
+
+import logging
+import sqlite3
+from collections import defaultdict
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Mapping
+from contextlib import closing
+
+from anime_mapping_db.config import mappings_db_path
+
+
+@dataclass(frozen=True, slots=True)
+class MappingOverride:
+    source_provider: str
+    source_id: str
+    target_provider: str
+    target_id: str
+    action: str
+    reason: str
+    author: str = ""
+    updated_at: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class MappingOverrideHistory:
+    source_provider: str
+    source_id: str
+    target_provider: str
+    target_id: str
+    event: str
+    override_action: str
+    reason: str
+    author: str
+    changed_at: str
+
+
+def _clean_provider(value: object) -> str:
+    return str(value or "").strip().casefold()
+
+
+def _clean_id(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _clean_text(value: object) -> str:
+    return " ".join(str(value or "").split()).strip()
+
+
+def _database_path(path: Path | None = None) -> Path:
+    return Path(path) if path is not None else mappings_db_path()
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    return {str(row[1]) for row in conn.execute(f"PRAGMA table_info({table})")}
+
+
+def _ensure_override_audit_schema(conn: sqlite3.Connection) -> None:
+    columns = _table_columns(conn, "mapping_overrides")
+    if not columns:
+        raise sqlite3.OperationalError("mapping_overrides table is missing")
+    if "author" not in columns:
+        conn.execute(
+            "ALTER TABLE mapping_overrides ADD COLUMN author TEXT NOT NULL DEFAULT ''"
+        )
+    if "updated_at" not in columns:
+        conn.execute(
+            "ALTER TABLE mapping_overrides ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''"
+        )
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS mapping_override_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_provider TEXT NOT NULL,
+            source_id TEXT NOT NULL,
+            target_provider TEXT NOT NULL,
+            target_id TEXT NOT NULL,
+            event TEXT NOT NULL CHECK(event IN ('set', 'delete')),
+            override_action TEXT NOT NULL CHECK(override_action IN ('accept', 'reject')),
+            reason TEXT NOT NULL DEFAULT '',
+            author TEXT NOT NULL DEFAULT '',
+            changed_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS mapping_override_history_route_idx
+            ON mapping_override_history(
+                source_provider, source_id, target_provider, target_id, changed_at
+            );
+        """
+    )
+
+
+def _validate_override(
+    source_provider: object,
+    source_id: object,
+    target_provider: object,
+    target_id: object,
+    action: object,
+    reason: object,
+    author: object = "",
+    updated_at: object = "",
+) -> MappingOverride:
+    override = MappingOverride(
+        source_provider=_clean_provider(source_provider),
+        source_id=_clean_id(source_id),
+        target_provider=_clean_provider(target_provider),
+        target_id=_clean_id(target_id),
+        action=_clean_text(action).casefold(),
+        reason=_clean_text(reason),
+        author=_clean_text(author),
+        updated_at=_clean_text(updated_at),
+    )
+    if not override.source_provider or not override.source_id:
+        raise ValueError("source provider and source ID are required")
+    if not override.target_provider or not override.target_id:
+        raise ValueError("target provider and target ID are required")
+    if override.source_provider == override.target_provider:
+        raise ValueError("mapping overrides must connect different providers")
+    if override.action not in {"accept", "reject"}:
+        raise ValueError("override action must be accept or reject")
+    if not override.reason:
+        raise ValueError("override reason is required for auditability")
+    return override
+
+
+def list_mapping_overrides(path: Path | None = None) -> list[MappingOverride]:
+    db_path = _database_path(path)
+    if not db_path.is_file():
+        return []
+    uri = f"file:{db_path.resolve().as_posix()}?mode=ro"
+    try:
+        with closing(sqlite3.connect(uri, uri=True, timeout=5.0)) as conn:
+            columns = _table_columns(conn, "mapping_overrides")
+            if not columns:
+                return []
+            author_sql = "author" if "author" in columns else "''"
+            updated_sql = "updated_at" if "updated_at" in columns else "''"
+            rows = conn.execute(
+                f"""
+                SELECT source_provider, source_id, target_provider, target_id, action, reason,
+                       {author_sql}, {updated_sql}
+                FROM mapping_overrides
+                ORDER BY source_provider, source_id, target_provider, target_id
+                """
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [MappingOverride(*map(str, row)) for row in rows]
+
+
+def list_mapping_override_history(
+    path: Path | None = None,
+    *,
+    limit: int | None = None,
+    newest_first: bool = False,
+) -> list[MappingOverrideHistory]:
+    if limit is not None:
+        limit = int(limit)
+        if limit <= 0:
+            return []
+
+    db_path = _database_path(path)
+    if not db_path.is_file():
+        return []
+    uri = f"file:{db_path.resolve().as_posix()}?mode=ro"
+    order = "DESC" if newest_first else "ASC"
+    limit_sql = " LIMIT ?" if limit is not None else ""
+    params: tuple[int, ...] = (limit,) if limit is not None else ()
+    try:
+        with closing(sqlite3.connect(uri, uri=True, timeout=5.0)) as conn:
+            if not _table_columns(conn, "mapping_override_history"):
+                return []
+            rows = conn.execute(
+                f"""
+                SELECT source_provider, source_id, target_provider, target_id, event,
+                       override_action, reason, author, changed_at
+                FROM mapping_override_history ORDER BY id {order}{limit_sql}
+                """,
+                params,
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [MappingOverrideHistory(*map(str, row)) for row in rows]
+
+
+def set_mapping_override(
+    source_provider: object,
+    source_id: object,
+    target_provider: object,
+    target_id: object,
+    *,
+    action: object,
+    reason: object,
+    author: object = "manual",
+    path: Path | None = None,
+) -> MappingOverride:
+    changed_at = _now()
+    override = _validate_override(
+        source_provider,
+        source_id,
+        target_provider,
+        target_id,
+        action,
+        reason,
+        author,
+        changed_at,
+    )
+    db_path = _database_path(path)
+    if not db_path.is_file():
+        raise FileNotFoundError(f"mapping database does not exist: {db_path}")
+    with closing(sqlite3.connect(db_path, timeout=5.0)) as conn:
+        _ensure_override_audit_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO mapping_overrides(
+                source_provider, source_id, target_provider, target_id,
+                action, reason, author, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(source_provider, source_id, target_provider, target_id) DO UPDATE SET
+                action=excluded.action,
+                reason=excluded.reason,
+                author=excluded.author,
+                updated_at=excluded.updated_at
+            """,
+            (
+                override.source_provider,
+                override.source_id,
+                override.target_provider,
+                override.target_id,
+                override.action,
+                override.reason,
+                override.author,
+                override.updated_at,
+            ),
+        )
+        conn.execute(
+            """
+            INSERT INTO mapping_override_history(
+                source_provider, source_id, target_provider, target_id,
+                event, override_action, reason, author, changed_at
+            ) VALUES (?, ?, ?, ?, 'set', ?, ?, ?, ?)
+            """,
+            (
+                override.source_provider,
+                override.source_id,
+                override.target_provider,
+                override.target_id,
+                override.action,
+                override.reason,
+                override.author,
+                override.updated_at,
+            ),
+        )
+        conn.commit()
+    return override
+
+
+def delete_mapping_override(
+    source_provider: object,
+    source_id: object,
+    target_provider: object,
+    target_id: object,
+    *,
+    reason: object = "manual override deleted",
+    author: object = "manual",
+    path: Path | None = None,
+) -> bool:
+    values = (
+        _clean_provider(source_provider),
+        _clean_id(source_id),
+        _clean_provider(target_provider),
+        _clean_id(target_id),
+    )
+    if not all(values):
+        raise ValueError("source/target provider and ID are required")
+    db_path = _database_path(path)
+    if not db_path.is_file():
+        return False
+    with closing(sqlite3.connect(db_path, timeout=5.0)) as conn:
+        _ensure_override_audit_schema(conn)
+        existing = conn.execute(
+            """
+            SELECT action, reason FROM mapping_overrides
+            WHERE source_provider=? AND source_id=? AND target_provider=? AND target_id=?
+            """,
+            values,
+        ).fetchone()
+        if existing is None:
+            return False
+        conn.execute(
+            """
+            DELETE FROM mapping_overrides
+            WHERE source_provider=? AND source_id=? AND target_provider=? AND target_id=?
+            """,
+            values,
+        )
+        conn.execute(
+            """
+            INSERT INTO mapping_override_history(
+                source_provider, source_id, target_provider, target_id,
+                event, override_action, reason, author, changed_at
+            ) VALUES (?, ?, ?, ?, 'delete', ?, ?, ?, ?)
+            """,
+            (
+                *values,
+                str(existing[0]),
+                _clean_text(reason) or str(existing[1]),
+                _clean_text(author),
+                _now(),
+            ),
+        )
+        conn.commit()
+        return True
+
+
+def copy_mapping_overrides(source_path: Path, destination: sqlite3.Connection) -> int:
+    source_path = Path(source_path)
+    if not source_path.is_file():
+        return 0
+    _ensure_override_audit_schema(destination)
+    uri = f"file:{source_path.resolve().as_posix()}?mode=ro"
+    try:
+        with closing(sqlite3.connect(uri, uri=True, timeout=5.0)) as source:
+            columns = _table_columns(source, "mapping_overrides")
+            if not columns:
+                return 0
+            author_sql = "author" if "author" in columns else "''"
+            updated_sql = "updated_at" if "updated_at" in columns else "''"
+            rows = source.execute(
+                f"""
+                SELECT source_provider, source_id, target_provider, target_id,
+                       action, reason, {author_sql}, {updated_sql}
+                FROM mapping_overrides
+                """
+            ).fetchall()
+            history = []
+            if _table_columns(source, "mapping_override_history"):
+                history = source.execute(
+                    """
+                    SELECT source_provider, source_id, target_provider, target_id,
+                           event, override_action, reason, author, changed_at
+                    FROM mapping_override_history ORDER BY id
+                    """
+                ).fetchall()
+    except sqlite3.OperationalError:
+        return 0
+    destination.executemany(
+        """
+        INSERT OR REPLACE INTO mapping_overrides(
+            source_provider, source_id, target_provider, target_id,
+            action, reason, author, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        rows,
+    )
+    if history:
+        destination.executemany(
+            """
+            INSERT INTO mapping_override_history(
+                source_provider, source_id, target_provider, target_id,
+                event, override_action, reason, author, changed_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            history,
+        )
+    destination.commit()
+    return len(rows)
+
+
+class MappingResolver:
+    """Resolve only direct, unambiguous edges from already-confirmed IDs.
+
+    Cross-catalog mappings are not generally transitive: one TVDB/TMDB entry can
+    represent a season grouping that points back to several MAL/AniDB entries.
+    Following arbitrary chains can therefore turn a correct anime identity into a
+    related season or split entry. Runtime enrichment deliberately performs a
+    single hop from source-confirmed IDs and requires every target provider to
+    collapse to exactly one candidate.
+
+    Directional manual overrides are applied after dataset evidence. ``accept``
+    replaces automatic candidates for that exact source -> target-provider route;
+    ``reject`` removes only the exact target ID. Confirmed source IDs remain more
+    authoritative than both dataset evidence and overrides.
+    """
+
+    def __init__(self, path: Path | None = None) -> None:
+        self.path = _database_path(path)
+
+    @property
+    def available(self) -> bool:
+        return self.path.is_file()
+
+    def _connect(self) -> sqlite3.Connection:
+        uri = f"file:{self.path.resolve().as_posix()}?mode=ro"
+        conn = sqlite3.connect(uri, uri=True, timeout=5.0)
+        conn.execute("PRAGMA query_only=ON")
+        conn.execute("PRAGMA temp_store=FILE")
+        return conn
+
+    def resolve(self, identity: Mapping[str, str]) -> dict[str, str]:
+        normalized = {
+            _clean_provider(provider): _clean_id(external_id)
+            for provider, external_id in identity.items()
+            if _clean_provider(provider) and _clean_id(external_id)
+        }
+        if not self.available or not normalized:
+            return {}
+
+        seeds = sorted(normalized.items())
+        seed_sql = " UNION ALL ".join(
+            "SELECT ? AS provider, ? AS external_id" for _ in seeds
+        )
+        params: list[str] = []
+        for provider, external_id in seeds:
+            params.extend([provider, external_id])
+
+        edge_query = """
+            SELECT target.provider, target.external_id
+            FROM edges AS e
+            JOIN nodes AS target
+              ON target.id=CASE WHEN e.a_node=? THEN e.b_node ELSE e.a_node END
+            LEFT JOIN conflicts AS c
+              ON c.source_node=? AND c.target_provider=target.provider
+            WHERE e.status='accepted'
+              AND (e.a_node=? OR e.b_node=?)
+              AND c.source_node IS NULL
+            ORDER BY target.provider, target.external_id
+        """
+        override_query = f"""
+            WITH seeds(provider, external_id) AS (
+                {seed_sql}
+            )
+            SELECT
+                s.provider,
+                s.external_id,
+                o.target_provider,
+                o.target_id,
+                o.action,
+                o.reason
+            FROM seeds AS s
+            JOIN mapping_overrides AS o
+              ON o.source_provider=s.provider
+             AND o.source_id=s.external_id
+            ORDER BY s.provider, s.external_id, o.target_provider, o.target_id
+        """
+
+        per_seed: dict[tuple[str, str], dict[str, set[str]]] = defaultdict(
+            lambda: defaultdict(set)
+        )
+        accepts: dict[tuple[str, str, str], set[str]] = defaultdict(set)
+        rejects: dict[tuple[str, str, str], set[str]] = defaultdict(set)
+        try:
+            with closing(self._connect()) as conn:
+                for seed_provider, seed_id in seeds:
+                    node_row = conn.execute(
+                        "SELECT id FROM nodes WHERE provider=? AND external_id=?",
+                        (seed_provider, seed_id),
+                    ).fetchone()
+                    if node_row is None:
+                        continue
+                    node_id = int(node_row[0])
+                    for target_provider, target_id in conn.execute(
+                        edge_query,
+                        (node_id, node_id, node_id, node_id),
+                    ):
+                        per_seed[(seed_provider, seed_id)][str(target_provider)].add(
+                            str(target_id)
+                        )
+                try:
+                    override_rows = conn.execute(override_query, params).fetchall()
+                except sqlite3.OperationalError:
+                    override_rows = []
+        except (sqlite3.DatabaseError, OSError):
+            logging.exception("Could not resolve direct external IDs from mappings.db")
+            return {}
+
+        for (
+            seed_provider,
+            seed_id,
+            target_provider,
+            target_id,
+            action,
+            _reason,
+        ) in override_rows:
+            key = (str(seed_provider), str(seed_id), str(target_provider))
+            if str(action) == "accept":
+                accepts[key].add(str(target_id))
+            elif str(action) == "reject":
+                rejects[key].add(str(target_id))
+
+        for seed_provider, seed_id in seeds:
+            seed_key = (seed_provider, seed_id)
+            target_providers = set(per_seed.get(seed_key, {}))
+            target_providers.update(
+                target_provider
+                for provider, external_id, target_provider in accepts
+                if provider == seed_provider and external_id == seed_id
+            )
+            target_providers.update(
+                target_provider
+                for provider, external_id, target_provider in rejects
+                if provider == seed_provider and external_id == seed_id
+            )
+            for target_provider in target_providers:
+                route_key = (seed_provider, seed_id, target_provider)
+                if accepts.get(route_key):
+                    per_seed[seed_key][target_provider] = set(accepts[route_key])
+                elif rejects.get(route_key):
+                    per_seed[seed_key][target_provider].difference_update(
+                        rejects[route_key]
+                    )
+                    if not per_seed[seed_key][target_provider]:
+                        per_seed[seed_key].pop(target_provider, None)
+
+        candidates: dict[str, dict[str, set[tuple[str, str]]]] = defaultdict(
+            lambda: defaultdict(set)
+        )
+        for seed_key, targets in per_seed.items():
+            for target_provider, target_ids in targets.items():
+                for target_id in target_ids:
+                    candidates[target_provider][target_id].add(seed_key)
+
+        # A direct mapping that contradicts a source-confirmed ID makes this
+        # enrichment attempt unsafe. Do not cherry-pick unrelated additions from
+        # evidence that has already disagreed with the identity we trust more.
+        for provider, known_id in normalized.items():
+            provider_candidates = candidates.get(provider)
+            if not provider_candidates:
+                continue
+            if set(provider_candidates) != {known_id}:
+                logging.warning(
+                    "Direct mapping evidence conflicts with confirmed %s:%s -> %s",
+                    provider,
+                    known_id,
+                    sorted(provider_candidates),
+                )
+                return {}
+
+        additions: dict[str, str] = {}
+        for provider, provider_candidates in candidates.items():
+            if provider in normalized:
+                continue
+            if len(provider_candidates) == 1:
+                additions[provider] = next(iter(provider_candidates))
+                continue
+            if provider_candidates:
+                logging.info(
+                    "Skipping ambiguous direct %s mappings for %s: %s",
+                    provider,
+                    repr(normalized),
+                    sorted(provider_candidates),
+                )
+        return additions
+
+    def enrich(self, identity: Mapping[str, str]) -> dict[str, str]:
+        enriched = {
+            _clean_provider(provider): _clean_id(external_id)
+            for provider, external_id in identity.items()
+            if _clean_provider(provider) and _clean_id(external_id)
+        }
+        for provider, external_id in self.resolve(enriched).items():
+            enriched.setdefault(provider, external_id)
+        return enriched
