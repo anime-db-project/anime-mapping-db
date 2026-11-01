@@ -16,7 +16,9 @@ The project generates artifacts such as:
 
 - `mappings.db`;
 - `mappings-evidence.db`;
-- their compressed release variants.
+- `mappings.tsv.zst`;
+- `mappings.jsonl.zst`;
+- other compressed or transformed release variants derived from the same data.
 
 These files are compiled from multiple independent third-party datasets. Their data therefore remains subject to the applicable upstream database/content licenses, attribution requirements, share-alike requirements, and other notices.
 

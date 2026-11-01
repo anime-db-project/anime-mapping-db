@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+import io
 import json
 import tempfile
 import unittest
@@ -9,7 +11,19 @@ import zstandard as zstd
 
 from anime_mapping_db.config import MappingSourceSpec
 from anime_mapping_db.database import MappingDatabaseBuilder, MappingRecord
-from anime_mapping_db.release import package_release, sha256_file
+from anime_mapping_db.release import (
+    TEXT_EXPORT_FIELDS,
+    TEXT_EXPORT_SCHEMA_VERSION,
+    package_release,
+    sha256_file,
+)
+from anime_mapping_db.resolver import set_mapping_override
+
+
+def _read_zstd_text(path: Path) -> str:
+    with path.open("rb") as src:
+        with zstd.ZstdDecompressor().stream_reader(src) as reader:
+            return io.TextIOWrapper(reader, encoding="utf-8").read()
 
 
 class ReleasePackagingTests(unittest.TestCase):
@@ -52,11 +66,22 @@ class ReleasePackagingTests(unittest.TestCase):
             self.assertEqual(manifest["sources"][0]["sha256"], "source-sha")
             self.assertEqual(manifest["providers"], {"anidb": 1, "mal": 1})
             self.assertTrue(manifest["source_fingerprint"])
+            self.assertEqual(
+                manifest["text_export"],
+                {
+                    "schema_version": TEXT_EXPORT_SCHEMA_VERSION,
+                    "semantics": "directed single-seed resolver routes",
+                    "fields": list(TEXT_EXPORT_FIELDS),
+                    "rows": 2,
+                },
+            )
 
             expected = {
                 "mappings.db",
                 "mappings.db.zst",
                 "mappings-evidence.db.zst",
+                "mappings.tsv.zst",
+                "mappings.jsonl.zst",
                 "manifest.json",
                 "SHA256SUMS",
             }
@@ -66,6 +91,66 @@ class ReleasePackagingTests(unittest.TestCase):
                 parsed["assets"]["runtime"]["sha256"],
                 sha256_file(output / "mappings.db"),
             )
+            for key, name in (
+                ("runtime_tsv_zstd", "mappings.tsv.zst"),
+                ("runtime_jsonl_zstd", "mappings.jsonl.zst"),
+            ):
+                self.assertEqual(parsed["assets"][key]["name"], name)
+                self.assertEqual(parsed["assets"][key]["rows"], 2)
+                self.assertEqual(
+                    parsed["assets"][key]["schema_version"],
+                    TEXT_EXPORT_SCHEMA_VERSION,
+                )
+                self.assertEqual(
+                    parsed["assets"][key]["sha256"],
+                    sha256_file(output / name),
+                )
+
+            tsv_rows = list(
+                csv.DictReader(
+                    io.StringIO(_read_zstd_text(output / "mappings.tsv.zst")),
+                    delimiter="\t",
+                )
+            )
+            self.assertEqual(
+                tsv_rows,
+                [
+                    {
+                        "source_provider": "anidb",
+                        "source_id": "2",
+                        "target_provider": "mal",
+                        "target_id": "1",
+                        "confidence": "95",
+                        "evidence_count": "1",
+                        "evidence_group_count": "1",
+                        "max_weight": "95",
+                        "origin": "evidence",
+                    },
+                    {
+                        "source_provider": "mal",
+                        "source_id": "1",
+                        "target_provider": "anidb",
+                        "target_id": "2",
+                        "confidence": "95",
+                        "evidence_count": "1",
+                        "evidence_group_count": "1",
+                        "max_weight": "95",
+                        "origin": "evidence",
+                    },
+                ],
+            )
+            jsonl_rows = [
+                json.loads(line)
+                for line in _read_zstd_text(output / "mappings.jsonl.zst").splitlines()
+            ]
+            self.assertEqual(len(jsonl_rows), 2)
+            self.assertEqual(jsonl_rows[0]["source_provider"], "anidb")
+            self.assertEqual(jsonl_rows[0]["confidence"], 95)
+            self.assertEqual(jsonl_rows[1]["target_id"], "2")
+
+            sums = (output / "SHA256SUMS").read_text(encoding="utf-8")
+            self.assertIn("mappings.tsv.zst", sums)
+            self.assertIn("mappings.jsonl.zst", sums)
 
             restored = root / "restored.db"
             decompressor = zstd.ZstdDecompressor()
@@ -75,6 +160,92 @@ class ReleasePackagingTests(unittest.TestCase):
             ):
                 decompressor.copy_stream(src, dst)
             self.assertEqual(sha256_file(restored), sha256_file(runtime))
+
+    def test_text_exports_follow_directional_conflicts_and_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            runtime = root / "mappings.db"
+            evidence = root / "mappings-evidence.db"
+            with MappingDatabaseBuilder(runtime, evidence_path=evidence) as builder:
+                builder.ingest_dataset(
+                    MappingSourceSpec(
+                        "fixture",
+                        "https://example.invalid/data.json",
+                        "test",
+                        True,
+                        "fixture license",
+                    ),
+                    [
+                        MappingRecord(
+                            "a",
+                            {"mal": ("1",), "anidb": ("2",)},
+                            "fixture-a",
+                            95,
+                        ),
+                        MappingRecord(
+                            "b",
+                            {"mal": ("1",), "anidb": ("3",)},
+                            "fixture-b",
+                            95,
+                        ),
+                    ],
+                    sha256="source-sha",
+                    downloaded_at="2026-11-01T00:00:00+00:00",
+                )
+                builder.finalize(built_at="2026-11-01T00:00:00+00:00")
+
+            # MAL -> AniDB is directionally ambiguous in evidence. A manual accept
+            # chooses one target and should therefore appear as an override route.
+            set_mapping_override(
+                "mal",
+                "1",
+                "anidb",
+                "2",
+                action="accept",
+                reason="fixture override",
+                path=runtime,
+            )
+            set_mapping_override(
+                "mal",
+                "999",
+                "anidb",
+                "999",
+                action="accept",
+                reason="fixture override without evidence",
+                path=runtime,
+            )
+
+            output = root / "release"
+            manifest = package_release(
+                runtime,
+                evidence,
+                output,
+                release_tag="v2026.11.01-test",
+            )
+            rows = [
+                json.loads(line)
+                for line in _read_zstd_text(output / "mappings.jsonl.zst").splitlines()
+            ]
+            routes = {
+                (
+                    row["source_provider"],
+                    row["source_id"],
+                    row["target_provider"],
+                    row["target_id"],
+                ): row
+                for row in rows
+            }
+            self.assertIn(("anidb", "2", "mal", "1"), routes)
+            self.assertIn(("anidb", "3", "mal", "1"), routes)
+            self.assertIn(("mal", "1", "anidb", "2"), routes)
+            self.assertNotIn(("mal", "1", "anidb", "3"), routes)
+            overridden = routes[("mal", "1", "anidb", "2")]
+            self.assertEqual(overridden["origin"], "override")
+            self.assertEqual(overridden["confidence"], 95)
+            override_only = routes[("mal", "999", "anidb", "999")]
+            self.assertEqual(override_only["origin"], "override")
+            self.assertIsNone(override_only["confidence"])
+            self.assertEqual(manifest["text_export"]["rows"], 4)
 
 
 if __name__ == "__main__":

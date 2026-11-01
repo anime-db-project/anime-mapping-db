@@ -288,14 +288,42 @@ Every release contains:
 - `mappings.db`
 - `mappings.db.zst`
 - `mappings-evidence.db.zst`
+- `mappings.tsv.zst`
+- `mappings.jsonl.zst`
 - `manifest.json`
 - `SHA256SUMS`
+
+### Text exports
+
+`mappings.tsv.zst` and `mappings.jsonl.zst` are portable, compressed exports for consumers that do not want to embed SQLite. SQLite remains the canonical runtime format.
+
+Text rows are **directed resolver-safe routes**, not raw undirected graph edges. Directional conflicts are removed and manual mapping overrides are applied before export. A route is emitted only when one source ID resolves to exactly one target ID for that provider.
+
+Both formats use text-export schema v1 with these fields:
+
+```text
+source_provider
+source_id
+target_provider
+target_id
+confidence
+evidence_count
+evidence_group_count
+max_weight
+origin
+```
+
+`origin` is `evidence` for normal accepted mappings and `override` when a manual accept override determines the route. For override-only mappings without a matching evidence edge, the four evidence metrics are empty in TSV and `null` in JSONL.
+
+`manifest.json` publishes the text-export schema version, fields, row count, asset sizes and SHA-256 hashes.
 
 Latest stable asset URLs use GitHub Releases:
 
 ```text
 https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json
 https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db.zst
+https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.tsv.zst
+https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.jsonl.zst
 ```
 
 `manifest.json` includes schema version, build time, dataset counts, provider counts, source URLs/hashes, `source_fingerprint`, release asset sizes and SHA-256 hashes.

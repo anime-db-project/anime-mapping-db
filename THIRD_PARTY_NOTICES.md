@@ -29,4 +29,4 @@ AnimeAPI's generator can also use live scrapers and an external Geckyzz API. Ani
 
 The exact URLs and notes embedded into every evidence database are defined in `anime_mapping_db/config.py`.
 
-When publishing or redistributing a compiled `mappings.db`, preserve applicable attribution, share-alike/database-license requirements and notices from upstream sources. If an upstream project's licensing changes, update this file and the source specification before publishing the next database release.
+When publishing or redistributing a compiled `mappings.db`, the TSV/JSONL release exports, or another derivative database, preserve applicable attribution, share-alike/database-license requirements and notices from upstream sources. If an upstream project's licensing changes, update this file and the source specification before publishing the next database release.
