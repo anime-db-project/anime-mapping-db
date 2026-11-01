@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import csv
 import json
 import re
+import sqlite3
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Iterable, Iterator
@@ -394,6 +396,269 @@ def import_wikidata_bahamut(path: Path) -> Iterator[MappingRecord]:
         yield record
 
 
+def import_notify_rensetsu(path: Path) -> Iterator[MappingRecord]:
+    """Import the GitHub-hosted Notify/Rensetsu mapping dump."""
+    with path.open("rb") as handle:
+        for index, item in enumerate(ijson.items(handle, "item")):
+            if not isinstance(item, dict):
+                continue
+            mappings = item.get("mappings") or {}
+            if not isinstance(mappings, dict):
+                continue
+            kitsu = mappings.get("kitsu")
+            kitsu_id = kitsu.get("id") if isinstance(kitsu, dict) else kitsu
+            record = _record(
+                str(item.get("uuid") or index),
+                {
+                    "anidb": _values(mappings.get("anidb"), numeric=True),
+                    "anilist": _values(mappings.get("anilist"), numeric=True),
+                    "kitsu": _values(kitsu_id, numeric=True),
+                    "mal": _values(mappings.get("myanimelist"), numeric=True),
+                    "notify": _values(mappings.get("notify")),
+                },
+                group="notify-rensetsu",
+                weight=88,
+            )
+            if record is not None:
+                yield record
+
+
+def import_arm(path: Path) -> Iterator[MappingRecord]:
+    """Import kawaiioverflow/arm (MAL/AniList/Annict/Shoboi Calendar)."""
+    with path.open("rb") as handle:
+        for index, item in enumerate(ijson.items(handle, "item")):
+            if not isinstance(item, dict):
+                continue
+            record = _record(
+                str(index),
+                {
+                    "mal": _values(item.get("mal_id"), numeric=True),
+                    "anilist": _values(item.get("anilist_id"), numeric=True),
+                    "annict": _values(item.get("annict_id"), numeric=True),
+                    "shoboi": _values(item.get("syobocal_tid"), numeric=True),
+                },
+                group="arm",
+                weight=90,
+            )
+            if record is not None:
+                yield record
+
+
+def _import_anitrakt(path: Path, *, movie: bool) -> Iterator[MappingRecord]:
+    with path.open("rb") as handle:
+        for index, item in enumerate(ijson.items(handle, "item")):
+            if not isinstance(item, dict):
+                continue
+            mal = item.get("myanimelist") or {}
+            trakt = item.get("trakt") or {}
+            externals = item.get("externals") or {}
+            if (
+                not isinstance(mal, dict)
+                or not isinstance(trakt, dict)
+                or not isinstance(externals, dict)
+            ):
+                continue
+            ids: dict[str, tuple[str, ...]] = {
+                "mal": _values(mal.get("id"), numeric=True),
+                "trakt": _values(trakt.get("id"), numeric=True),
+                "imdb": _values(externals.get("imdb")),
+            }
+            if movie:
+                ids["tmdb_movie"] = _values(externals.get("tmdb"), numeric=True)
+                letterboxd = externals.get("letterboxd") or {}
+                if isinstance(letterboxd, dict):
+                    ids["letterboxd_uid"] = _values(letterboxd.get("uid"), numeric=True)
+                    ids["letterboxd_slug"] = _values(letterboxd.get("slug"))
+                    ids["letterboxd_lid"] = _values(letterboxd.get("lid"))
+            else:
+                ids["tvdb"] = _values(externals.get("tvdb"), numeric=True)
+                ids["tmdb_tv"] = _values(externals.get("tmdb"), numeric=True)
+            record = _record(
+                str(index),
+                ids,
+                group="anitrakt",
+                weight=88,
+            )
+            if record is not None:
+                yield record
+
+
+def import_anitrakt_tv(path: Path) -> Iterator[MappingRecord]:
+    yield from _import_anitrakt(path, movie=False)
+
+
+def import_anitrakt_movie(path: Path) -> Iterator[MappingRecord]:
+    yield from _import_anitrakt(path, movie=True)
+
+
+def import_silveryasha(path: Path) -> Iterator[MappingRecord]:
+    """Import the CC0 SilverYasha public dump without scraping SilverYasha itself."""
+    with path.open("rb") as handle:
+        for index, item in enumerate(ijson.items(handle, "data.item")):
+            if not isinstance(item, dict):
+                continue
+            record = _record(
+                str(item.get("id") or index),
+                {
+                    "mal": _values(item.get("mal_id"), numeric=True),
+                    "silveryasha": _values(item.get("id"), numeric=True),
+                },
+                group="silveryasha",
+                weight=88,
+            )
+            if record is not None:
+                yield record
+
+
+_ANIMEAPI_ANCHOR_FIELDS: tuple[tuple[str, str, bool], ...] = (
+    ("myanimelist", "mal", True),
+    ("anilist", "anilist", True),
+    ("anidb", "anidb", True),
+    ("kitsu", "kitsu", True),
+    ("anisearch", "anisearch", True),
+    ("animeplanet", "animeplanet", False),
+    ("animenewsnetwork", "ann", True),
+    ("livechart", "livechart", True),
+    ("simkl", "simkl", True),
+)
+
+_ANIMEAPI_TARGET_FIELDS: tuple[tuple[str, str, bool], ...] = (
+    ("annict", "annict", True),
+    ("hikka", "hikka", False),
+    ("kaize", "kaize", False),
+    ("kaize_id", "kaize_id", True),
+    ("letterboxd_lid", "letterboxd_lid", False),
+    ("letterboxd_slug", "letterboxd_slug", False),
+    ("letterboxd_uid", "letterboxd_uid", True),
+    ("nautiljon", "nautiljon", False),
+    ("nautiljon_id", "nautiljon_id", True),
+    ("notify", "notify", False),
+    ("otakotaku", "otakotaku", True),
+    ("shikimori", "shikimori", True),
+    ("shoboi", "shoboi", True),
+    ("silveryasha", "silveryasha", True),
+    ("trakt", "trakt", True),
+)
+
+
+def _safe_accepted_pair(
+    left: tuple[str, str, int],
+    right: tuple[str, str, int],
+    *,
+    accepted_edges: set[tuple[int, int]],
+    conflicts: set[tuple[int, str]],
+) -> bool:
+    left_provider, _left_id, left_node = left
+    right_provider, _right_id, right_node = right
+    edge = tuple(sorted((left_node, right_node)))
+    return (
+        edge in accepted_edges
+        and (left_node, right_provider) not in conflicts
+        and (right_node, left_provider) not in conflicts
+    )
+
+
+def import_animeapi_enrichment(
+    path: Path,
+    runtime_conn: sqlite3.Connection,
+) -> Iterator[MappingRecord]:
+    """Import AnimeAPI only as anchor-validated supplemental namespace enrichment.
+
+    Existing provider-to-provider relationships are deliberately not emitted. A row
+    must first contain at least two anime-native IDs that already form an accepted,
+    conflict-free direct edge in the provisional runtime database. New namespace IDs
+    are then linked separately to those two anchors, so AnimeAPI cannot become a
+    second correlated vote for an existing edge.
+    """
+
+    anchor_providers = tuple(
+        provider for _field, provider, _numeric in _ANIMEAPI_ANCHOR_FIELDS
+    )
+    placeholders = ",".join("?" for _ in anchor_providers)
+    node_lookup = {
+        (str(provider), str(external_id)): int(node_id)
+        for node_id, provider, external_id in runtime_conn.execute(
+            f"SELECT id, provider, external_id FROM nodes WHERE provider IN ({placeholders})",
+            anchor_providers,
+        )
+    }
+    accepted_edges = {
+        tuple(sorted((int(a_node), int(b_node))))
+        for a_node, b_node in runtime_conn.execute(
+            "SELECT a_node, b_node FROM edges WHERE status='accepted'"
+        )
+    }
+    conflicts = {
+        (int(source_node), str(target_provider))
+        for source_node, target_provider in runtime_conn.execute(
+            "SELECT source_node, target_provider FROM conflicts"
+        )
+    }
+    existing_nodes = {
+        (str(provider), str(external_id))
+        for provider, external_id in runtime_conn.execute(
+            "SELECT provider, external_id FROM nodes"
+        )
+    }
+
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        for index, row in enumerate(reader):
+            anchors: list[tuple[str, str, int]] = []
+            for field, provider, numeric in _ANIMEAPI_ANCHOR_FIELDS:
+                values = _values(row.get(field), numeric=numeric)
+                if not values:
+                    continue
+                external_id = values[0]
+                node_id = node_lookup.get((provider, external_id))
+                if node_id is not None:
+                    anchors.append((provider, external_id, node_id))
+
+            trusted_pair: tuple[tuple[str, str, int], tuple[str, str, int]] | None = (
+                None
+            )
+            for left_index, left in enumerate(anchors):
+                for right in anchors[left_index + 1 :]:
+                    if _safe_accepted_pair(
+                        left,
+                        right,
+                        accepted_edges=accepted_edges,
+                        conflicts=conflicts,
+                    ):
+                        trusted_pair = (left, right)
+                        break
+                if trusted_pair is not None:
+                    break
+            if trusted_pair is None:
+                continue
+
+            for field, target_provider, numeric in _ANIMEAPI_TARGET_FIELDS:
+                if target_provider == "trakt" and str(
+                    row.get("trakt_may_invalid") or ""
+                ).strip().casefold() in {"1", "true", "yes"}:
+                    continue
+                target_values = _values(row.get(field), numeric=numeric)
+                if not target_values:
+                    continue
+                target_id = target_values[0]
+                if (target_provider, target_id) in existing_nodes:
+                    # The base graph already knows this exact target ID. AnimeAPI is
+                    # correlated with several base sources, so do not add another vote
+                    # for an already represented node. Missing IDs in the same namespace
+                    # may still be added after anchor validation.
+                    continue
+                for anchor_provider, anchor_id, _anchor_node in trusted_pair:
+                    yield MappingRecord(
+                        record_key=f"{index}:{target_provider}:{target_id}:{anchor_provider}",
+                        ids={
+                            anchor_provider: (anchor_id,),
+                            target_provider: (target_id,),
+                        },
+                        evidence_group="animeapi-anchor",
+                        weight=85,
+                    )
+
+
 IMPORTERS = {
     "fribb": import_fribb,
     "kometa": import_kometa,
@@ -402,4 +667,9 @@ IMPORTERS = {
     "manami": import_manami,
     "anibridge": import_anibridge,
     "wikidata_bahamut": import_wikidata_bahamut,
+    "notify_rensetsu": import_notify_rensetsu,
+    "arm": import_arm,
+    "anitrakt_tv": import_anitrakt_tv,
+    "anitrakt_movie": import_anitrakt_movie,
+    "silveryasha": import_silveryasha,
 }

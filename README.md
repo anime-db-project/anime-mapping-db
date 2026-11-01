@@ -1,100 +1,172 @@
+> **AI-assisted project:** This project was developed with the help of AI.
+
+<p align="center">
+  <strong>English</strong> · <a href="docs/README.ru.md">Русский</a> · <a href="docs/README.ja.md">日本語</a> · <a href="docs/README.de.md">Deutsch</a> · <a href="docs/README.es.md">Español</a> · <a href="docs/README.fr.md">Français</a> · <a href="docs/README.it.md">Italiano</a>
+</p>
+
 # Anime Mapping DB
 
-Anime Mapping DB is the standalone cross-database identifier mapping dataset used by `anime-db-project/anime-db-bot`.
+[![CI](https://github.com/anime-db-project/anime-mapping-db/actions/workflows/ci.yml/badge.svg)](https://github.com/anime-db-project/anime-mapping-db/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/anime-db-project/anime-mapping-db)](https://github.com/anime-db-project/anime-mapping-db/releases/latest)
+[![Python](https://img.shields.io/badge/Python-3.11--3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/Code-Apache%202.0-D22128.svg)](LICENSE)
 
-It builds a compact SQLite runtime database from multiple upstream anime mapping datasets, keeps provenance/evidence in a separate SQLite database, validates conflicts, and publishes versioned release assets that can be consumed without running the builder.
+**Anime Mapping DB** builds and publishes a compact SQLite database for resolving anime identifiers between many public databases and tracking services.
 
-The project intentionally exposes data files rather than an HTTP API. Consumers download `mappings.db` (or `mappings.db.zst`) and resolve IDs locally.
+There is no mapping HTTP API in this project. Consumers download `mappings.db` (or `mappings.db.zst`) from GitHub Releases and resolve IDs locally with SQLite. `anime-db-project/anime-db-bot` is one consumer, but the database is intentionally standalone and reusable.
 
-## What this repository owns
+## Highlights
 
-This repository is the single source of truth for:
+- **31 provider namespaces** in the current build, from MAL/AniList/AniDB to Annict, Shikimori, Hikka, Notify, Trakt and others.
+- **13 dataset inputs** from public mapping projects and GitHub-hosted dumps.
+- **Direct-only runtime resolution**: no unsafe transitive graph walking across season/grouping boundaries.
+- **Evidence-aware confidence**: correlated datasets do not automatically become independent votes.
+- **Directional conflicts**: ambiguous source → target-provider routes are suppressed without discarding safe reverse routes.
+- **Separate provenance database**: runtime lookups use only `mappings.db`; build/audit evidence lives in `mappings-evidence.db`.
+- **AnimeAPI enrichment without its REST API**: only the GitHub-hosted TSV is consumed, after strict anchor validation.
+- **Reproducible releases**: manifest, source hashes, provider counts, compressed assets and SHA-256 checksums.
+- **Sub-millisecond local lookup** in the current benchmark.
 
-- mapping source definitions and importers;
-- evidence grouping and source weights;
-- confidence calculation;
-- accepted/candidate edge classification;
-- directional conflict detection;
-- schema migrations for the mapping database;
-- reproducible builds of `mappings.db` and `mappings-evidence.db`;
-- validation, checksums, manifests and GitHub Releases.
+## Latest build snapshot
 
-`anime-db-bot` only consumes the released runtime database. It no longer builds mappings from upstream sources.
+The figures below come from the feature build used to validate the AnimeAPI expansion on 2026-11-01. Every release also publishes the same machine-readable counts in `manifest.json`.
 
-## Release assets
+| Metric | Value |
+| --- | ---: |
+| Dataset inputs | 13 |
+| Provider namespaces | 31 |
+| Unique provider/ID nodes | 371,128 |
+| Source records | 654,827 |
+| Evidence edges | 2,169,089 |
+| Runtime edges | 1,111,505 |
+| Accepted runtime edges | 1,104,610 |
+| Directional conflicts | 19,724 |
+| `mappings.db` | 109,547,520 B (~104.5 MiB) |
+| `mappings.db.zst` | 18,808,357 B (~17.9 MiB) |
+| `mappings-evidence.db` | 126,738,432 B (~120.9 MiB) |
+| `mappings-evidence.db.zst` | 31,557,064 B (~30.1 MiB) |
 
-Every published release contains stable asset names:
+## Databases inside `mappings.db`
 
-- `mappings.db` — uncompressed runtime SQLite database;
-- `mappings.db.zst` — Zstandard-compressed runtime database;
-- `mappings-evidence.db.zst` — compressed provenance/evidence database;
-- `manifest.json` — schema version, counts, source hashes, release tag and asset hashes;
-- `SHA256SUMS` — SHA-256 checksums for the published files.
+A provider namespace is the key used by the resolver. Some services intentionally have more than one namespace when their IDs have different semantics (for example TMDB TV vs movie, or Letterboxd UID vs slug).
 
-The latest release can be consumed from:
+| Namespace | Database / identifier | IDs in validated build |
+| --- | --- | ---: |
+| `anidb` | AniDB | 16,341 |
+| `anilist` | AniList | 22,415 |
+| `animecountdown` | AnimeCountdown | 14,711 |
+| `animeplanet` | Anime-Planet | 25,126 |
+| `anisearch` | aniSearch | 20,042 |
+| `ann` | Anime News Network | 12,402 |
+| `annict` | Annict | 13,353 |
+| `bahamut` | Bahamut Animation Crazy | 783 |
+| `hikka` | Hikka | 27,157 |
+| `imdb` | IMDb | 7,162 |
+| `kaize` | Kaize slug | 23,233 |
+| `kaize_id` | Kaize numeric ID | 9,956 |
+| `kitsu` | Kitsu | 21,692 |
+| `letterboxd_lid` | Letterboxd LID | 1,269 |
+| `letterboxd_slug` | Letterboxd slug | 1,269 |
+| `letterboxd_uid` | Letterboxd UID | 1,269 |
+| `livechart` | LiveChart.me | 12,367 |
+| `mal` | MyAnimeList | 28,119 |
+| `nautiljon` | Nautiljon slug | 8,979 |
+| `nautiljon_id` | Nautiljon numeric ID | 9,002 |
+| `notify` | Notify.moe | 16,861 |
+| `otakotaku` | Otak Otaku | 3,131 |
+| `shikimori` | Shikimori | 27,711 |
+| `shoboi` | Shoboi / Syoboi Calendar | 6,525 |
+| `silveryasha` | SilverYasha | 5,703 |
+| `simkl` | SIMKL | 14,711 |
+| `tmdb_movie` | TMDB movie | 3,304 |
+| `tmdb_tv` | TMDB TV | 4,465 |
+| `trakt` | Trakt title | 6,100 |
+| `tvdb` | TVDB series | 4,854 |
+| `tvdb_movie` | TVDB movie | 1,116 |
+
+`manifest.json` contains a `providers` object with these counts for each published build, so consumers do not need to query SQLite just to inspect coverage.
+
+## Upstream datasets
+
+The current builder has 13 dataset inputs. All newly added AnimeAPI-related inputs are consumed as GitHub-hosted files; the pre-existing Wikidata/Bahamut integration remains the only SPARQL query source.
+
+| Dataset input | Role | Access path | Evidence group / note |
+| --- | --- | --- | --- |
+| `Fribb/anime-lists` | Required direct source | GitHub raw JSON | `fribb` |
+| `Kometa-Team/Anime-IDs` | Required direct source | GitHub raw JSON | correlated groups are preserved by importer |
+| `Anime-Lists/anime-lists` | Required direct source | GitHub raw XML | `anime-lists` |
+| `cplieger/animap` | Required direct source | GitHub Release JSON | `animap` |
+| `cedya77/anime-offline-database` | Optional direct source | GitHub Release JSONL | `manami`; maintained fork replacing the old Manami URL |
+| `anibridge/anibridge-mappings` | Optional direct source | GitHub Release JSON | `anibridge` |
+| Wikidata / Bahamut | Optional direct source | WDQS + bundled CC0 bootstrap fallback | `wikidata-bahamut` |
+| `rensetsu/db.notify.rensetsu-mirai` | Optional direct source | GitHub raw JSON | `notify-rensetsu` |
+| `kawaiioverflow/arm` | Optional direct source | GitHub raw JSON | `arm` |
+| `rensetsu/db.trakt.extended-anitrakt` TV | Optional direct source | GitHub raw JSON | `anitrakt` |
+| `rensetsu/db.trakt.extended-anitrakt` Movies | Optional direct source | GitHub raw JSON | `anitrakt` |
+| `rensetsu/db.rensetsu.public-dump` SilverYasha | Optional direct source | GitHub raw JSON | `silveryasha` |
+| `nattadasu/animeApi` | Supplemental enrichment | GitHub raw `database/animeapi.tsv` | `animeapi-anchor` |
+
+Exact URLs, importer names and license notes are defined in `anime_mapping_db/config.py` and copied into `mappings-evidence.db` plus every release manifest.
+
+## How AnimeAPI is used
+
+AnimeAPI is intentionally **not** treated as a normal independent vote. Its compiled database aggregates several projects that Anime Mapping DB also consumes directly, so counting AnimeAPI as another ordinary evidence group would artificially increase confidence.
+
+The integration therefore runs in two phases:
 
 ```text
-https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json
-https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db
-https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db.zst
-https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings-evidence.db.zst
-https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/SHA256SUMS
+Direct GitHub/public datasets
+        ↓
+provisional accepted graph + conflicts
+        ↓
+AnimeAPI GitHub TSV
+        ↓
+anchor validation
+        ↓
+new/missing provider namespaces only
+        ↓
+final runtime graph
 ```
 
-Consumers should read `manifest.json`, compare `source_fingerprint`, verify SHA-256, decompress to a temporary file, validate SQLite, and only then atomically replace their active database.
+For an AnimeAPI row to add a new ID:
 
-## Runtime schema
+1. at least two already-known anime-native anchors must exist in the provisional graph;
+2. those two anchors must already have an **accepted direct edge**;
+3. neither direction may be blocked by a conflict;
+4. AnimeAPI does not add evidence between those existing anchors;
+5. if the exact target ID already exists in the base graph, AnimeAPI does not add a correlated duplicate vote for it;
+6. `trakt_may_invalid=true` rows are ignored for Trakt;
+7. `themoviedb_season_id`, `thetvdb_season_id`, `trakt_season`, `trakt_season_id` and other season-only fields are never imported into the title graph.
 
-Schema version: `3`.
-
-The runtime database is deliberately small and contains only what a resolver needs:
+The builder downloads only:
 
 ```text
-metadata
-nodes
-edges
-conflicts
-mapping_overrides
-mapping_override_history
+https://raw.githubusercontent.com/nattadasu/animeApi/v3/database/animeapi.tsv
 ```
 
-`nodes` normalizes repeated `(provider, external_id)` strings to integer IDs.
+It does **not** call AnimeAPI's REST service. It also does not directly call AnimeAPI's external Geckyzz endpoint or run AnimeAPI's Hikka/Kaize/Nautiljon/Otak-Otaku/SilverYasha site scrapers. IDs originating from those sources may appear through the already-published AnimeAPI TSV, but our builder itself performs no such scraping.
 
-```sql
-CREATE TABLE nodes (
-    id INTEGER PRIMARY KEY,
-    provider TEXT NOT NULL,
-    external_id TEXT NOT NULL,
-    UNIQUE(provider, external_id)
-);
+To improve provenance, several databases AnimeAPI itself uses are consumed directly from their GitHub repositories: `cedya77/anime-offline-database`, `kawaiioverflow/arm`, Notify/Rensetsu, AniTrakt/Rensetsu and the CC0 SilverYasha public dump. `Fribb/anime-lists` was already a direct source before AnimeAPI support.
+
+## Lookup example
+
+The project intentionally performs a single direct hop. Example:
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("data/mappings/mappings.db")
+print(resolver.resolve({"mal": "1"}))
 ```
 
-`edges` stores compact relationships between node IDs:
+A validated build currently resolves MAL `1` to IDs including AniDB, AniList, Anime-Planet, aniSearch, ANN, Annict, Hikka, IMDb, Kaize, Kitsu, LiveChart, Notify, Otak Otaku, Shikimori, Shoboi, SilverYasha, SIMKL, TMDB TV, Trakt and TVDB.
 
-```sql
-CREATE TABLE edges (
-    a_node INTEGER NOT NULL,
-    b_node INTEGER NOT NULL,
-    confidence INTEGER NOT NULL,
-    status TEXT NOT NULL,
-    evidence_count INTEGER NOT NULL,
-    evidence_group_count INTEGER NOT NULL,
-    max_weight INTEGER NOT NULL,
-    PRIMARY KEY (a_node, b_node)
-) WITHOUT ROWID;
-```
-
-Indexes are optimized for direct lookup from either side of an edge.
-
-## Basic SQL usage
-
-Resolve all accepted direct mappings from a MAL ID:
+Equivalent direct SQL:
 
 ```sql
 SELECT target.provider, target.external_id
 FROM nodes AS source
-JOIN edges AS e
-  ON e.a_node = source.id OR e.b_node = source.id
+JOIN edges AS e ON e.a_node = source.id OR e.b_node = source.id
 JOIN nodes AS target
   ON target.id = CASE
       WHEN e.a_node = source.id THEN e.b_node
@@ -107,25 +179,51 @@ WHERE source.provider = 'mal'
   AND source.external_id = '1'
   AND e.status = 'accepted'
   AND c.source_node IS NULL
-ORDER BY target.provider, target.external_id;
+ORDER BY target.provider;
 ```
 
-The project also includes a small Python resolver:
+## Lookup benchmark
 
-```python
-from anime_mapping_db.resolver import MappingResolver
+A reproducible benchmark is included:
 
-resolver = MappingResolver("data/mappings/mappings.db")
-print(resolver.resolve({"mal": "1"}))
+```bash
+python scripts/benchmark_lookup.py \
+  --db data/mappings/mappings.db \
+  --samples 1200 \
+  --rounds 3
 ```
 
-Resolution is intentionally direct/one-hop only. Cross-catalog mappings are not safely transitive: season splits and grouped TVDB/TMDB entries can otherwise turn a correct identity into a related but different title.
+Validation run on the same Linux host, 1,200 common IDs × 3 rounds (3,600 lookups):
 
-## Evidence database
+| Database | Median | p95 |
+| --- | ---: | ---: |
+| Previous 7-source schema-v3 build | 0.418 ms | 0.749 ms |
+| Expanded 13-dataset build | **0.403 ms** | **0.552 ms** |
 
-`mappings-evidence.db` is not required for normal lookups. It exists to explain and rebuild the runtime result.
+A separate sample across the expanded database measured median **0.446 ms**, mean **0.437 ms**, p95 **0.551 ms**, p99 **0.604 ms**.
 
-It contains:
+These are microbenchmarks, not a latency guarantee. They measure local SQLite resolution including opening a read-only resolver connection. Hardware, filesystem cache and OS will change the exact numbers. The important result is that the much larger provider set did not introduce an observable lookup regression in the validation run.
+
+## Runtime and evidence databases
+
+### `mappings.db`
+
+The runtime file contains only what consumers need:
+
+```text
+metadata
+nodes
+edges
+conflicts
+mapping_overrides
+mapping_override_history
+```
+
+Repeated `(provider, external_id)` strings are normalized into integer node IDs. Runtime edges are indexed for lookup from either side.
+
+### `mappings-evidence.db`
+
+The evidence database is for builds, audit and provenance:
 
 ```text
 metadata
@@ -140,31 +238,23 @@ Conceptually:
 
 ```text
 upstream dataset
-  -> source record
-    -> evidence group
-      -> one or more mapping edges
+  → source record
+    → evidence group
+      → mapping edge
 ```
 
-Evidence answers questions such as:
+Normal consumers do not need to open the evidence database.
 
-- which upstream dataset produced an edge;
-- which source record produced it;
-- whether multiple records are actually independent evidence;
-- why an edge reached its confidence score;
-- why one route was classified as conflicting.
+## Confidence model
 
-The runtime database and evidence database intentionally use the same normalized node IDs during a build, but runtime lookups never need to open the evidence database.
-
-## Confidence and acceptance
-
-For every pair of nodes, confidence is calculated from all evidence records:
+For each pair of nodes:
 
 ```text
 confidence = min(
   100,
   max_weight
-  + 8 * (distinct_evidence_groups - 1)
-  + 2 * min(5, evidence_count - distinct_evidence_groups)
+  + 8 × (distinct_evidence_groups - 1)
+  + 2 × min(5, evidence_count - distinct_evidence_groups)
 )
 ```
 
@@ -174,52 +264,53 @@ An edge is accepted when either:
 max_weight >= 80
 ```
 
-or at least two independent evidence groups corroborate it:
+or:
 
 ```text
 distinct_evidence_groups >= 2
 ```
 
-Otherwise it remains a `candidate` and is not returned by the normal resolver.
+Lower-confidence edges remain `candidate` and are not returned by the normal resolver.
 
-Evidence groups matter because several public datasets may derive the same relationship from a common upstream source. Two copies of the same upstream evidence must not be counted as two independent votes.
+Several public datasets share upstream lineage. Importers deliberately assign correlated records to the same evidence group where appropriate, so copied data does not masquerade as independent confirmation.
 
 ## Directional conflicts
 
-A relationship can be valid in one direction and ambiguous in the other.
+Mappings are not always 1:1. If one AniDB item points to two MAL entries, the route `AniDB → MAL` is ambiguous even when each reverse `MAL → AniDB` route is individually safe.
 
-Example:
+The `conflicts` table therefore stores unsafe `(source_node, target_provider)` routes. This preserves usable directions instead of deleting the entire relationship.
+
+## Releases
+
+Every release contains:
+
+- `mappings.db`
+- `mappings.db.zst`
+- `mappings-evidence.db.zst`
+- `manifest.json`
+- `SHA256SUMS`
+
+Latest stable asset URLs use GitHub Releases:
 
 ```text
-AniDB 200 -> MAL 100
-AniDB 200 -> MAL 101
+https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json
+https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db.zst
 ```
 
-`AniDB 200 -> MAL` is ambiguous and becomes a directional conflict. `MAL 100 -> AniDB 200` can still be unambiguous and usable.
+`manifest.json` includes schema version, build time, dataset counts, provider counts, source URLs/hashes, `source_fingerprint`, release asset sizes and SHA-256 hashes.
 
-The `conflicts` table records these unsafe source-node/target-provider routes. Consumers should suppress automatic results for a route present in this table.
+Release automation runs:
 
-## Current upstream sources
+- after mapping-engine changes land on `main`;
+- daily at 03:17 UTC to check upstream datasets;
+- for explicit `v*` tags;
+- manually through `workflow_dispatch`.
 
-The builder currently ingests:
-
-1. `Fribb/anime-lists`
-2. `Kometa-Team/Anime-IDs`
-3. `Anime-Lists/anime-lists`
-4. `cplieger/animap`
-5. `manami-project/anime-offline-database`
-6. `anibridge/anibridge-mappings`
-7. `Wikidata/Bahamut Animation Crazy`
-
-Some sources are mandatory for a successful build; some are optional. Exact URLs, importers, required flags and attribution notes live in `anime_mapping_db/config.py` and are copied into the evidence database.
-
-For the very first build only, the repository also ships a small deterministic CC0 bootstrap snapshot for the Wikidata/Bahamut query. It is used only if WDQS is temporarily unavailable and no previous evidence database exists. Once a live Wikidata response succeeds, the normal source replaces that bootstrap dataset automatically. Later scheduled releases seed the previous validated evidence release before refreshes, so temporary optional-source outages do not remove already validated mappings.
-
-See `THIRD_PARTY_NOTICES.md` for licensing/attribution notes.
+Scheduled runs skip publishing when the source fingerprint is unchanged. Mapping-engine pushes publish even when upstream files are unchanged because a builder change can alter the resulting graph.
 
 ## Build locally
 
-Python 3.11+ is supported.
+Python 3.11+:
 
 ```bash
 python -m venv .venv
@@ -228,20 +319,20 @@ python -m pip install -e .
 python -m anime_mapping_db build --force
 ```
 
-Default outputs:
+Outputs:
 
 ```text
 data/mappings/mappings.db
 data/mappings/mappings-evidence.db
 ```
 
-Inspect status:
+Status:
 
 ```bash
 python -m anime_mapping_db status
 ```
 
-Create the same release layout used by GitHub Actions:
+Package release assets:
 
 ```bash
 python -m anime_mapping_db package-release \
@@ -249,77 +340,40 @@ python -m anime_mapping_db package-release \
   --output release
 ```
 
-Environment overrides are available for local builds:
-
-```text
-MAPPINGS_DB_PATH
-MAPPINGS_EVIDENCE_DB_PATH
-MAPPINGS_UPDATE_MAX_AGE_HOURS
-MAPPINGS_WIKIDATA_CHECK_INTERVAL_HOURS
-MAPPINGS_REQUEST_TIMEOUT_SECONDS
-MAPPINGS_KEEP_DOWNLOADS
-MAPPINGS_KEEP_PREVIOUS
-```
-
-## Update behavior
-
-The builder stores each source SHA-256 in the evidence database. A normal update checks only sources whose check interval has expired. If downloaded content has not changed, the runtime database is left untouched.
-
-A rebuild is atomic:
-
-```text
-new runtime DB
-new evidence DB
-  -> validate
-  -> preserve local builder overrides if present
-  -> replace active files
-```
-
-GitHub release builds use a `source_fingerprint` derived from the sorted `(dataset name, SHA-256)` pairs. Scheduled CI can therefore skip publishing a new release when source content is unchanged even though build timestamps differ.
-
-## Overrides
-
-The schema contains directional manual override tables because some cross-catalog relationships require human correction.
-
-`accept` replaces automatic candidates for one exact source -> target-provider route. `reject` removes one exact target ID. Override history is audit logged.
-
-Published release databases are intended to represent the canonical dataset. A consumer may maintain local operational overrides and copy them into a newly downloaded runtime database before atomic replacement. `anime-db-bot` does this for its admin-managed overrides.
-
 ## Validation
 
-Before publication the project verifies:
+CI and release builds verify:
 
-- SQLite `PRAGMA integrity_check` for runtime and evidence databases;
-- matching schema versions;
-- runtime/evidence database roles;
-- non-empty accepted edge set;
-- unit tests for confidence, conflicts, direct-only resolution, overrides and importers;
-- release compression/decompression and hashes.
+- Python 3.11–3.14 unit tests;
+- Windows and macOS portability smoke tests;
+- Ruff correctness checks and formatting;
+- coverage gate;
+- SQLite `PRAGMA integrity_check`;
+- runtime/evidence schema roles and versions;
+- non-empty accepted graph;
+- direct-only resolution and directional conflicts;
+- correlated evidence behavior;
+- AnimeAPI two-anchor enrichment and invalid/season-field exclusions;
+- release compression and SHA-256 integrity.
 
-## CI and releases
-
-`ci.yml` runs the fast unit suite on supported Python versions and a small portability smoke test. It intentionally avoids the much larger bot test matrix to keep organization Actions usage low.
-
-`release.yml` performs the network-heavy source build. It can run manually, on release tags, and on a daily schedule. Scheduled runs publish only when the source fingerprint changes.
-
-## Project relationship
+## Relationship to anime-db-bot
 
 ```text
-upstream mapping datasets
-        |
-        v
-anime-db-project/anime-mapping-db
-        |
-        | GitHub Release: mappings.db.zst + manifest
-        v
-anime-db-project/anime-db-bot
-        |
-        v
-local SQLite direct lookups
+upstream datasets
+       ↓
+anime-mapping-db
+       ↓ GitHub Release
+mappings.db.zst + manifest.json
+       ↓
+anime-db-bot
+       ↓
+local direct SQLite lookups
 ```
 
-The bot does not call a mapping API and does not rebuild upstream datasets.
+The bot does not build mapping datasets and does not call a mapping web API.
 
-## License
+## Licensing
 
-Project code is licensed under the repository `LICENSE` file. The generated database combines information from multiple upstream datasets with their own licenses and attribution requirements. Redistribution of the compiled database does not erase those upstream obligations; review `THIRD_PARTY_NOTICES.md` before redistributing or creating derivative datasets.
+Project **code** is licensed under Apache-2.0. The generated database combines third-party datasets with their own licenses and attribution/share-alike requirements. In particular, AnimeAPI and anime-offline-database compiled data are ODbL 1.0 + DbCL 1.0.
+
+See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) before redistributing `mappings.db` or a derivative database.
