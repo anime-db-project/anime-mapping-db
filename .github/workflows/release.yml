@@ -156,8 +156,40 @@ jobs:
           print(f"engine_push={'true' if engine_push else 'false'}")
           PY
 
-      - name: Verify release checksums
+      - name: Verify database asset checksums
         if: steps.existing_release.outputs.exists != 'true'
+        run: cd release && sha256sum --check SHA256SUMS
+
+      - name: Package source archives
+        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq p7zip-full zstd
+          tag="${{ steps.meta.outputs.tag }}"
+          prefix="anime-mapping-db-${tag}"
+          zip="release/${prefix}-source.zip"
+          zst="release/${prefix}-source.tar.zst"
+          seven="release/${prefix}-source.7z"
+
+          git archive --format=zip --prefix="${prefix}/" -o "$zip" "$GITHUB_SHA"
+          git archive --format=tar --prefix="${prefix}/" "$GITHUB_SHA" \
+            | zstd -T0 -19 -o "$zst"
+
+          stage="$(mktemp -d)"
+          git archive --format=tar --prefix="${prefix}/" "$GITHUB_SHA" \
+            | tar -xf - -C "$stage"
+          7z a -t7z -mx=9 "$seven" "$stage/$prefix" >/dev/null
+          rm -rf "$stage"
+
+          {
+            sha256sum "$zip" | sed 's#  release/#  #'
+            sha256sum "$zst" | sed 's#  release/#  #'
+            sha256sum "$seven" | sed 's#  release/#  #'
+          } >> release/SHA256SUMS
+
+      - name: Verify complete release checksums
+        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
         run: cd release && sha256sum --check SHA256SUMS
 
       - name: Publish GitHub Release
@@ -166,11 +198,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          gh release create "${{ steps.meta.outputs.tag }}" release/* \
+          tag="${{ steps.meta.outputs.tag }}"
+          mapfile -t base_assets < <(
+            find release -maxdepth 1 -type f \
+              ! -name '*-source.zip' \
+              ! -name '*-source.tar.zst' \
+              ! -name '*-source.7z' \
+              -print | sort
+          )
+          gh release create "$tag" "${base_assets[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "${{ steps.meta.outputs.tag }}" \
-            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. See manifest.json for source hashes, schemas and counts."
+            --title "$tag" \
+            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. See manifest.json for source hashes, schemas and counts."
+
+          # Source archives are intentionally uploaded in a separate final call so
+          # they appear after all database/export assets in the release asset list.
+          gh release upload "$tag" \
+            release/*-source.zip \
+            release/*-source.tar.zst \
+            release/*-source.7z \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
 
       - name: No source changes
         if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'
