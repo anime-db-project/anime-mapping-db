@@ -165,7 +165,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq p7zip-full
+          sudo apt-get install -y -qq p7zip-full zstd
           tag="${{ steps.meta.outputs.tag }}"
           prefix="anime-mapping-db-${tag}"
           zip="release/${prefix}-source.zip"
@@ -182,15 +182,11 @@ jobs:
           7z a -t7z -mx=9 "$seven" "$stage/$prefix" >/dev/null
           rm -rf "$stage"
 
-          sha256sum "$(basename "$zip")" "$(basename "$zst")" "$(basename "$seven")" \
-            | sed 's#  #  #' >> release/SHA256SUMS.tmp
-          # sha256sum above runs from the repository root, so write canonical entries explicitly.
           {
             sha256sum "$zip" | sed 's#  release/#  #'
             sha256sum "$zst" | sed 's#  release/#  #'
             sha256sum "$seven" | sed 's#  release/#  #'
           } >> release/SHA256SUMS
-          rm -f release/SHA256SUMS.tmp
 
       - name: Verify complete release checksums
         if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
