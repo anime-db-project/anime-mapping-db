@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from anime_mapping_db.anchors import AnchorResolver, materialize_anchor_index
@@ -18,7 +19,7 @@ class AnchorIdentityTests(unittest.TestCase):
 
     def _database(self, name: str, *, merge: bool = False, extra: bool = False) -> Path:
         path = self.root / name
-        with sqlite3.connect(path) as conn:
+        with closing(sqlite3.connect(path)) as conn:
             conn.executescript(
                 """
                 CREATE TABLE metadata(key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -75,6 +76,7 @@ class AnchorIdentityTests(unittest.TestCase):
                 conn.execute(
                     "INSERT INTO edges VALUES(2, 3, 100, 'accepted', 1, 1, 100)"
                 )
+            conn.commit()
         return path
 
     def test_anchor_survives_graph_enrichment(self) -> None:
@@ -122,10 +124,11 @@ class AnchorIdentityTests(unittest.TestCase):
 
     def test_conflicted_edge_does_not_merge_entities(self) -> None:
         path = self._database("conflict.db")
-        with sqlite3.connect(path) as conn:
+        with closing(sqlite3.connect(path)) as conn:
             conn.execute(
                 "INSERT INTO conflicts VALUES(1, 'anilist', '[\"10\",\"20\"]', 'ambiguous')"
             )
+            conn.commit()
         materialize_anchor_index(path)
         resolver = AnchorResolver(path)
         self.assertNotEqual(
