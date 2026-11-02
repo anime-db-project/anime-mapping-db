@@ -1,0 +1,91 @@
+name: Harden anchor clustering once
+
+on:
+  push:
+    branches:
+      - feat/stable-anchor-ids-refactor
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/stable-anchor-ids-refactor
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Patch clustering and tests
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("anime_mapping_db/anchors.py")
+          text = path.read_text()
+          old = '''    node_rows = conn.execute("SELECT id, provider FROM nodes ORDER BY id").fetchall()\n    parent = {int(node_id): int(node_id) for node_id, _provider in node_rows}\n    rank = {node_id: 0 for node_id in parent}\n    providers = {int(node_id): str(provider) for node_id, provider in node_rows}\n'''
+          new = '''    node_rows = conn.execute(\n        "SELECT id, provider FROM nodes ORDER BY id"\n    ).fetchall()\n    parent = {int(node_id): int(node_id) for node_id, _provider in node_rows}\n    rank = {node_id: 0 for node_id in parent}\n    providers = {int(node_id): str(provider) for node_id, provider in node_rows}\n    component_providers = {\n        int(node_id): {str(provider)} for node_id, provider in node_rows\n    }\n'''
+          if old not in text:
+              raise SystemExit("node_rows block not found")
+          text = text.replace(old, new, 1)
+
+          old = '''    def union(left: int, right: int) -> None:\n        left_root = find(left)\n        right_root = find(right)\n        if left_root == right_root:\n            return\n        if rank[left_root] < rank[right_root]:\n            left_root, right_root = right_root, left_root\n        parent[right_root] = left_root\n        if rank[left_root] == rank[right_root]:\n            rank[left_root] += 1\n'''
+          new = '''    def union(left: int, right: int) -> bool:\n        left_root = find(left)\n        right_root = find(right)\n        if left_root == right_root:\n            return True\n        # A project entity represents one catalog entry per provider. Refuse a\n        # transitive merge that would collapse two MAL/AniList/etc. titles into\n        # one entity even when pairwise mapping edges happen to connect them.\n        if component_providers[left_root] & component_providers[right_root]:\n            return False\n        if rank[left_root] < rank[right_root]:\n            left_root, right_root = right_root, left_root\n        parent[right_root] = left_root\n        component_providers[left_root].update(component_providers[right_root])\n        component_providers.pop(right_root, None)\n        if rank[left_root] == rank[right_root]:\n            rank[left_root] += 1\n        return True\n'''
+          if old not in text:
+              raise SystemExit("union block not found")
+          text = text.replace(old, new, 1)
+
+          old = '''    for a_node, b_node in conn.execute(\n        "SELECT a_node, b_node FROM edges WHERE status='accepted'"\n    ):\n'''
+          new = '''    for a_node, b_node in conn.execute(\n        """\n        SELECT a_node, b_node\n        FROM edges\n        WHERE status='accepted'\n        ORDER BY confidence DESC, evidence_group_count DESC, max_weight DESC,\n                 a_node, b_node\n        """\n    ):\n'''
+          if old not in text:
+              raise SystemExit("edge iteration block not found")
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+
+          tests = Path("tests/test_anchors.py")
+          text = tests.read_text()
+          text = text.replace(
+              'def _database(self, name: str, *, merge: bool = False, extra: bool = False) -> Path:',
+              'def _database(\n        self,\n        name: str,\n        *,\n        merge: bool = False,\n        extra: bool = False,\n        disjoint: bool = False,\n    ) -> Path:',
+              1,
+          )
+          marker = '''            if extra:\n                conn.execute("INSERT INTO nodes VALUES(5, 'kitsu', 'series-one')")\n'''
+          replacement = '''            if disjoint:\n                conn.execute(\n                    "UPDATE nodes SET provider='anidb', external_id='2' WHERE id=3"\n                )\n                conn.execute(\n                    "UPDATE nodes SET provider='kitsu', external_id='series-two' WHERE id=4"\n                )\n            if extra:\n                conn.execute("INSERT INTO nodes VALUES(5, 'kitsu', 'series-one')")\n'''
+          if marker not in text:
+              raise SystemExit("test disjoint marker not found")
+          text = text.replace(marker, replacement, 1)
+          text = text.replace(
+              'previous = self._database("previous.db")\n        materialize_anchor_index(previous)\n        old = AnchorResolver(previous)\n        first = old.anchor_for({"mal": "1"}).anchor_id\n        second = old.anchor_for({"mal": "2"}).anchor_id',
+              'previous = self._database("previous.db", disjoint=True)\n        materialize_anchor_index(previous)\n        old = AnchorResolver(previous)\n        first = old.anchor_for({"mal": "1"}).anchor_id\n        second = old.anchor_for({"anidb": "2"}).anchor_id',
+              1,
+          )
+          text = text.replace(
+              'current = self._database("current.db", merge=True)',
+              'current = self._database("current.db", merge=True, disjoint=True)',
+              1,
+          )
+          text = text.replace(
+              'self.assertEqual(resolver.anchor_for({"mal": "2"}).anchor_id, survivor)\n        redirected = resolver.ids_for(f"amdb:{max(first, second)}")\n        self.assertEqual(redirected["mal"], ("1", "2"))',
+              'self.assertEqual(resolver.anchor_for({"anidb": "2"}).anchor_id, survivor)\n        redirected = resolver.ids_for(f"amdb:{max(first, second)}")\n        self.assertEqual(redirected["mal"], ("1",))\n        self.assertEqual(redirected["anidb"], ("2",))',
+              1,
+          )
+          insert_before = '''    def test_conflicted_edge_does_not_merge_entities(self) -> None:\n'''
+          test = '''    def test_provider_collision_blocks_transitive_entity_merge(self) -> None:\n        path = self._database("provider-collision.db", merge=True)\n        stats = materialize_anchor_index(path)\n        self.assertEqual(stats.entities, 2)\n        resolver = AnchorResolver(path)\n        self.assertNotEqual(\n            resolver.anchor_for({"mal": "1"}).anchor_id,\n            resolver.anchor_for({"mal": "2"}).anchor_id,\n        )\n\n'''
+          if insert_before not in text:
+              raise SystemExit("test insertion marker not found")
+          text = text.replace(insert_before, test + insert_before, 1)
+          tests.write_text(text)
+          PY
+          python -m pip install ruff==0.17.3
+          ruff format anime_mapping_db/anchors.py tests/test_anchors.py
+          git rm .github/workflows/harden-anchors-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add anime_mapping_db/anchors.py tests/test_anchors.py
+          git commit -m "Harden anchor entity clustering"
+          git push origin HEAD:feat/stable-anchor-ids-refactor
