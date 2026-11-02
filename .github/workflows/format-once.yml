@@ -1,0 +1,33 @@
+name: Format refactor branch once
+
+on:
+  push:
+    branches:
+      - feat/stable-anchor-ids-refactor
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/stable-anchor-ids-refactor
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Format and commit
+        shell: bash
+        run: |
+          python -m pip install ruff==0.17.3
+          ruff format anime_mapping_db tests
+          git rm .github/workflows/format-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add anime_mapping_db tests
+          git commit -m "Format mapping refactor"
+          git push origin HEAD:feat/stable-anchor-ids-refactor
