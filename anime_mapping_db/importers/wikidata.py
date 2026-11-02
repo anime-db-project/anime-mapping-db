@@ -59,9 +59,7 @@ def import_wikidata_bahamut(path: Path) -> Iterator[MappingRecord]:
             ):
                 raw = binding.get(field)
                 value = (
-                    str(raw.get("value") or "").strip()
-                    if isinstance(raw, dict)
-                    else ""
+                    str(raw.get("value") or "").strip() if isinstance(raw, dict) else ""
                 )
                 if value.isdigit() and int(value) > 0:
                     collected.setdefault(provider, set()).add(value)
@@ -200,9 +198,7 @@ def import_wikidata_enrichment(
             provider, numeric = field
             raw = binding.get("id")
             raw_value = (
-                str(raw.get("value") or "").strip()
-                if isinstance(raw, dict)
-                else ""
+                str(raw.get("value") or "").strip() if isinstance(raw, dict) else ""
             )
             provider_ids = _values(raw_value, numeric=numeric)
             if provider_ids:

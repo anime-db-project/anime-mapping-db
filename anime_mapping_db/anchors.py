@@ -99,9 +99,9 @@ def _existing_stats(conn: sqlite3.Connection) -> AnchorBuildStats | None:
     )
 
 
-def _load_anchor_state(path: Path | None) -> tuple[
-    dict[tuple[str, str], int], dict[int, int], int
-]:
+def _load_anchor_state(
+    path: Path | None,
+) -> tuple[dict[tuple[str, str], int], dict[int, int], int]:
     if path is None:
         return {}, {}, 0
     path = Path(path)
@@ -276,9 +276,9 @@ def materialize_anchor_index(
         }
 
         overlaps: list[Counter[int]] = []
-        anchor_candidates: dict[
-            int, list[tuple[int, tuple[tuple[str, str], ...]]]
-        ] = defaultdict(list)
+        anchor_candidates: dict[int, list[tuple[int, tuple[tuple[str, str], ...]]]] = (
+            defaultdict(list)
+        )
         for signature, nodes in components:
             counts: Counter[int] = Counter()
             for node_id in nodes:
@@ -304,9 +304,7 @@ def materialize_anchor_index(
         reused = created = merged = split_components = 0
         for (signature, _nodes), counts in zip(components, overlaps, strict=True):
             reusable = sorted(
-                anchor_id
-                for anchor_id in counts
-                if winners.get(anchor_id) == signature
+                anchor_id for anchor_id in counts if winners.get(anchor_id) == signature
             )
             if reusable:
                 anchor_id = reusable[0]

@@ -44,7 +44,9 @@ def record(
     group: str,
     weight: int,
 ) -> MappingRecord | None:
-    cleaned = {provider: provider_ids for provider, provider_ids in ids.items() if provider_ids}
+    cleaned = {
+        provider: provider_ids for provider, provider_ids in ids.items() if provider_ids
+    }
     if len(cleaned) < 2:
         return None
     return MappingRecord(

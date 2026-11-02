@@ -69,24 +69,38 @@ def import_kometa(path: Path) -> Iterator[MappingRecord]:
             if not anidb:
                 continue
             groups = (
-                ("manami", 62, {
-                    "anidb": anidb,
-                    "mal": _values(item.get("mal_id"), numeric=True),
-                    "anilist": _values(item.get("anilist_id"), numeric=True),
-                }),
-                ("anime-lists", 62, {
-                    "anidb": anidb,
-                    "tvdb": _values(item.get("tvdb_id"), numeric=True),
-                    "imdb": _values(item.get("imdb_id")),
-                }),
-                ("animeaggregations", 68, {
-                    "anidb": anidb,
-                    "tmdb_movie": _values(item.get("tmdb_movie_id"), numeric=True),
-                    "tmdb_tv": _values(item.get("tmdb_show_id"), numeric=True),
-                }),
+                (
+                    "manami",
+                    62,
+                    {
+                        "anidb": anidb,
+                        "mal": _values(item.get("mal_id"), numeric=True),
+                        "anilist": _values(item.get("anilist_id"), numeric=True),
+                    },
+                ),
+                (
+                    "anime-lists",
+                    62,
+                    {
+                        "anidb": anidb,
+                        "tvdb": _values(item.get("tvdb_id"), numeric=True),
+                        "imdb": _values(item.get("imdb_id")),
+                    },
+                ),
+                (
+                    "animeaggregations",
+                    68,
+                    {
+                        "anidb": anidb,
+                        "tmdb_movie": _values(item.get("tmdb_movie_id"), numeric=True),
+                        "tmdb_tv": _values(item.get("tmdb_show_id"), numeric=True),
+                    },
+                ),
             )
             for group, weight, ids in groups:
-                mapped = _record(f"{anidb_key}:{group}", ids, group=group, weight=weight)
+                mapped = _record(
+                    f"{anidb_key}:{group}", ids, group=group, weight=weight
+                )
                 if mapped is not None:
                     yield mapped
 
@@ -168,13 +182,21 @@ def import_animap(path: Path) -> Iterator[MappingRecord]:
 
 
 _URL_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("anidb", re.compile(r"anidb\.net/(?:anime/|perl-bin/animedb\.pl\?show=anime&aid=)(\d+)", re.I)),
+    (
+        "anidb",
+        re.compile(
+            r"anidb\.net/(?:anime/|perl-bin/animedb\.pl\?show=anime&aid=)(\d+)", re.I
+        ),
+    ),
     ("anilist", re.compile(r"anilist\.co/anime/(\d+)", re.I)),
     ("mal", re.compile(r"myanimelist\.net/anime/(\d+)", re.I)),
     ("kitsu", re.compile(r"kitsu\.(?:app|io)/anime/([^/?#]+)", re.I)),
     ("animeplanet", re.compile(r"anime-planet\.com/anime/([^/?#]+)", re.I)),
     ("anisearch", re.compile(r"anisearch\.com/anime/(\d+)", re.I)),
-    ("ann", re.compile(r"animenewsnetwork\.com/encyclopedia/anime\.php\?id=(\d+)", re.I)),
+    (
+        "ann",
+        re.compile(r"animenewsnetwork\.com/encyclopedia/anime\.php\?id=(\d+)", re.I),
+    ),
     ("livechart", re.compile(r"livechart\.me/anime/(\d+)", re.I)),
     ("simkl", re.compile(r"simkl\.com/anime/(\d+)", re.I)),
     ("animecountdown", re.compile(r"animecountdown\.com/(\d+)", re.I)),
@@ -208,7 +230,10 @@ def import_manami(path: Path) -> Iterator[MappingRecord]:
             if not isinstance(item, dict) or not isinstance(item.get("sources"), list):
                 continue
             mapped = _record(
-                str(index), _ids_from_source_urls(item["sources"]), group="manami", weight=82
+                str(index),
+                _ids_from_source_urls(item["sources"]),
+                group="manami",
+                weight=82,
             )
             if mapped is not None:
                 yield mapped
@@ -221,10 +246,15 @@ def _descriptor(value: object) -> tuple[str, str] | None:
         return None
     raw_provider, external_id = parts[0].casefold(), parts[1].strip()
     aliases = {
-        "anidb": "anidb", "anilist": "anilist", "mal": "mal",
-        "tvdb_show": "tvdb", "tvdb_movie": "tvdb_movie",
-        "tmdb_show": "tmdb_tv", "tmdb_movie": "tmdb_movie",
-        "imdb_show": "imdb", "imdb_movie": "imdb",
+        "anidb": "anidb",
+        "anilist": "anilist",
+        "mal": "mal",
+        "tvdb_show": "tvdb",
+        "tvdb_movie": "tvdb_movie",
+        "tmdb_show": "tmdb_tv",
+        "tmdb_movie": "tmdb_movie",
+        "imdb_show": "imdb",
+        "imdb_movie": "imdb",
     }
     provider = aliases.get(raw_provider)
     if not provider or not external_id:
@@ -306,7 +336,11 @@ def _import_anitrakt(path: Path, *, movie: bool) -> Iterator[MappingRecord]:
             mal = item.get("myanimelist") or {}
             trakt = item.get("trakt") or {}
             externals = item.get("externals") or {}
-            if not isinstance(mal, dict) or not isinstance(trakt, dict) or not isinstance(externals, dict):
+            if (
+                not isinstance(mal, dict)
+                or not isinstance(trakt, dict)
+                or not isinstance(externals, dict)
+            ):
                 continue
             ids: dict[str, tuple[str, ...]] = {
                 "mal": _values(mal.get("id"), numeric=True),
@@ -414,16 +448,20 @@ def import_shinkro(path: Path) -> Iterator[MappingRecord]:
             tvdb = _values(item.get("tvdbid"), numeric=True)
             if tvdb:
                 mapped = _record(
-                    f"{index}:tvdb", {"mal": mal, "tvdb": tvdb},
-                    group="shinkro", weight=78,
+                    f"{index}:tvdb",
+                    {"mal": mal, "tvdb": tvdb},
+                    group="shinkro",
+                    weight=78,
                 )
                 if mapped is not None:
                     yield mapped
             tmdb_movie = _values(item.get("tmdbid"), numeric=True)
             if tmdb_movie:
                 mapped = _record(
-                    f"{index}:tmdb-movie", {"mal": mal, "tmdb_movie": tmdb_movie},
-                    group="shinkro", weight=78,
+                    f"{index}:tmdb-movie",
+                    {"mal": mal, "tmdb_movie": tmdb_movie},
+                    group="shinkro",
+                    weight=78,
                 )
                 if mapped is not None:
                     yield mapped

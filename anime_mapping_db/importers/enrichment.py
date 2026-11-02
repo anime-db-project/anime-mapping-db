@@ -365,7 +365,9 @@ def import_animeapi_enrichment(
                 if node_id is not None:
                     anchors.append((provider, external_id, node_id))
 
-            trusted_pair: tuple[tuple[str, str, int], tuple[str, str, int]] | None = None
+            trusted_pair: tuple[tuple[str, str, int], tuple[str, str, int]] | None = (
+                None
+            )
             for left_index, left in enumerate(anchors):
                 for right in anchors[left_index + 1 :]:
                     if _safe_accepted_pair(
