@@ -1,0 +1,64 @@
+name: Wire anchor materialization into updater once
+
+on:
+  push:
+    branches:
+      - feat/stable-anchor-ids-refactor
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/stable-anchor-ids-refactor
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Patch updater, format and commit
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("anime_mapping_db/updater.py")
+          text = path.read_text()
+
+          old = 'import httpx\n\nUSER_AGENT = "anime-db-project/anime-mapping-db"\nfrom anime_mapping_db.config import ('
+          new = 'import httpx\n\nfrom anime_mapping_db.anchors import materialize_anchor_index\nfrom anime_mapping_db.config import ('
+          if old not in text:
+              raise SystemExit("updater import anchor not found")
+          text = text.replace(old, new, 1)
+
+          marker = 'from anime_mapping_db.resolver import copy_mapping_overrides\n\n\ndef _utc_now()'
+          replacement = 'from anime_mapping_db.resolver import copy_mapping_overrides\n\nUSER_AGENT = "anime-db-project/anime-mapping-db"\n\n\ndef _utc_now()'
+          if marker not in text:
+              raise SystemExit("updater user-agent marker not found")
+          text = text.replace(marker, replacement, 1)
+
+          old = '''        if (\n            db_path.is_file()\n            and evidence_path.is_file()\n            and not force\n            and not changed_sources\n        ):\n            _touch_checked_sources(evidence_path, successful_checks, checked_at)\n'''
+          new = '''        if (\n            db_path.is_file()\n            and evidence_path.is_file()\n            and not force\n            and not changed_sources\n        ):\n            anchor_stats = materialize_anchor_index(db_path)\n            logging.info(\n                "Mapping anchor index current: entities=%d nodes=%d redirects=%d",\n                anchor_stats.entities,\n                anchor_stats.nodes,\n                anchor_stats.redirects,\n            )\n            _touch_checked_sources(evidence_path, successful_checks, checked_at)\n'''
+          if old not in text:
+              raise SystemExit("unchanged-source block not found")
+          text = text.replace(old, new, 1)
+
+          old = '''        if mappings_keep_previous():\n            if db_path.exists():\n'''
+          new = '''        anchor_stats = materialize_anchor_index(\n            new_path,\n            previous_path=db_path if db_path.is_file() else None,\n            force=True,\n        )\n        if anchor_stats.nodes <= 0 or anchor_stats.entities <= 0:\n            raise RuntimeError("mappings.db validation failed: empty anchor identity index")\n        logging.info(\n            "Mapping anchor index rebuilt: entities=%d reused=%d created=%d redirects=%d",\n            anchor_stats.entities,\n            anchor_stats.reused,\n            anchor_stats.created,\n            anchor_stats.redirects,\n        )\n\n        if mappings_keep_previous():\n            if db_path.exists():\n'''
+          if old not in text:
+              raise SystemExit("pre-replace anchor marker not found")
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          python -m pip install ruff==0.17.3
+          ruff format anime_mapping_db/updater.py
+          git rm .github/workflows/patch-updater-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add anime_mapping_db/updater.py
+          git commit -m "Materialize stable anchors in updater"
+          git push origin HEAD:feat/stable-anchor-ids-refactor
