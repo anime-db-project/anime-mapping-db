@@ -161,36 +161,13 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y p7zip-full zstd
-
-          tag="${{ steps.meta.outputs.tag }}"
-          root="anime-mapping-db-${tag}"
-          zip="release/zz-anime-mapping-db-${tag}-source.zip"
-          tarzst="release/zz-anime-mapping-db-${tag}-source.tar.zst"
-          sevenz="release/zz-anime-mapping-db-${tag}-source.7z"
-
-          git archive --format=zip --prefix="${root}/" "$GITHUB_SHA" > "$zip"
-          git archive --format=tar --prefix="${root}/" "$GITHUB_SHA" \
-            | zstd -19 -T0 -o "$tarzst"
-
-          rm -rf source-stage
-          mkdir -p source-stage
-          git archive --format=tar --prefix="${root}/" "$GITHUB_SHA" \
-            | tar -xf - -C source-stage
-          (
-            cd source-stage
-            7z a -t7z -mx=9 "../${sevenz}" "$root" >/dev/null
-          )
-          rm -rf source-stage
-
-          (
-            cd release
-            sha256sum \
-              "zz-anime-mapping-db-${tag}-source.7z" \
-              "zz-anime-mapping-db-${tag}-source.tar.zst" \
-              "zz-anime-mapping-db-${tag}-source.zip" \
-              >> SHA256SUMS
-          )
+          sudo apt-get install -y p7zip-full
+          python -m anime_mapping_db.source_archives \
+            --project anime-mapping-db \
+            --tag "${{ steps.meta.outputs.tag }}" \
+            --commit "$GITHUB_SHA" \
+            --output-dir release \
+            --checksums release/SHA256SUMS
 
       - name: Verify release checksums
         if: steps.existing_release.outputs.exists != 'true'
