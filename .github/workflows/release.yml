@@ -156,43 +156,8 @@ jobs:
           print(f"engine_push={'true' if engine_push else 'false'}")
           PY
 
-      - name: Verify database asset checksums
+      - name: Verify release checksums
         if: steps.existing_release.outputs.exists != 'true'
-        run: cd release && sha256sum --check SHA256SUMS
-
-      - name: Package source archives
-        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
-        shell: bash
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq p7zip-full zstd
-          tag="${{ steps.meta.outputs.tag }}"
-          prefix="anime-mapping-db-${tag}"
-          zip="release/zz-${prefix}-source.zip"
-          zst="release/zz-${prefix}-source.tar.zst"
-          seven="release/zz-${prefix}-source.7z"
-
-          git archive --format=zip --prefix="${prefix}/" -o "$zip" "$GITHUB_SHA"
-          git archive --format=tar --prefix="${prefix}/" "$GITHUB_SHA" \
-            | zstd -T0 -19 -o "$zst"
-
-          stage="$(mktemp -d)"
-          git archive --format=tar --prefix="${prefix}/" "$GITHUB_SHA" \
-            | tar -xf - -C "$stage"
-          (
-            cd "$stage"
-            7z a -t7z -mx=9 "$GITHUB_WORKSPACE/$seven" "$prefix" >/dev/null
-          )
-          rm -rf "$stage"
-
-          {
-            sha256sum "$zip" | sed 's#  release/#  #'
-            sha256sum "$zst" | sed 's#  release/#  #'
-            sha256sum "$seven" | sed 's#  release/#  #'
-          } >> release/SHA256SUMS
-
-      - name: Verify complete release checksums
-        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
         run: cd release && sha256sum --check SHA256SUMS
 
       - name: Publish GitHub Release
@@ -202,28 +167,12 @@ jobs:
         shell: bash
         run: |
           tag="${{ steps.meta.outputs.tag }}"
-          mapfile -t base_assets < <(
-            find release -maxdepth 1 -type f \
-              ! -name 'zz-*-source.zip' \
-              ! -name 'zz-*-source.tar.zst' \
-              ! -name 'zz-*-source.7z' \
-              -print | sort
-          )
-
-          # GitHub sorts the visible asset list by name. The zz- prefix is
-          # deliberate: source bundles stay at the bottom, after database assets.
-          gh release create "$tag" "${base_assets[@]}" \
+          mapfile -t assets < <(find release -maxdepth 1 -type f -print | sort)
+          gh release create "$tag" "${assets[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$tag" \
-            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. See manifest.json for source hashes, schemas and counts."
-
-          gh release upload "$tag" \
-            release/zz-*-source.zip \
-            release/zz-*-source.tar.zst \
-            release/zz-*-source.7z \
-            --repo "$GITHUB_REPOSITORY" \
-            --clobber
+            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. See manifest.json for source hashes, schemas and counts. GitHub provides the repository source-code archives automatically."
 
       - name: No source changes
         if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'
