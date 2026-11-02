@@ -11,6 +11,8 @@
 ## Caratteristiche
 
 - 55 namespace di provider e 18 dataset di input.
+- ID pubblico stabile del progetto: `amdb:<anchor_id>`; `entity_id` resta locale alla build e non è mai una chiave esterna.
+- I database runtime/evidence pubblicati usano il layout `compact-v1` ottimizzato per la lettura.
 - Risoluzione diretta a un solo hop, senza traversal transitivo rischioso.
 - Confidence basata sulle evidence senza raddoppiare fonti correlate.
 - Runtime separato dal database di provenance/evidence.
@@ -23,14 +25,17 @@
 | --- | ---: |
 | Dataset inputs | 18 |
 | Provider namespaces | 55 |
-| Unique provider/ID nodes | 429,740 |
-| Source records | 803,456 |
-| Evidence edges | 2,343,467 |
-| Runtime edges | 1,231,762 |
-| Accepted runtime edges | 1,223,386 |
-| Directional conflicts | 21,860 |
-| `mappings.db` | ~116.7 MiB |
-| `mappings.db.zst` | ~20.2 MiB |
+| Unique provider/ID nodes | 430,209 |
+| Source records | 803,634 |
+| Evidence edges | 2,346,017 |
+| Runtime edges | 1,233,485 |
+| Accepted runtime edges | 1,225,311 |
+| Directional conflicts | 21,975 |
+| Stable AMDB entities | 34,845 |
+| Resolver-safe text routes | 2,385,942 |
+| `mappings.db` | 83,537,920 B (~79.7 MiB) |
+| `mappings.db.zst` | 17,258,973 B (~16.5 MiB) |
+| `mappings-evidence.db.zst` | 23,559,041 B (~22.5 MiB) |
 
 ## Database presenti in `mappings.db`
 
@@ -39,19 +44,19 @@ Tutti i 55 namespace della build validata. Varianti come `tmdb_tv` e `tmdb_movie
 | Namespace | Database / ID | Count |
 | --- | --- | ---: |
 | `allcinema` | AllCinema | 9,752 |
-| `anidb` | AniDB | 16,341 |
+| `anidb` | AniDB | 16,345 |
 | `anikore` | Anikore | 655 |
-| `anilist` | AniList | 22,435 |
-| `animecharacters` | Anime Characters Database | 2,363 |
-| `animeclick` | AnimeClick | 2,153 |
+| `anilist` | AniList | 22,437 |
+| `animecharacters` | Anime Characters Database | 2,364 |
+| `animeclick` | AnimeClick | 2,154 |
 | `animecountdown` | AnimeCountdown | 14,711 |
 | `animefillerlist` | Anime Filler List | 88 |
 | `animemorial` | Anime Memorial | 376 |
 | `animenfo` | AnimeNfo | 4,868 |
-| `animeplanet` | Anime-Planet | 25,126 |
-| `animetaizen` | Anime Taizen | 3,252 |
+| `animeplanet` | Anime-Planet | 25,127 |
+| `animetaizen` | Anime Taizen | 3,254 |
 | `animethemes` | AnimeThemes | 5,017 |
-| `anisearch` | aniSearch | 20,042 |
+| `anisearch` | aniSearch | 20,088 |
 | `anison` | Anison | 8,226 |
 | `ann` | Anime News Network | 12,402 |
 | `annict` | Annict | 13,353 |
@@ -62,17 +67,17 @@ Tutti i 55 namespace della build validata. Varianti come `tmdb_tv` e `tmdb_movie
 | `douban` | Douban | 850 |
 | `funimation` | Funimation | 534 |
 | `hidive` | HIDIVE | 490 |
-| `hikka` | Hikka | 27,157 |
+| `hikka` | Hikka | 27,168 |
 | `imdb` | IMDb | 7,162 |
 | `kaize` | Kaize slug | 23,233 |
 | `kaize_id` | Kaize numeric ID | 9,956 |
-| `kitsu` | Kitsu | 21,692 |
+| `kitsu` | Kitsu | 21,693 |
 | `lain` | Lain MediaDB | 521 |
 | `letterboxd_lid` | Letterboxd LID | 1,269 |
 | `letterboxd_slug` | Letterboxd slug | 1,269 |
 | `letterboxd_uid` | Letterboxd UID | 1,269 |
-| `livechart` | LiveChart.me | 12,367 |
-| `mal` | MyAnimeList | 28,231 |
+| `livechart` | LiveChart.me | 12,375 |
+| `mal` | MyAnimeList | 28,241 |
 | `marumeganel` | Marumegane | 464 |
 | `mediaarts` | Media Arts Database | 971 |
 | `nanime` | N-Anime | 536 |
@@ -82,17 +87,17 @@ Tutti i 55 namespace della build validata. Varianti come `tmdb_tv` e `tmdb_movie
 | `niconico` | Niconico | 842 |
 | `notify` | Notify.moe | 16,861 |
 | `otakotaku` | Otak Otaku | 3,131 |
-| `shikimori` | Shikimori | 27,711 |
+| `shikimori` | Shikimori | 27,727 |
 | `shoboi` | Shoboi / Syoboi Calendar | 6,525 |
 | `silveryasha` | SilverYasha | 5,703 |
 | `simkl` | SIMKL | 14,711 |
-| `tmdb_movie` | TMDB movie | 4,660 |
+| `tmdb_movie` | TMDB movie | 5,027 |
 | `tmdb_tv` | TMDB TV | 4,465 |
 | `trakt` | Trakt title | 6,100 |
 | `tv_animation_museum` | TV Animation Museum | 38 |
-| `tvdb` | TVDB series | 4,854 |
+| `tvdb` | TVDB series | 4,852 |
 | `tvdb_movie` | TVDB movie | 1,116 |
-| `wikidata` | Wikidata QID | 7,276 |
+| `wikidata` | Wikidata QID | 7,277 |
 
 `manifest.json` contains the same provider counts for every release.
 
@@ -135,13 +140,19 @@ Il builder scarica solo `https://raw.githubusercontent.com/nattadasu/animeApi/v3
 Direct datasets → provisional accepted graph → AnimeAPI TSV → anchor validation → final graph
 ```
 
+## Identità del progetto
+
+Anime Mapping DB separa due tipi di ID. `entity_id` è una chiave SQLite densa e locale a una singola build; può essere rinumerata e non va persistita fuori da quel file. `anchor_id` è l’ID pubblico stabile del progetto, con forma testuale `amdb:<integer>`, per esempio `amdb:18472`.
+
+Le tabelle `entities`, `entity_nodes` e `anchor_redirects` formano questo livello. Gli `(provider, external_id)` concreti restano in `nodes`. In caso di merge i vecchi anchor vengono reindirizzati; in caso di split il componente con la maggiore sovrapposizione conserva l’anchor precedente. Gli anchor ritirati non vengono riutilizzati per altri titoli. Contratto completo: [`IDENTITY.md`](IDENTITY.md).
+
 ## Prestazioni
 
-Benchmark riproducibile: `python scripts/benchmark_lookup.py --db data/mappings/mappings.db --samples 1200 --rounds 3`. Sullo stesso host Linux: vecchia build a 7 fonti median 0.418 ms / p95 0.749 ms; nuova build a 18 dataset / 55 provider **0.380 ms / 0.516 ms**. La build a 18 dataset dà anche mean 0.394 ms / p99 0.575 ms. È un microbenchmark, non una garanzia di latenza.
+Benchmark riproducibile: `python scripts/benchmark_lookup.py --db data/mappings/mappings.db --samples 1200 --rounds 3`. Sullo stesso host Linux: vecchia build a 7 fonti median 0.418 ms / p95 0.749 ms; nuova build a 18 dataset / 55 provider **0.354 ms / 0.497 ms**. La build a 18 dataset dà anche mean 0.378 ms / p99 0.655 ms. È un microbenchmark, non una garanzia di latenza.
 
 ## Runtime ed evidence
 
-`mappings.db` contiene le tabelle runtime per lookup e override. `mappings-evidence.db` conserva dataset, record sorgente, evidence group e provenance. Un consumer normale non necessita del file evidence.
+`mappings.db` usa il layout compact-v1 e contiene `metadata`, `nodes`, `edges`, `conflicts`, `entities`, `entity_nodes`, `anchor_redirects` e le tabelle di override. Il lookup forward usa la PK `edges(a_node,b_node)` e quello reverse accepted un singolo indice parziale. `mappings-evidence.db` normalizza le relazioni ripetute tramite `record_nodes`; il vecchio contratto `edge_evidence` resta disponibile come compatibility view in sola lettura. Un consumer normale non deve aprire il database evidence.
 
 ## Confidence e conflitti
 
@@ -154,7 +165,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Release e build locale
 
-Ogni release contiene `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, oltre agli export testuali portabili `mappings.tsv.zst` e `mappings.jsonl.zst`, più `manifest.json` e `SHA256SUMS`. I file di testo contengono route dirette sicure per il resolver dopo l’applicazione dei conflitti direzionali e degli override manuali; SQLite resta il formato runtime canonico. L’automazione parte dopo modifiche al motore su `main`, ogni giorno alle 03:17 UTC, con tag `v*` o manualmente. Nessuna release giornaliera se il source fingerprint non cambia.
+Ogni release contiene `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, gli export `mappings.tsv.zst`/`mappings.jsonl.zst`, `manifest.json`, `SHA256SUMS` e tre archivi dei sorgenti del progetto: `zz-anime-mapping-db-<tag>-source.zip`, `.tar.zst` e `.7z`. Vengono generati dall’esatto tracked Git tree del commit di release. Il prefisso `zz-` serve solo a mantenerli in fondo alla lista degli asset; all’interno la root resta `anime-mapping-db-<tag>/`. Tutti e tre gli SHA-256 vengono aggiunti a `SHA256SUMS`. Nessuna release giornaliera viene pubblicata se il source fingerprint non cambia.
 
 ```bash
 python -m venv .venv
