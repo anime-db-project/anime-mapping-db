@@ -13,7 +13,7 @@ from contextlib import closing
 
 import httpx
 
-USER_AGENT = "anime-db-project/anime-mapping-db"
+from anime_mapping_db.anchors import materialize_anchor_index
 from anime_mapping_db.config import (
     SOURCE_SPECS,
     MappingSourceSpec,
@@ -32,6 +32,8 @@ from anime_mapping_db.database import (
 )
 from anime_mapping_db.importers import IMPORTERS, SUPPLEMENTAL_IMPORTERS
 from anime_mapping_db.resolver import copy_mapping_overrides
+
+USER_AGENT = "anime-db-project/anime-mapping-db"
 
 
 def _utc_now() -> str:
@@ -340,6 +342,13 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
             and not force
             and not changed_sources
         ):
+            anchor_stats = materialize_anchor_index(db_path)
+            logging.info(
+                "Mapping anchor index current: entities=%d nodes=%d redirects=%d",
+                anchor_stats.entities,
+                anchor_stats.nodes,
+                anchor_stats.redirects,
+            )
             _touch_checked_sources(evidence_path, successful_checks, checked_at)
             _touch_runtime_check(db_path, checked_at)
             logging.info(
@@ -530,6 +539,23 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
             raise RuntimeError(
                 "mappings.db validation failed: no accepted mapping edges"
             )
+
+        anchor_stats = materialize_anchor_index(
+            new_path,
+            previous_path=db_path if db_path.is_file() else None,
+            force=True,
+        )
+        if anchor_stats.nodes <= 0 or anchor_stats.entities <= 0:
+            raise RuntimeError(
+                "mappings.db validation failed: empty anchor identity index"
+            )
+        logging.info(
+            "Mapping anchor index rebuilt: entities=%d reused=%d created=%d redirects=%d",
+            anchor_stats.entities,
+            anchor_stats.reused,
+            anchor_stats.created,
+            anchor_stats.redirects,
+        )
 
         if mappings_keep_previous():
             if db_path.exists():
