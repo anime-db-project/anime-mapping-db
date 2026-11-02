@@ -168,9 +168,9 @@ jobs:
           sudo apt-get install -y -qq p7zip-full zstd
           tag="${{ steps.meta.outputs.tag }}"
           prefix="anime-mapping-db-${tag}"
-          zip="release/${prefix}-source.zip"
-          zst="release/${prefix}-source.tar.zst"
-          seven="release/${prefix}-source.7z"
+          zip="release/zz-${prefix}-source.zip"
+          zst="release/zz-${prefix}-source.tar.zst"
+          seven="release/zz-${prefix}-source.7z"
 
           git archive --format=zip --prefix="${prefix}/" -o "$zip" "$GITHUB_SHA"
           git archive --format=tar --prefix="${prefix}/" "$GITHUB_SHA" \
@@ -204,32 +204,26 @@ jobs:
           tag="${{ steps.meta.outputs.tag }}"
           mapfile -t base_assets < <(
             find release -maxdepth 1 -type f \
-              ! -name '*-source.zip' \
-              ! -name '*-source.tar.zst' \
-              ! -name '*-source.7z' \
+              ! -name 'zz-*-source.zip' \
+              ! -name 'zz-*-source.tar.zst' \
+              ! -name 'zz-*-source.7z' \
               -print | sort
           )
 
-          # GitHub renders newer release assets before older ones. Create a draft
-          # with source archives first, then upload database/export assets so the
-          # explicit source archives end up at the bottom of the visible asset list.
-          gh release create "$tag" \
-            release/*-source.zip \
-            release/*-source.tar.zst \
-            release/*-source.7z \
+          # GitHub sorts the visible asset list by name. The zz- prefix is
+          # deliberate: source bundles stay at the bottom, after database assets.
+          gh release create "$tag" "${base_assets[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$tag" \
-            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. See manifest.json for source hashes, schemas and counts." \
-            --draft
+            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. See manifest.json for source hashes, schemas and counts."
 
-          gh release upload "$tag" "${base_assets[@]}" \
+          gh release upload "$tag" \
+            release/zz-*-source.zip \
+            release/zz-*-source.tar.zst \
+            release/zz-*-source.7z \
             --repo "$GITHUB_REPOSITORY" \
             --clobber
-
-          gh release edit "$tag" \
-            --repo "$GITHUB_REPOSITORY" \
-            --draft=false
 
       - name: No source changes
         if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'
