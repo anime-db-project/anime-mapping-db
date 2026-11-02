@@ -179,7 +179,10 @@ jobs:
           stage="$(mktemp -d)"
           git archive --format=tar --prefix="${prefix}/" "$GITHUB_SHA" \
             | tar -xf - -C "$stage"
-          7z a -t7z -mx=9 "$seven" "$stage/$prefix" >/dev/null
+          (
+            cd "$stage"
+            7z a -t7z -mx=9 "$GITHUB_WORKSPACE/$seven" "$prefix" >/dev/null
+          )
           rm -rf "$stage"
 
           {
@@ -206,20 +209,27 @@ jobs:
               ! -name '*-source.7z' \
               -print | sort
           )
-          gh release create "$tag" "${base_assets[@]}" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "$tag" \
-            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. See manifest.json for source hashes, schemas and counts."
 
-          # Source archives are intentionally uploaded in a separate final call so
-          # they appear after all database/export assets in the release asset list.
-          gh release upload "$tag" \
+          # GitHub renders newer release assets before older ones. Create a draft
+          # with source archives first, then upload database/export assets so the
+          # explicit source archives end up at the bottom of the visible asset list.
+          gh release create "$tag" \
             release/*-source.zip \
             release/*-source.tar.zst \
             release/*-source.7z \
             --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$tag" \
+            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. See manifest.json for source hashes, schemas and counts." \
+            --draft
+
+          gh release upload "$tag" "${base_assets[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
             --clobber
+
+          gh release edit "$tag" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft=false
 
       - name: No source changes
         if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'
