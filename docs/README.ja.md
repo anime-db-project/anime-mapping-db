@@ -11,6 +11,8 @@
 ## 特徴
 
 - 55 の provider namespace と 18 の入力 dataset。
+- 安定した公開プロジェクト ID は `amdb:<anchor_id>`。build-local の `entity_id` は外部キーとして使用しません。
+- 公開する runtime/evidence DB は read-optimized な `compact-v1` layout を使用します。
 - 危険な推移的探索を行わない direct one-hop resolver。
 - 相関したソースを独立票として二重計上しない evidence ベースの confidence。
 - runtime `mappings.db` と provenance `mappings-evidence.db` を分離。
@@ -23,14 +25,17 @@
 | --- | ---: |
 | Dataset inputs | 18 |
 | Provider namespaces | 55 |
-| Unique provider/ID nodes | 429,740 |
-| Source records | 803,456 |
-| Evidence edges | 2,343,467 |
-| Runtime edges | 1,231,762 |
-| Accepted runtime edges | 1,223,386 |
-| Directional conflicts | 21,860 |
-| `mappings.db` | ~116.7 MiB |
-| `mappings.db.zst` | ~20.2 MiB |
+| Unique provider/ID nodes | 430,209 |
+| Source records | 803,634 |
+| Evidence edges | 2,346,017 |
+| Runtime edges | 1,233,485 |
+| Accepted runtime edges | 1,225,311 |
+| Directional conflicts | 21,975 |
+| Stable AMDB entities | 34,845 |
+| Resolver-safe text routes | 2,385,942 |
+| `mappings.db` | 83,537,920 B (~79.7 MiB) |
+| `mappings.db.zst` | 17,258,973 B (~16.5 MiB) |
+| `mappings-evidence.db.zst` | 23,559,041 B (~22.5 MiB) |
 
 ## `mappings.db` に含まれるデータベース
 
@@ -39,19 +44,19 @@
 | Namespace | Database / ID | Count |
 | --- | --- | ---: |
 | `allcinema` | AllCinema | 9,752 |
-| `anidb` | AniDB | 16,341 |
+| `anidb` | AniDB | 16,345 |
 | `anikore` | Anikore | 655 |
-| `anilist` | AniList | 22,435 |
-| `animecharacters` | Anime Characters Database | 2,363 |
-| `animeclick` | AnimeClick | 2,153 |
+| `anilist` | AniList | 22,437 |
+| `animecharacters` | Anime Characters Database | 2,364 |
+| `animeclick` | AnimeClick | 2,154 |
 | `animecountdown` | AnimeCountdown | 14,711 |
 | `animefillerlist` | Anime Filler List | 88 |
 | `animemorial` | Anime Memorial | 376 |
 | `animenfo` | AnimeNfo | 4,868 |
-| `animeplanet` | Anime-Planet | 25,126 |
-| `animetaizen` | Anime Taizen | 3,252 |
+| `animeplanet` | Anime-Planet | 25,127 |
+| `animetaizen` | Anime Taizen | 3,254 |
 | `animethemes` | AnimeThemes | 5,017 |
-| `anisearch` | aniSearch | 20,042 |
+| `anisearch` | aniSearch | 20,088 |
 | `anison` | Anison | 8,226 |
 | `ann` | Anime News Network | 12,402 |
 | `annict` | Annict | 13,353 |
@@ -62,17 +67,17 @@
 | `douban` | Douban | 850 |
 | `funimation` | Funimation | 534 |
 | `hidive` | HIDIVE | 490 |
-| `hikka` | Hikka | 27,157 |
+| `hikka` | Hikka | 27,168 |
 | `imdb` | IMDb | 7,162 |
 | `kaize` | Kaize slug | 23,233 |
 | `kaize_id` | Kaize numeric ID | 9,956 |
-| `kitsu` | Kitsu | 21,692 |
+| `kitsu` | Kitsu | 21,693 |
 | `lain` | Lain MediaDB | 521 |
 | `letterboxd_lid` | Letterboxd LID | 1,269 |
 | `letterboxd_slug` | Letterboxd slug | 1,269 |
 | `letterboxd_uid` | Letterboxd UID | 1,269 |
-| `livechart` | LiveChart.me | 12,367 |
-| `mal` | MyAnimeList | 28,231 |
+| `livechart` | LiveChart.me | 12,375 |
+| `mal` | MyAnimeList | 28,241 |
 | `marumeganel` | Marumegane | 464 |
 | `mediaarts` | Media Arts Database | 971 |
 | `nanime` | N-Anime | 536 |
@@ -82,17 +87,17 @@
 | `niconico` | Niconico | 842 |
 | `notify` | Notify.moe | 16,861 |
 | `otakotaku` | Otak Otaku | 3,131 |
-| `shikimori` | Shikimori | 27,711 |
+| `shikimori` | Shikimori | 27,727 |
 | `shoboi` | Shoboi / Syoboi Calendar | 6,525 |
 | `silveryasha` | SilverYasha | 5,703 |
 | `simkl` | SIMKL | 14,711 |
-| `tmdb_movie` | TMDB movie | 4,660 |
+| `tmdb_movie` | TMDB movie | 5,027 |
 | `tmdb_tv` | TMDB TV | 4,465 |
 | `trakt` | Trakt title | 6,100 |
 | `tv_animation_museum` | TV Animation Museum | 38 |
-| `tvdb` | TVDB series | 4,854 |
+| `tvdb` | TVDB series | 4,852 |
 | `tvdb_movie` | TVDB movie | 1,116 |
-| `wikidata` | Wikidata QID | 7,276 |
+| `wikidata` | Wikidata QID | 7,277 |
 
 `manifest.json` contains the same provider counts for every release.
 
@@ -135,13 +140,19 @@ AnimeAPI は既に複数の直接ソースを集約しているため、追加�
 Direct datasets → provisional accepted graph → AnimeAPI TSV → anchor validation → final graph
 ```
 
+## プロジェクト ID
+
+Anime Mapping DB は 2 種類の ID を明確に分離します。`entity_id` は 1 個の `mappings.db` 内だけで有効な密な SQLite キーで、再 build で番号が変わる可能性があります。永続化・外部交換には使いません。`anchor_id` は安定した公開プロジェクト ID で、外部表現は `amdb:<integer>`（例: `amdb:18472`）です。
+
+`mappings.db` の `entities`, `entity_nodes`, `anchor_redirects` がこの層を構成します。具体的な `(provider, external_id)` は引き続き `nodes` が所有します。merge では古い anchor を redirect し、split では最大 overlap の component が以前の anchor を維持します。retired anchor は別 title に再利用しません。詳細は [`IDENTITY.md`](IDENTITY.md) を参照してください。
+
 ## Lookup 性能
 
-再現コマンド: `python scripts/benchmark_lookup.py --db data/mappings/mappings.db --samples 1200 --rounds 3`。同一 Linux ホスト・共通 1,200 ID × 3 round では、旧 7-source build が median 0.418 ms / p95 0.749 ms、新 18-dataset / 55-provider build が **0.380 ms / 0.516 ms**。18-dataset build では mean 0.394 ms / p99 0.575 ms でした。これは microbenchmark であり latency 保証ではありません。
+再現コマンド: `python scripts/benchmark_lookup.py --db data/mappings/mappings.db --samples 1200 --rounds 3`。同一 Linux ホスト・共通 1,200 ID × 3 round では、旧 7-source build が median 0.418 ms / p95 0.749 ms、新 18-dataset / 55-provider build が **0.354 ms / 0.497 ms**。18-dataset build では mean 0.378 ms / p99 0.655 ms でした。これは microbenchmark であり latency 保証ではありません。
 
 ## Runtime と evidence
 
-`mappings.db` は lookup と override に必要な runtime table のみを保持します。`mappings-evidence.db` は dataset、source record、evidence group、provenance を保持します。通常の consumer は evidence DB を開く必要がありません。
+`mappings.db` は compact-v1 layout を使用し、`metadata`, `nodes`, `edges`, `conflicts`, `entities`, `entity_nodes`, `anchor_redirects` と override table を保持します。forward lookup は `edges(a_node,b_node)` の primary key、reverse accepted lookup は 1 個の partial index を使います。`mappings-evidence.db` は繰り返し関係を `record_nodes` に正規化し、従来の `edge_evidence` は read-only compatibility view として維持します。通常の consumer は evidence DB を開く必要がありません。
 
 ## Confidence と conflict
 
@@ -154,7 +165,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Release とローカル build
 
-各 release には `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst` に加えて、移植しやすいテキスト export `mappings.tsv.zst` と `mappings.jsonl.zst`、`manifest.json`, `SHA256SUMS` が含まれます。テキスト export は directional conflict と manual override を適用した後の、resolver で安全な有向 route を収録します。SQLite は引き続き canonical runtime format です。`main` の engine 変更、毎日 03:17 UTC、`v*` tag、手動実行で build されます。日次チェックで source fingerprint が同じなら新 release は公開されません。
+各 release には `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, `mappings.tsv.zst`, `mappings.jsonl.zst`, `manifest.json`, `SHA256SUMS` に加え、`zz-anime-mapping-db-<tag>-source.zip`, `.tar.zst`, `.7z` の 3 種類の project source archive が含まれます。archive は release commit の tracked Git tree から生成されます。`zz-` は asset 一覧で最後に置くための名前だけで、archive 内の root は通常の `anime-mapping-db-<tag>/` です。3 archive の SHA-256 も `SHA256SUMS` に含まれます。日次 build は source fingerprint が変わらない限り新 release を公開しません。
 
 ```bash
 python -m venv .venv
