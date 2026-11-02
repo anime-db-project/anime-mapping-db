@@ -20,6 +20,8 @@ There is no mapping HTTP API in this project. Consumers download `mappings.db` (
 
 - **55 provider namespaces** in the current build, from MAL/AniList/AniDB to Annict, Shikimori, Hikka, Notify, Trakt and others.
 - **18 dataset inputs** from public mapping projects and GitHub-hosted dumps.
+- **Stable project identity**: `amdb:<anchor_id>` is durable across rebuilds; `entity_id` is build-local only.
+- **Compact-v1 distribution**: strict staging constraints are retained during build/audit, then read-optimized SQLite files are published.
 - **Direct-only runtime resolution**: no unsafe transitive graph walking across season/grouping boundaries.
 - **Evidence-aware confidence**: correlated datasets do not automatically become independent votes.
 - **Directional conflicts**: ambiguous source → target-provider routes are suppressed without discarding safe reverse routes.
@@ -36,17 +38,18 @@ The figures below come from the current 18-dataset source snapshot, materialized
 | --- | ---: |
 | Dataset inputs | 18 |
 | Provider namespaces | 55 |
-| Unique provider/ID nodes | 430,207 |
-| Source records | 803,633 |
-| Evidence edges | 2,346,016 |
-| Runtime edges | 1,233,484 |
+| Unique provider/ID nodes | 430,209 |
+| Source records | 803,634 |
+| Evidence edges | 2,346,017 |
+| Runtime edges | 1,233,485 |
 | Accepted runtime edges | 1,225,311 |
 | Directional conflicts | 21,975 |
+| Stable AMDB entities | 34,845 |
 | Resolver-safe text routes | 2,385,942 |
 | `mappings.db` | 83,537,920 B (~79.7 MiB) |
-| `mappings.db.zst` | 17,260,735 B (~16.5 MiB) |
+| `mappings.db.zst` | 17,258,973 B (~16.5 MiB) |
 | compact evidence DB, decompressed | 89,260,032 B (~85.1 MiB) |
-| `mappings-evidence.db.zst` | 23,556,768 B (~22.5 MiB) |
+| `mappings-evidence.db.zst` | 23,559,041 B (~22.5 MiB) |
 | `mappings.tsv.zst` | 17,337,043 B (~16.5 MiB) |
 | `mappings.jsonl.zst` | 20,826,566 B (~19.9 MiB) |
 
@@ -59,19 +62,19 @@ A provider namespace is the key used by the resolver. Some services intentionall
 | Namespace | Database / identifier | IDs in validated build |
 | --- | --- | ---: |
 | `allcinema` | AllCinema | 9,752 |
-| `anidb` | AniDB | 16,341 |
+| `anidb` | AniDB | 16,345 |
 | `anikore` | Anikore | 655 |
-| `anilist` | AniList | 22,435 |
-| `animecharacters` | Anime Characters Database | 2,363 |
-| `animeclick` | AnimeClick | 2,153 |
+| `anilist` | AniList | 22,437 |
+| `animecharacters` | Anime Characters Database | 2,364 |
+| `animeclick` | AnimeClick | 2,154 |
 | `animecountdown` | AnimeCountdown | 14,711 |
 | `animefillerlist` | Anime Filler List | 88 |
 | `animemorial` | Anime Memorial | 376 |
 | `animenfo` | AnimeNfo | 4,868 |
-| `animeplanet` | Anime-Planet | 25,126 |
-| `animetaizen` | Anime Taizen | 3,252 |
+| `animeplanet` | Anime-Planet | 25,127 |
+| `animetaizen` | Anime Taizen | 3,254 |
 | `animethemes` | AnimeThemes | 5,017 |
-| `anisearch` | aniSearch | 20,042 |
+| `anisearch` | aniSearch | 20,088 |
 | `anison` | Anison | 8,226 |
 | `ann` | Anime News Network | 12,402 |
 | `annict` | Annict | 13,353 |
@@ -82,17 +85,17 @@ A provider namespace is the key used by the resolver. Some services intentionall
 | `douban` | Douban | 850 |
 | `funimation` | Funimation | 534 |
 | `hidive` | HIDIVE | 490 |
-| `hikka` | Hikka | 27,157 |
+| `hikka` | Hikka | 27,168 |
 | `imdb` | IMDb | 7,162 |
 | `kaize` | Kaize slug | 23,233 |
 | `kaize_id` | Kaize numeric ID | 9,956 |
-| `kitsu` | Kitsu | 21,692 |
+| `kitsu` | Kitsu | 21,693 |
 | `lain` | Lain MediaDB | 521 |
 | `letterboxd_lid` | Letterboxd LID | 1,269 |
 | `letterboxd_slug` | Letterboxd slug | 1,269 |
 | `letterboxd_uid` | Letterboxd UID | 1,269 |
-| `livechart` | LiveChart.me | 12,367 |
-| `mal` | MyAnimeList | 28,231 |
+| `livechart` | LiveChart.me | 12,375 |
+| `mal` | MyAnimeList | 28,241 |
 | `marumeganel` | Marumegane | 464 |
 | `mediaarts` | Media Arts Database | 971 |
 | `nanime` | N-Anime | 536 |
@@ -102,19 +105,28 @@ A provider namespace is the key used by the resolver. Some services intentionall
 | `niconico` | Niconico | 842 |
 | `notify` | Notify.moe | 16,861 |
 | `otakotaku` | Otak Otaku | 3,131 |
-| `shikimori` | Shikimori | 27,711 |
+| `shikimori` | Shikimori | 27,727 |
 | `shoboi` | Shoboi / Syoboi Calendar | 6,525 |
 | `silveryasha` | SilverYasha | 5,703 |
 | `simkl` | SIMKL | 14,711 |
-| `tmdb_movie` | TMDB movie | 4,660 |
+| `tmdb_movie` | TMDB movie | 5,027 |
 | `tmdb_tv` | TMDB TV | 4,465 |
 | `trakt` | Trakt title | 6,100 |
 | `tv_animation_museum` | TV Animation Museum | 38 |
-| `tvdb` | TVDB series | 4,854 |
+| `tvdb` | TVDB series | 4,852 |
 | `tvdb_movie` | TVDB movie | 1,116 |
-| `wikidata` | Wikidata QID | 7,276 |
+| `wikidata` | Wikidata QID | 7,277 |
 
 `manifest.json` contains a `providers` object with these counts for each published build, so consumers do not need to query SQLite just to inspect coverage.
+
+## Project identity
+
+Anime Mapping DB intentionally exposes two different identifiers for two different jobs:
+
+- `entity_id` is a dense SQLite key local to one concrete `mappings.db` build. It may be renumbered and must not be persisted or exchanged outside that file.
+- `anchor_id` is the stable public project identity. Its textual form is `amdb:<integer>` (for example `amdb:18472`) and it is independent of MAL, AniList, AniDB, Kitsu or any other upstream provider.
+
+The runtime tables `entities`, `entity_nodes` and `anchor_redirects` implement this layer without copying provider IDs. Unchanged/enriched entities retain their anchor across rebuilds; genuine merges create redirects; on a split the component with the strongest overlap retains the old anchor; retired anchor numbers are never reused for unrelated titles. See [`docs/IDENTITY.md`](docs/IDENTITY.md) for the full stability contract and `AnchorResolver` API.
 
 ## Upstream datasets
 
@@ -252,9 +264,10 @@ Validation run on the same Linux host, 1,200 common IDs × 3 rounds (3,600 looku
 | --- | ---: | ---: |
 | Previous 7-source schema-v3 build | 0.418 ms | 0.749 ms |
 | Expanded 13-dataset build | 0.403 ms | 0.552 ms |
-| Expanded 18-dataset / 55-provider build | **0.380 ms** | **0.516 ms** |
+| Expanded 18-dataset / 55-provider strict staging build | **0.380 ms** | **0.516 ms** |
+| Current compact-v1 release | **0.354 ms** | **0.497 ms** |
 
-The 18-dataset validation sample measured mean **0.394 ms**, p99 **0.575 ms** and mean **5.48 direct targets** per sampled lookup.
+The compact-v1 validation sample measured mean **0.378 ms**, p99 **0.655 ms** and mean **5.582 direct targets** per sampled lookup across 3,600 lookups. The compact file therefore reduced the B-tree footprint without introducing a resolver regression.
 
 These are microbenchmarks, not a latency guarantee. They measure local SQLite resolution including opening a read-only resolver connection. Hardware, filesystem cache and OS will change the exact numbers. The important result is that the much larger provider set did not introduce an observable lookup regression in the validation run.
 
@@ -349,6 +362,11 @@ Every release contains:
 - `mappings.jsonl.zst`
 - `manifest.json`
 - `SHA256SUMS`
+- `zz-anime-mapping-db-<tag>-source.zip`
+- `zz-anime-mapping-db-<tag>-source.tar.zst`
+- `zz-anime-mapping-db-<tag>-source.7z`
+
+The three `zz-...-source.*` assets are project-source archives generated from the exact tracked Git tree for the release commit. The `zz-` prefix is only an asset-ordering convention; each archive contains a normal `anime-mapping-db-<tag>/` root directory, and all three hashes are covered by `SHA256SUMS`.
 
 ### Text exports
 

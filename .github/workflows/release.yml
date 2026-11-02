@@ -116,7 +116,7 @@ jobs:
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Package assets
+      - name: Package database assets
         if: steps.existing_release.outputs.exists != 'true'
         run: >-
           python -m anime_mapping_db package-release
@@ -156,6 +156,42 @@ jobs:
           print(f"engine_push={'true' if engine_push else 'false'}")
           PY
 
+      - name: Package project source archives
+        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full zstd
+
+          tag="${{ steps.meta.outputs.tag }}"
+          root="anime-mapping-db-${tag}"
+          zip="release/zz-anime-mapping-db-${tag}-source.zip"
+          tarzst="release/zz-anime-mapping-db-${tag}-source.tar.zst"
+          sevenz="release/zz-anime-mapping-db-${tag}-source.7z"
+
+          git archive --format=zip --prefix="${root}/" "$GITHUB_SHA" > "$zip"
+          git archive --format=tar --prefix="${root}/" "$GITHUB_SHA" \
+            | zstd -19 -T0 -o "$tarzst"
+
+          rm -rf source-stage
+          mkdir -p source-stage
+          git archive --format=tar --prefix="${root}/" "$GITHUB_SHA" \
+            | tar -xf - -C source-stage
+          (
+            cd source-stage
+            7z a -t7z -mx=9 "../${sevenz}" "$root" >/dev/null
+          )
+          rm -rf source-stage
+
+          (
+            cd release
+            sha256sum \
+              "zz-anime-mapping-db-${tag}-source.7z" \
+              "zz-anime-mapping-db-${tag}-source.tar.zst" \
+              "zz-anime-mapping-db-${tag}-source.zip" \
+              >> SHA256SUMS
+          )
+
       - name: Verify release checksums
         if: steps.existing_release.outputs.exists != 'true'
         run: cd release && sha256sum --check SHA256SUMS
@@ -172,7 +208,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$tag" \
-            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. See manifest.json for source hashes, schemas and counts. GitHub provides the repository source-code archives automatically."
+            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. Project source is additionally published as checksum-covered ZIP, TAR.ZST and 7Z assets (prefixed zz- so they stay after database assets). See manifest.json for source hashes, schemas and counts."
 
       - name: No source changes
         if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'
