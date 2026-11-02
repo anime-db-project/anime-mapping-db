@@ -17,7 +17,14 @@ class AnchorIdentityTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp.cleanup()
 
-    def _database(self, name: str, *, merge: bool = False, extra: bool = False) -> Path:
+    def _database(
+        self,
+        name: str,
+        *,
+        merge: bool = False,
+        extra: bool = False,
+        disjoint: bool = False,
+    ) -> Path:
         path = self.root / name
         with closing(sqlite3.connect(path)) as conn:
             conn.executescript(
@@ -67,6 +74,13 @@ class AnchorIdentityTests(unittest.TestCase):
                     (3, 4, 100, 'accepted', 1, 1, 100);
                 """
             )
+            if disjoint:
+                conn.execute(
+                    "UPDATE nodes SET provider='anidb', external_id='2' WHERE id=3"
+                )
+                conn.execute(
+                    "UPDATE nodes SET provider='kitsu', external_id='series-two' WHERE id=4"
+                )
             if extra:
                 conn.execute("INSERT INTO nodes VALUES(5, 'kitsu', 'series-one')")
                 conn.execute(
@@ -103,13 +117,13 @@ class AnchorIdentityTests(unittest.TestCase):
         )
 
     def test_merge_keeps_survivor_and_redirects_old_anchor(self) -> None:
-        previous = self._database("previous.db")
+        previous = self._database("previous.db", disjoint=True)
         materialize_anchor_index(previous)
         old = AnchorResolver(previous)
         first = old.anchor_for({"mal": "1"}).anchor_id
-        second = old.anchor_for({"mal": "2"}).anchor_id
+        second = old.anchor_for({"anidb": "2"}).anchor_id
 
-        current = self._database("current.db", merge=True)
+        current = self._database("current.db", merge=True, disjoint=True)
         stats = materialize_anchor_index(current, previous_path=previous)
         self.assertEqual(stats.entities, 1)
         self.assertEqual(stats.merged, 1)
@@ -118,9 +132,20 @@ class AnchorIdentityTests(unittest.TestCase):
         resolver = AnchorResolver(current)
         survivor = min(first, second)
         self.assertEqual(resolver.anchor_for({"mal": "1"}).anchor_id, survivor)
-        self.assertEqual(resolver.anchor_for({"mal": "2"}).anchor_id, survivor)
+        self.assertEqual(resolver.anchor_for({"anidb": "2"}).anchor_id, survivor)
         redirected = resolver.ids_for(f"amdb:{max(first, second)}")
-        self.assertEqual(redirected["mal"], ("1", "2"))
+        self.assertEqual(redirected["mal"], ("1",))
+        self.assertEqual(redirected["anidb"], ("2",))
+
+    def test_provider_collision_blocks_transitive_entity_merge(self) -> None:
+        path = self._database("provider-collision.db", merge=True)
+        stats = materialize_anchor_index(path)
+        self.assertEqual(stats.entities, 2)
+        resolver = AnchorResolver(path)
+        self.assertNotEqual(
+            resolver.anchor_for({"mal": "1"}).anchor_id,
+            resolver.anchor_for({"mal": "2"}).anchor_id,
+        )
 
     def test_conflicted_edge_does_not_merge_entities(self) -> None:
         path = self._database("conflict.db")

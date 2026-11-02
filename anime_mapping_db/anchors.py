@@ -142,6 +142,9 @@ def _union_find_components(conn: sqlite3.Connection) -> list[list[int]]:
     parent = {int(node_id): int(node_id) for node_id, _provider in node_rows}
     rank = {node_id: 0 for node_id in parent}
     providers = {int(node_id): str(provider) for node_id, provider in node_rows}
+    component_providers = {
+        int(node_id): {str(provider)} for node_id, provider in node_rows
+    }
 
     def find(node: int) -> int:
         root = node
@@ -153,16 +156,24 @@ def _union_find_components(conn: sqlite3.Connection) -> list[list[int]]:
             node = next_node
         return root
 
-    def union(left: int, right: int) -> None:
+    def union(left: int, right: int) -> bool:
         left_root = find(left)
         right_root = find(right)
         if left_root == right_root:
-            return
+            return True
+        # A project entity represents one catalog entry per provider. Refuse a
+        # transitive merge that would collapse two MAL/AniList/etc. titles into
+        # one entity even when pairwise mapping edges happen to connect them.
+        if component_providers[left_root] & component_providers[right_root]:
+            return False
         if rank[left_root] < rank[right_root]:
             left_root, right_root = right_root, left_root
         parent[right_root] = left_root
+        component_providers[left_root].update(component_providers[right_root])
+        component_providers.pop(right_root, None)
         if rank[left_root] == rank[right_root]:
             rank[left_root] += 1
+        return True
 
     conflicts = {
         (int(source_node), str(target_provider))
@@ -194,7 +205,13 @@ def _union_find_components(conn: sqlite3.Connection) -> list[list[int]]:
             accepted_overrides.add(pair)
 
     for a_node, b_node in conn.execute(
-        "SELECT a_node, b_node FROM edges WHERE status='accepted'"
+        """
+        SELECT a_node, b_node
+        FROM edges
+        WHERE status='accepted'
+        ORDER BY confidence DESC, evidence_group_count DESC, max_weight DESC,
+                 a_node, b_node
+        """
     ):
         left, right = int(a_node), int(b_node)
         pair = tuple(sorted((left, right)))
