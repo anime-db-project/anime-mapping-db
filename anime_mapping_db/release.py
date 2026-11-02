@@ -4,7 +4,6 @@ import csv
 import hashlib
 import io
 import json
-import shutil
 import sqlite3
 from collections import defaultdict
 from contextlib import closing, contextmanager
@@ -13,6 +12,11 @@ from pathlib import Path
 import zstandard as zstd
 
 from anime_mapping_db.database import SCHEMA_VERSION
+from anime_mapping_db.distribution import (
+    STORAGE_PROFILE,
+    compact_evidence_database,
+    compact_runtime_database,
+)
 
 REPOSITORY = "anime-db-project/anime-mapping-db"
 TEXT_EXPORT_SCHEMA_VERSION = 1
@@ -368,11 +372,19 @@ def package_release(
     runtime_asset = output_dir / "mappings.db"
     runtime_zst = output_dir / "mappings.db.zst"
     evidence_zst = output_dir / "mappings-evidence.db.zst"
+    compact_evidence = output_dir / ".mappings-evidence.compact.db"
     tsv_zst = output_dir / "mappings.tsv.zst"
     jsonl_zst = output_dir / "mappings.jsonl.zst"
-    shutil.copy2(runtime_path, runtime_asset)
-    _compress(runtime_path, runtime_zst)
-    _compress(evidence_path, evidence_zst)
+
+    compact_runtime_database(runtime_path, runtime_asset)
+    compact_evidence_database(evidence_path, compact_evidence)
+    try:
+        _compress(runtime_asset, runtime_zst)
+        _compress(compact_evidence, evidence_zst)
+    finally:
+        compact_evidence.unlink(missing_ok=True)
+    # Text exports retain the complete build-time edge metrics and are therefore
+    # produced from the audited staging database rather than the compact copy.
     text_route_count = _write_text_exports(runtime_path, tsv_zst, jsonl_zst)
 
     sources = _sources(evidence_path)
@@ -431,7 +443,12 @@ def package_release(
         "last_source_check_at": runtime_meta.get("last_source_check_at", ""),
         "source_fingerprint": source_fingerprint(sources),
         "counts": counts,
-        "providers": _providers(runtime_path),
+        "providers": _providers(runtime_asset),
+        "storage": {
+            "profile": STORAGE_PROFILE,
+            "runtime_edge_lookup": "pk-plus-reverse-accepted",
+            "evidence_edge_storage": "record_nodes-view",
+        },
         "text_export": {
             "schema_version": TEXT_EXPORT_SCHEMA_VERSION,
             "semantics": "directed single-seed resolver routes",

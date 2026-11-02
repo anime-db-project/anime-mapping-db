@@ -429,7 +429,7 @@ class MappingDatabaseBuilder:
             self.evidence_conn.execute(
                 """
                 INSERT OR IGNORE INTO nodes(provider, external_id)
-                SELECT DISTINCT n.provider, n.external_id
+                SELECT n.provider, n.external_id
                 FROM source_db.nodes AS n
                 JOIN (
                     SELECT ee.a_node AS node_id
@@ -442,6 +442,7 @@ class MappingDatabaseBuilder:
                     JOIN source_db.records AS r ON r.id=ee.record_id
                     WHERE r.dataset_id=?
                 ) AS used ON used.node_id=n.id
+                ORDER BY n.id
                 """,
                 (source_dataset_id, source_dataset_id),
             )
@@ -453,6 +454,7 @@ class MappingDatabaseBuilder:
                 JOIN source_db.evidence_groups AS sg ON sg.id=sr.evidence_group_id
                 JOIN evidence_groups AS dg ON dg.name=sg.name
                 WHERE sr.dataset_id=?
+                ORDER BY sr.id
                 """,
                 (destination_dataset_id, source_dataset_id),
             )

@@ -420,15 +420,21 @@ class MappingResolver:
             params.extend([provider, external_id])
 
         edge_query = """
+            WITH direct_targets(target_node) AS (
+                SELECT b_node
+                FROM edges
+                WHERE a_node=? AND status='accepted'
+                UNION ALL
+                SELECT a_node
+                FROM edges
+                WHERE b_node=? AND status='accepted'
+            )
             SELECT target.provider, target.external_id
-            FROM edges AS e
-            JOIN nodes AS target
-              ON target.id=CASE WHEN e.a_node=? THEN e.b_node ELSE e.a_node END
+            FROM direct_targets AS direct
+            JOIN nodes AS target ON target.id=direct.target_node
             LEFT JOIN conflicts AS c
               ON c.source_node=? AND c.target_provider=target.provider
-            WHERE e.status='accepted'
-              AND (e.a_node=? OR e.b_node=?)
-              AND c.source_node IS NULL
+            WHERE c.source_node IS NULL
             ORDER BY target.provider, target.external_id
         """
         override_query = f"""
@@ -466,7 +472,7 @@ class MappingResolver:
                     node_id = int(node_row[0])
                     for target_provider, target_id in conn.execute(
                         edge_query,
-                        (node_id, node_id, node_id, node_id),
+                        (node_id, node_id, node_id),
                     ):
                         per_seed[(seed_provider, seed_id)][str(target_provider)].add(
                             str(target_id)

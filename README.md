@@ -30,25 +30,27 @@ There is no mapping HTTP API in this project. Consumers download `mappings.db` (
 
 ## Latest build snapshot
 
-The figures below come from the source-expansion validation build on 2026-11-01/02. Every release also publishes the same machine-readable counts in `manifest.json`.
+The figures below come from the current 18-dataset source snapshot, materialized with the compact-v1 distribution layout. Every release publishes authoritative machine-readable counts and storage metadata in `manifest.json`.
 
 | Metric | Value |
 | --- | ---: |
 | Dataset inputs | 18 |
 | Provider namespaces | 55 |
-| Unique provider/ID nodes | 429,740 |
-| Source records | 803,456 |
-| Evidence edges | 2,343,467 |
-| Runtime edges | 1,231,762 |
-| Accepted runtime edges | 1,223,386 |
-| Directional conflicts | 21,860 |
-| Resolver-safe text routes | 2,382,990 |
-| `mappings.db` | 122,363,904 B (~116.7 MiB) |
-| `mappings.db.zst` | 21,132,735 B (~20.2 MiB) |
-| `mappings-evidence.db` | 148,525,056 B (~141.6 MiB) |
-| `mappings-evidence.db.zst` | 37,151,582 B (~35.4 MiB) |
-| `mappings.tsv.zst` | 17,311,985 B (~16.5 MiB) |
-| `mappings.jsonl.zst` | 20,795,700 B (~19.8 MiB) |
+| Unique provider/ID nodes | 430,207 |
+| Source records | 803,633 |
+| Evidence edges | 2,346,016 |
+| Runtime edges | 1,233,484 |
+| Accepted runtime edges | 1,225,311 |
+| Directional conflicts | 21,975 |
+| Resolver-safe text routes | 2,385,942 |
+| `mappings.db` | 83,537,920 B (~79.7 MiB) |
+| `mappings.db.zst` | 17,260,735 B (~16.5 MiB) |
+| compact evidence DB, decompressed | 89,260,032 B (~85.1 MiB) |
+| `mappings-evidence.db.zst` | 23,556,768 B (~22.5 MiB) |
+| `mappings.tsv.zst` | 17,337,043 B (~16.5 MiB) |
+| `mappings.jsonl.zst` | 20,826,566 B (~19.9 MiB) |
+
+The builder still uses the stricter staging schema while ingesting and validating data. Only after the build passes its integrity checks is a read-optimized distribution database materialized. This keeps build-time uniqueness guarantees without shipping their large B-trees to every consumer.
 
 ## Databases inside `mappings.db`
 
@@ -137,7 +139,7 @@ The current builder has 18 dataset inputs. Most are immutable/versioned GitHub-h
 | `shinkro/community-mapping` | Optional corroborating source | GitHub generated JSON | `shinkro`; title-level MAL↔TVDB/TMDB only |
 | `notseteve/AnimeAggregations` | Supplemental enrichment | GitHub raw JSON | `animeaggregations-anchor`; two-anchor validation |
 | Wikidata multi-ID | Supplemental enrichment | QLever bulk SPARQL + WDQS fallback | `wikidata-anchor`; two-anchor validation |
-| `nattadasu/animeApi` | Supplemental enrichment | GitHub raw `database/animeapi.tsv` | `animeapi-anchor` |
+| `nattadasu/animeApi` | Supplemental enrichment | GitHub raw `database/animeapi.tsv` | `animeapi-anchor`; two-anchor validation |
 
 Exact URLs, importer names and license notes are defined in `anime_mapping_db/config.py` and copied into `mappings-evidence.db` plus every release manifest.
 
@@ -205,21 +207,31 @@ A validated build currently resolves MAL `1` to 30 direct targets, including Ani
 Equivalent direct SQL:
 
 ```sql
+WITH source AS (
+    SELECT id
+    FROM nodes
+    WHERE provider = 'mal' AND external_id = '1'
+),
+direct_targets(target_node, source_node) AS (
+    SELECT e.b_node, e.a_node
+    FROM source
+    JOIN edges AS e ON e.a_node = source.id
+    WHERE e.status = 'accepted'
+
+    UNION ALL
+
+    SELECT e.a_node, e.b_node
+    FROM source
+    JOIN edges AS e ON e.b_node = source.id
+    WHERE e.status = 'accepted'
+)
 SELECT target.provider, target.external_id
-FROM nodes AS source
-JOIN edges AS e ON e.a_node = source.id OR e.b_node = source.id
-JOIN nodes AS target
-  ON target.id = CASE
-      WHEN e.a_node = source.id THEN e.b_node
-      ELSE e.a_node
-  END
+FROM direct_targets AS direct
+JOIN nodes AS target ON target.id = direct.target_node
 LEFT JOIN conflicts AS c
-  ON c.source_node = source.id
+  ON c.source_node = direct.source_node
  AND c.target_provider = target.provider
-WHERE source.provider = 'mal'
-  AND source.external_id = '1'
-  AND e.status = 'accepted'
-  AND c.source_node IS NULL
+WHERE c.source_node IS NULL
 ORDER BY target.provider;
 ```
 
@@ -257,15 +269,18 @@ metadata
 nodes
 edges
 conflicts
+entities
+entity_nodes
+anchor_redirects
 mapping_overrides
 mapping_override_history
 ```
 
-Repeated `(provider, external_id)` strings are normalized into integer node IDs. Runtime edges are indexed for lookup from either side.
+Repeated `(provider, external_id)` strings are normalized into integer node IDs. In the compact-v1 distribution layout, the WITHOUT ROWID primary key on `edges(a_node, b_node)` serves the forward lookup directly and one partial reverse index covers accepted `b_node → a_node` lookups. The resolver uses two indexed branches joined with `UNION ALL`; it does not need two ~27 MiB symmetric secondary indexes.
 
 ### `mappings-evidence.db`
 
-The evidence database is for builds, audit and provenance:
+The evidence database is for builds, audit and provenance. The strict staging database stores pairwise `edge_evidence` directly. The published compact-v1 artifact stores normalized `record_nodes(record_id, node_id)` memberships and exposes the historical `edge_evidence(record_id, a_node, b_node)` contract as a read-only compatibility view. All original evidence pairs are reconstructed losslessly.
 
 ```text
 metadata
@@ -273,7 +288,8 @@ datasets
 nodes
 evidence_groups
 records
-edge_evidence
+record_nodes
+edge_evidence  # compatibility view in compact-v1
 ```
 
 Conceptually:

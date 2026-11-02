@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -159,7 +160,59 @@ class ReleasePackagingTests(unittest.TestCase):
                 restored.open("wb") as dst,
             ):
                 decompressor.copy_stream(src, dst)
-            self.assertEqual(sha256_file(restored), sha256_file(runtime))
+            self.assertEqual(sha256_file(restored), sha256_file(output / "mappings.db"))
+            self.assertNotEqual(sha256_file(restored), sha256_file(runtime))
+            self.assertEqual(manifest["storage"]["profile"], "compact-v1")
+
+            # The compact evidence asset keeps the old read contract while
+            # storing pair evidence through normalized record memberships.
+            restored_evidence = root / "restored-evidence.db"
+            with (
+                (output / "mappings-evidence.db.zst").open("rb") as src,
+                restored_evidence.open("wb") as dst,
+            ):
+                zstd.ZstdDecompressor().copy_stream(src, dst)
+            with sqlite3.connect(restored_evidence) as compact:
+                self.assertEqual(
+                    compact.execute(
+                        "SELECT value FROM metadata WHERE key='storage_profile'"
+                    ).fetchone()[0],
+                    "compact-v1",
+                )
+                self.assertEqual(
+                    compact.execute("SELECT COUNT(*) FROM edge_evidence").fetchone()[0],
+                    1,
+                )
+                self.assertEqual(
+                    compact.execute("SELECT COUNT(*) FROM record_nodes").fetchone()[0],
+                    2,
+                )
+
+            # The next incremental build must be able to seed its strict staging
+            # database from the compact evidence release without changing local
+            # node allocation merely because edge_evidence is now a view.
+            rebuilt_runtime = root / "rebuilt.db"
+            rebuilt_evidence = root / "rebuilt-evidence.db"
+            with MappingDatabaseBuilder(
+                rebuilt_runtime, evidence_path=rebuilt_evidence
+            ) as rebuilder:
+                self.assertEqual(
+                    rebuilder.copy_dataset_from(restored_evidence, "fixture"), 1
+                )
+                rebuilt_stats = rebuilder.finalize(built_at="2026-11-01T00:00:00+00:00")
+            self.assertEqual(rebuilt_stats.records, 1)
+            self.assertEqual(rebuilt_stats.evidence, 1)
+            with (
+                sqlite3.connect(evidence) as original,
+                sqlite3.connect(rebuilt_evidence) as rebuilt,
+            ):
+                original_nodes = original.execute(
+                    "SELECT id, provider, external_id FROM nodes ORDER BY id"
+                ).fetchall()
+                rebuilt_nodes = rebuilt.execute(
+                    "SELECT id, provider, external_id FROM nodes ORDER BY id"
+                ).fetchall()
+                self.assertEqual(rebuilt_nodes, original_nodes)
 
     def test_text_exports_follow_directional_conflicts_and_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
