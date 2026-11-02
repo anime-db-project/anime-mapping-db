@@ -5,6 +5,7 @@ import io
 import json
 import sqlite3
 import tempfile
+from contextlib import closing
 import unittest
 from pathlib import Path
 
@@ -172,7 +173,7 @@ class ReleasePackagingTests(unittest.TestCase):
                 restored_evidence.open("wb") as dst,
             ):
                 zstd.ZstdDecompressor().copy_stream(src, dst)
-            with sqlite3.connect(restored_evidence) as compact:
+            with closing(sqlite3.connect(restored_evidence)) as compact:
                 self.assertEqual(
                     compact.execute(
                         "SELECT value FROM metadata WHERE key='storage_profile'"
@@ -203,8 +204,8 @@ class ReleasePackagingTests(unittest.TestCase):
             self.assertEqual(rebuilt_stats.records, 1)
             self.assertEqual(rebuilt_stats.evidence, 1)
             with (
-                sqlite3.connect(evidence) as original,
-                sqlite3.connect(rebuilt_evidence) as rebuilt,
+                closing(sqlite3.connect(evidence)) as original,
+                closing(sqlite3.connect(rebuilt_evidence)) as rebuilt,
             ):
                 original_nodes = original.execute(
                     "SELECT id, provider, external_id FROM nodes ORDER BY id"
