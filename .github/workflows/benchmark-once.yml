@@ -1,0 +1,122 @@
+name: One-time release database benchmark
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/benchmark-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download latest runtime database
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download --repo "$GITHUB_REPOSITORY" --pattern mappings.db --dir benchmark
+
+      - name: Benchmark indexed runtime queries
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import random
+          import sqlite3
+          import statistics
+          import time
+          from pathlib import Path
+
+          path = Path('benchmark/mappings.db')
+          rng = random.Random(20261103)
+          conn = sqlite3.connect(path)
+          nodes = conn.execute('SELECT id FROM nodes').fetchall()
+          sample = rng.sample(nodes, min(5000, len(nodes)))
+          anchors = conn.execute('SELECT anchor_id FROM entities').fetchall()
+          anchor_sample = rng.sample(anchors, min(5000, len(anchors)))
+          conn.close()
+
+          queries = {
+              'anchor_for_node': (
+                  '''SELECT e.anchor_id FROM entity_nodes en JOIN entities e ON e.entity_id=en.entity_id WHERE en.node_id=?''',
+                  sample,
+              ),
+              'direct_edges_out': (
+                  '''SELECT b_node FROM edges WHERE a_node=? AND status='accepted' ''',
+                  sample,
+              ),
+              'direct_edges_in': (
+                  '''SELECT a_node FROM edges WHERE b_node=? AND status='accepted' ''',
+                  sample,
+              ),
+              'direct_mapping_neighbors': (
+                  '''SELECT n.provider,n.external_id FROM (SELECT b_node AS node_id FROM edges WHERE a_node=? AND status='accepted' UNION ALL SELECT a_node AS node_id FROM edges WHERE b_node=? AND status='accepted') q JOIN nodes n ON n.id=q.node_id''',
+                  [(row[0], row[0]) for row in sample],
+              ),
+              'ids_for_anchor': (
+                  '''SELECT n.provider,n.external_id FROM entities e JOIN entity_nodes en ON en.entity_id=e.entity_id JOIN nodes n ON n.id=en.node_id WHERE e.anchor_id=? ORDER BY n.provider,n.external_id''',
+                  anchor_sample,
+              ),
+          }
+
+          def params(row):
+              if isinstance(row, tuple):
+                  return row
+              return (row,)
+
+          result = {
+              'database_bytes': path.stat().st_size,
+              'queries': {},
+          }
+          for name, (sql, values) in queries.items():
+              runs = []
+              for _ in range(3):
+                  db = sqlite3.connect(path)
+                  cur = db.cursor()
+                  for value in values[:200]:
+                      cur.execute(sql, params(value)).fetchall()
+                  timings = []
+                  rows = 0
+                  for value in values:
+                      t0 = time.perf_counter_ns()
+                      found = cur.execute(sql, params(value)).fetchall()
+                      timings.append((time.perf_counter_ns() - t0) / 1000)
+                      rows += len(found)
+                  db.close()
+                  runs.append({
+                      'median_us': statistics.median(timings),
+                      'p95_us': statistics.quantiles(timings, n=100)[94],
+                      'mean_us': statistics.mean(timings),
+                      'avg_rows': rows / len(values),
+                  })
+              mean_us = statistics.median([run['mean_us'] for run in runs])
+              result['queries'][name] = {
+                  'median_us': statistics.median([run['median_us'] for run in runs]),
+                  'p95_us': statistics.median([run['p95_us'] for run in runs]),
+                  'mean_us': mean_us,
+                  'ops_per_s': 1_000_000 / mean_us,
+                  'avg_rows': statistics.median([run['avg_rows'] for run in runs]),
+              }
+
+          conn = sqlite3.connect(path)
+          result['indexes'] = [
+              {'name': row[0], 'table': row[1], 'sql': row[2]}
+              for row in conn.execute("SELECT name,tbl_name,sql FROM sqlite_master WHERE type='index' AND sql IS NOT NULL ORDER BY name")
+          ]
+          result['query_plans'] = {
+              'direct_out': [list(row) for row in conn.execute("EXPLAIN QUERY PLAN SELECT b_node FROM edges WHERE a_node=1 AND status='accepted'")],
+              'direct_in': [list(row) for row in conn.execute("EXPLAIN QUERY PLAN SELECT a_node FROM edges WHERE b_node=1 AND status='accepted'")],
+              'anchor_for_node': [list(row) for row in conn.execute("EXPLAIN QUERY PLAN SELECT e.anchor_id FROM entity_nodes en JOIN entities e ON e.entity_id=en.entity_id WHERE en.node_id=1")],
+          }
+          conn.close()
+          Path('benchmark/results.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: mapping-performance-benchmark
+          path: benchmark/results.json
+          retention-days: 1
