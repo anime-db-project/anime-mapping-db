@@ -362,11 +362,8 @@ Every release contains:
 - `mappings.jsonl.zst`
 - `manifest.json`
 - `SHA256SUMS`
-- `zz-anime-mapping-db-<tag>-source.zip`
-- `zz-anime-mapping-db-<tag>-source.tar.zst`
-- `zz-anime-mapping-db-<tag>-source.7z`
 
-The three `zz-...-source.*` assets are project-source archives generated from the exact tracked Git tree for the release commit. The `zz-` prefix is only an asset-ordering convention; each archive contains a normal `anime-mapping-db-<tag>/` root directory, and all three hashes are covered by `SHA256SUMS`.
+GitHub automatically provides **Source code (zip)** and **Source code (tar.gz)** for every Release. The project intentionally does not upload duplicate source-code archives.
 
 ### Text exports
 

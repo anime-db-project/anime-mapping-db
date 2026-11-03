@@ -165,7 +165,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Releases y compilación local
 
-Cada release contiene `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, los exports `mappings.tsv.zst`/`mappings.jsonl.zst`, `manifest.json`, `SHA256SUMS` y tres archivos de código fuente del proyecto: `zz-anime-mapping-db-<tag>-source.zip`, `.tar.zst` y `.7z`. Se generan desde el tracked Git tree exacto del commit publicado. `zz-` solo fuerza su posición al final de la lista de assets; dentro del archivo la raíz normal es `anime-mapping-db-<tag>/`. Los tres SHA-256 también se añaden a `SHA256SUMS`. Un chequeo diario sin cambios de fingerprint no publica release.
+Cada release contiene `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, los exports portables `mappings.tsv.zst` / `mappings.jsonl.zst`, `manifest.json` y `SHA256SUMS`. GitHub genera automáticamente los archivos estándar **Source code (zip)** y **Source code (tar.gz)** para cada Release, por lo que el proyecto no sube archivos de código fuente duplicados. Los exports de texto contienen rutas dirigidas y seguras para el resolver después de aplicar conflicts/overrides; SQLite sigue siendo el formato runtime canónico. La automatización se ejecuta tras cambios del mapping engine en `main`, diariamente a las 03:17 UTC, con tags `v*` y manualmente. Un chequeo diario sin cambios en el source fingerprint no publica un nuevo release.
 
 ```bash
 python -m venv .venv

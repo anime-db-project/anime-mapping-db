@@ -165,7 +165,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Releases и локальная сборка
 
-Release включает `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, переносимые `mappings.tsv.zst`/`mappings.jsonl.zst`, `manifest.json`, `SHA256SUMS` и три архива исходников проекта: `zz-anime-mapping-db-<tag>-source.zip`, `.tar.zst` и `.7z`. Архивы строятся из точного tracked Git tree release-коммита; префикс `zz-` нужен только для расположения assets в конце списка, внутри корень обычный `anime-mapping-db-<tag>/`. Их SHA-256 также входят в `SHA256SUMS`. Текстовые экспорты содержат направленные resolver-safe routes после conflicts/overrides; SQLite остаётся каноническим runtime-форматом. Автоматическая сборка идёт после изменений mapping-engine в `main`, ежедневно в 03:17 UTC, по тегам `v*` и вручную. Ежедневный запуск не публикует новый release, если source fingerprint не изменился.
+Release включает `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, переносимые `mappings.tsv.zst`/`mappings.jsonl.zst`, `manifest.json` и `SHA256SUMS`. GitHub автоматически добавляет стандартные **Source code (zip)** и **Source code (tar.gz)**, поэтому проект намеренно не загружает собственные дублирующие архивы исходников. Текстовые экспорты содержат направленные resolver-safe routes после conflicts/overrides; SQLite остаётся каноническим runtime-форматом. Автоматическая сборка идёт после изменений mapping-engine в `main`, ежедневно в 03:17 UTC, по тегам `v*` и вручную. Ежедневный запуск не публикует новый release, если source fingerprint не изменился.
 
 ```bash
 python -m venv .venv

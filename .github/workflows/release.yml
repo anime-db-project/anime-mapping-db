@@ -156,19 +156,6 @@ jobs:
           print(f"engine_push={'true' if engine_push else 'false'}")
           PY
 
-      - name: Package project source archives
-        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y p7zip-full
-          python -m anime_mapping_db.source_archives \
-            --project anime-mapping-db \
-            --tag "${{ steps.meta.outputs.tag }}" \
-            --commit "$GITHUB_SHA" \
-            --output-dir release \
-            --checksums release/SHA256SUMS
-
       - name: Verify release checksums
         if: steps.existing_release.outputs.exists != 'true'
         run: cd release && sha256sum --check SHA256SUMS
@@ -185,7 +172,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$tag" \
-            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. Project source is additionally published as checksum-covered ZIP, TAR.ZST and 7Z assets (prefixed zz- so they stay after database assets). See manifest.json for source hashes, schemas and counts."
+            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. GitHub provides the repository Source code (zip) and Source code (tar.gz) archives automatically; this project does not upload duplicate source bundles. See manifest.json for source hashes, schemas and counts."
 
       - name: No source changes
         if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'

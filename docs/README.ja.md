@@ -165,7 +165,7 @@ accepted = max_weight >= 80 OR groups >= 2
 
 ## Release とローカル build
 
-各 release には `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`, `mappings.tsv.zst`, `mappings.jsonl.zst`, `manifest.json`, `SHA256SUMS` に加え、`zz-anime-mapping-db-<tag>-source.zip`, `.tar.zst`, `.7z` の 3 種類の project source archive が含まれます。archive は release commit の tracked Git tree から生成されます。`zz-` は asset 一覧で最後に置くための名前だけで、archive 内の root は通常の `anime-mapping-db-<tag>/` です。3 archive の SHA-256 も `SHA256SUMS` に含まれます。日次 build は source fingerprint が変わらない限り新 release を公開しません。
+各 release には `mappings.db`, `mappings.db.zst`, `mappings-evidence.db.zst`、移植可能な `mappings.tsv.zst` / `mappings.jsonl.zst`、`manifest.json`, `SHA256SUMS` が含まれます。GitHub は各 Release に標準の **Source code (zip)** と **Source code (tar.gz)** を自動生成するため、このプロジェクトは重複する独自ソースアーカイブをアップロードしません。テキスト export は conflicts / overrides 適用後の resolver-safe な有向 route を収録し、SQLite が canonical runtime format です。`main` の mapping-engine 変更、毎日 03:17 UTC、`v*` tag、手動実行で build され、source fingerprint が変わらない日次実行では新 release を公開しません。
 
 ```bash
 python -m venv .venv
