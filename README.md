@@ -17,13 +17,11 @@ A reproducible, provenance-aware database of cross-service anime title identifie
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## Database at a glance
 
-**≈35,000 unique anime titles**
-
-**34,853 verified stable AMDB identities.** Counts describe the versioned title-identity catalog, not coverage by every upstream provider.
+This release contains **34,853 indexed AMDB identity groups**. This measures indexed identity groups, **not a verified count of distinct anime works**.
 
 | Metric | Value |
 | --- | ---: |
-| Stable AMDB title identities | **34,853** |
+| Indexed AMDB identity groups | **34,853** |
 | Provider ID namespaces | **55** |
 | Source datasets | **18** |
 | Accepted mapping edges | **1,225,745** |
@@ -43,7 +41,6 @@ A reproducible, provenance-aware database of cross-service anime title identifie
 | p95 lookup | **0.519 ms** |
 | p99 lookup | **0.570 ms** |
 | Sequential queries per second | **2,093** |
-| Source download + database build time | **99 s** |
 
 Warm-cache, sequential, read-only MappingResolver calls against the released SQLite on Linux / Python 3.12. 300 IDs × 2 rounds. Not network/API latency.
 

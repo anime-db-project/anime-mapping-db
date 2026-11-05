@@ -17,13 +17,11 @@ Base reproducible de correspondencias entre identificadores de anime de distinto
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## La base de datos en cifras
 
-**≈35,000 títulos de anime únicos**
-
-**34,853 identidades AMDB estables verificadas.** No implica cobertura completa en cada proveedor.
+Esta versión contiene **34,853 grupos de identidades AMDB indexados**. Es una métrica interna del catálogo, **no un recuento verificado de títulos de anime únicos**.
 
 | Indicador | Valor |
 | --- | ---: |
-| Títulos AMDB estables | **34,853** |
+| Grupos de identidades AMDB indexados | **34,853** |
 | Espacios de ID | **55** |
 | Datasets de origen | **18** |
 | Relaciones aceptadas | **1,225,745** |
@@ -43,7 +41,6 @@ Base reproducible de correspondencias entre identificadores de anime de distinto
 | p95 | **0.519 ms** |
 | p99 | **0.570 ms** |
 | Consultas secuenciales/s | **2,093** |
-| Descarga de fuentes y compilación | **99 s** |
 
 Consultas secuenciales MappingResolver con caché caliente sobre SQLite publicada, Linux / Python 3.12. 300 IDs × 2 rondas. No es latencia de red/API.
 

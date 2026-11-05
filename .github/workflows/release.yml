@@ -102,13 +102,10 @@ jobs:
           fi
 
       - name: Build fresh databases
-        id: build
         if: steps.existing_release.outputs.exists != 'true'
         shell: bash
         run: |
-          started=$(date +%s)
           python -m anime_mapping_db build --force
-          echo "seconds=$(($(date +%s) - started))" >> "$GITHUB_OUTPUT"
 
       - name: Choose release tag
         id: meta
@@ -169,7 +166,6 @@ jobs:
           python scripts/benchmark_lookup.py \
             --db release/mappings.db \
             --samples 300 --rounds 2 \
-            --build-seconds "${{ steps.build.outputs.seconds }}" \
             --output release/performance.json
           (cd release && sha256sum performance.json >> SHA256SUMS)
 

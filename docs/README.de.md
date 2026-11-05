@@ -17,13 +17,11 @@ Eine reproduzierbare Datenbank mit Herkunftsnachweisen für Anime-Titelkennungen
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## Datenbank in Zahlen
 
-**≈35,000 unterschiedliche Anime-Titel**
-
-**34,853 verifizierte stabile AMDB-Identitäten.** Nicht jeder Anbieter deckt alle diese Werke ab.
+Dieses Release enthält **34,853 indexierte AMDB-Identitätsgruppen**. Das ist eine Datenbankkennzahl, **keine verifizierte Anzahl unterschiedlicher Anime-Titel**.
 
 | Kennzahl | Wert |
 | --- | ---: |
-| Stabile AMDB-Titel | **34,853** |
+| Indexierte AMDB-Identitätsgruppen | **34,853** |
 | Provider-ID-Namensräume | **55** |
 | Quelldatensätze | **18** |
 | Akzeptierte Mapping-Kanten | **1,225,745** |
@@ -43,7 +41,6 @@ Eine reproduzierbare Datenbank mit Herkunftsnachweisen für Anime-Titelkennungen
 | p95 | **0.519 ms** |
 | p99 | **0.570 ms** |
 | Sequentielle Abfragen/s | **2,093** |
-| Quellenbezug und DB-Aufbau | **99 s** |
 
 Sequentielle MappingResolver-Lookups auf der Release-SQLite mit warmem Cache, Linux / Python 3.12. 300 IDs × 2 Runden; keine Netzwerklatenz.
 

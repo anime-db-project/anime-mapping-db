@@ -60,7 +60,6 @@ class ReadmeStatisticsTests(unittest.TestCase):
             "p99_ms": 0.5,
             "lookups_per_second": 2000,
             "environment": "Linux / Python 3.12",
-            "build_seconds": 21,
         }
 
     def test_all_translations_update_once_and_preserve_other_content(self) -> None:
@@ -76,6 +75,9 @@ class ReadmeStatisticsTests(unittest.TestCase):
             self.assertEqual(text.count(END), 1)
             self.assertIn("**42**", text)
             self.assertIn("**0.200 ms**", text)
+            self.assertNotIn("≈35", text)
+            self.assertNotIn("unique anime titles", text)
+            self.assertNotIn("database build time", text)
             self.assertIn("Keep this.", text)
         self.assertEqual(
             refresh_readmes(self.root, self.manifest, self.db, self.performance), []

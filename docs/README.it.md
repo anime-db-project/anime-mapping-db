@@ -17,13 +17,11 @@ Database riproducibile di corrispondenze fra ID anime di servizi diversi, con tr
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## Il database in numeri
 
-**≈35,000 titoli anime unici**
-
-**34,853 identità AMDB stabili verificate.** Non significa copertura totale da ogni provider.
+Questa versione contiene **34,853 gruppi di identità AMDB indicizzati**. È una misura del database, **non un conteggio verificato di titoli anime unici**.
 
 | Indicatore | Valore |
 | --- | ---: |
-| Titoli AMDB stabili | **34,853** |
+| Gruppi di identità AMDB indicizzati | **34,853** |
 | Namespace di ID | **55** |
 | Dataset sorgenti | **18** |
 | Collegamenti accettati | **1,225,745** |
@@ -43,7 +41,6 @@ Database riproducibile di corrispondenze fra ID anime di servizi diversi, con tr
 | p95 | **0.519 ms** |
 | p99 | **0.570 ms** |
 | Query sequenziali/s | **2,093** |
-| Download sorgenti e build DB | **99 s** |
 
 Query sequenziali MappingResolver con cache calda sul DB della release, Linux / Python 3.12. 300 ID × 2 round; non misura la latenza delle API.
 

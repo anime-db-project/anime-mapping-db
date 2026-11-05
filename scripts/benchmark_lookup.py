@@ -30,7 +30,6 @@ def main() -> None:
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--seed", type=int, default=20261101)
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--build-seconds", type=int)
     args = parser.parse_args()
 
     db = args.db.resolve()
@@ -73,7 +72,6 @@ def main() -> None:
         "kind": "mapping-resolver-warm-sequential-v1",
         "environment": f"{platform.system()} / Python {sys.version_info.major}.{sys.version_info.minor}",
         "cache_mode": "warm",
-        "build_seconds": args.build_seconds,
         "lookups_per_second": round(len(timings_ms) / elapsed_seconds, 1),
         "database": str(db),
         "database_bytes": db.stat().st_size,

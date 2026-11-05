@@ -17,13 +17,11 @@ Base reproductible des correspondances d'identifiants d'anime entre services, av
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## La base en chiffres
 
-**≈35,000 titres d'anime distincts**
-
-**34,853 identités AMDB stables vérifiées.** Aucune garantie de couverture totale par fournisseur.
+Cette version contient **34,853 groupes d'identités AMDB indexés**. Il s'agit d'une mesure de la base, **pas du nombre vérifié de titres d'anime distincts**.
 
 | Indicateur | Valeur |
 | --- | ---: |
-| Titres AMDB stables | **34,853** |
+| Groupes d'identités AMDB indexés | **34,853** |
 | Espaces d'ID fournisseurs | **55** |
 | Jeux sources | **18** |
 | Liens acceptés | **1,225,745** |
@@ -43,7 +41,6 @@ Base reproductible des correspondances d'identifiants d'anime entre services, av
 | p95 | **0.519 ms** |
 | p99 | **0.570 ms** |
 | Requêtes séquentielles/s | **2,093** |
-| Téléchargement et construction | **99 s** |
 
 Appels séquentiels MappingResolver sur SQLite publiée avec cache chaud, Linux / Python 3.12. 300 IDs × 2 tours ; pas de latence réseau/API.
 

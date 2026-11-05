@@ -23,12 +23,11 @@ LANGUAGES = ("en", "ru", "ja", "de", "es", "fr", "it")
 WORDS: dict[str, dict[str, str | list[str]]] = {
     "en": {
         "title": "Database at a glance",
-        "hero": "≈{rounded} unique anime titles",
-        "sub": "**{titles} verified stable AMDB identities.** Counts describe the versioned title-identity catalog, not coverage by every upstream provider.",
+        "sub": "This release contains **{identities} indexed AMDB identity groups**. This measures indexed identity groups, **not a verified count of distinct anime works**.",
         "metric": "Metric",
         "value": "Value",
         "labels": [
-            "Stable AMDB title identities",
+            "Indexed AMDB identity groups",
             "Provider ID namespaces",
             "Source datasets",
             "Accepted mapping edges",
@@ -47,7 +46,6 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
             "p95 lookup",
             "p99 lookup",
             "Sequential queries per second",
-            "Source download + database build time",
         ],
         "snapshot": "Release snapshot",
         "latest": "Current release manifest",
@@ -55,12 +53,11 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
     },
     "ru": {
         "title": "Статистика базы данных",
-        "hero": "≈{rounded} уникальных аниме-тайтлов",
-        "sub": "**{titles} проверенных стабильных AMDB ID.** Это масштаб каталога идентичностей, а не полное покрытие каждого источника.",
+        "sub": "В этом релизе **{identities} проиндексированных AMDB-сущностей**. Это количество групп идентификаторов в базе, **а не подтверждённое число уникальных аниме**.",
         "metric": "Показатель",
         "value": "Значение",
         "labels": [
-            "Стабильные AMDB-тайтлы",
+            "Индексированные группы идентификаторов AMDB",
             "Пространства внешних ID",
             "Наборы источников",
             "Подтверждённые связи ID",
@@ -79,7 +76,6 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
             "Задержка p95",
             "Задержка p99",
             "Последовательные запросы/с",
-            "Получение источников и сборка БД",
         ],
         "snapshot": "Снимок релиза",
         "latest": "Актуальный манифест",
@@ -87,12 +83,11 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
     },
     "ja": {
         "title": "データベースの規模",
-        "hero": "約{rounded}作品",
-        "sub": "**{titles}件の検証済み AMDB 作品 ID。** 各データソースの完全収録を保証する数値ではありません。",
+        "sub": "このリリースには **{identities}件の AMDB ID グループ**があります。これはデータベース上の識別子数であり、**重複のないアニメ作品数を証明する数値ではありません**。",
         "metric": "指標",
         "value": "値",
         "labels": [
-            "安定した AMDB 作品 ID",
+            "インデックスされた AMDB ID グループ",
             "プロバイダー ID 空間",
             "入力データセット",
             "確認済みの対応エッジ",
@@ -111,7 +106,6 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
             "p95",
             "p99",
             "逐次検索/秒",
-            "データ取得と DB ビルド時間",
         ],
         "snapshot": "リリース時点",
         "latest": "最新マニフェスト",
@@ -119,12 +113,11 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
     },
     "de": {
         "title": "Datenbank in Zahlen",
-        "hero": "≈{rounded} unterschiedliche Anime-Titel",
-        "sub": "**{titles} verifizierte stabile AMDB-Identitäten.** Nicht jeder Anbieter deckt alle diese Werke ab.",
+        "sub": "Dieses Release enthält **{identities} indexierte AMDB-Identitätsgruppen**. Das ist eine Datenbankkennzahl, **keine verifizierte Anzahl unterschiedlicher Anime-Titel**.",
         "metric": "Kennzahl",
         "value": "Wert",
         "labels": [
-            "Stabile AMDB-Titel",
+            "Indexierte AMDB-Identitätsgruppen",
             "Provider-ID-Namensräume",
             "Quelldatensätze",
             "Akzeptierte Mapping-Kanten",
@@ -143,7 +136,6 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
             "p95",
             "p99",
             "Sequentielle Abfragen/s",
-            "Quellenbezug und DB-Aufbau",
         ],
         "snapshot": "Release-Snapshot",
         "latest": "Aktuelles Manifest",
@@ -151,12 +143,11 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
     },
     "es": {
         "title": "La base de datos en cifras",
-        "hero": "≈{rounded} títulos de anime únicos",
-        "sub": "**{titles} identidades AMDB estables verificadas.** No implica cobertura completa en cada proveedor.",
+        "sub": "Esta versión contiene **{identities} grupos de identidades AMDB indexados**. Es una métrica interna del catálogo, **no un recuento verificado de títulos de anime únicos**.",
         "metric": "Indicador",
         "value": "Valor",
         "labels": [
-            "Títulos AMDB estables",
+            "Grupos de identidades AMDB indexados",
             "Espacios de ID",
             "Datasets de origen",
             "Relaciones aceptadas",
@@ -175,7 +166,6 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
             "p95",
             "p99",
             "Consultas secuenciales/s",
-            "Descarga de fuentes y compilación",
         ],
         "snapshot": "Versión de referencia",
         "latest": "Manifiesto actual",
@@ -183,12 +173,11 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
     },
     "fr": {
         "title": "La base en chiffres",
-        "hero": "≈{rounded} titres d'anime distincts",
-        "sub": "**{titles} identités AMDB stables vérifiées.** Aucune garantie de couverture totale par fournisseur.",
+        "sub": "Cette version contient **{identities} groupes d'identités AMDB indexés**. Il s'agit d'une mesure de la base, **pas du nombre vérifié de titres d'anime distincts**.",
         "metric": "Indicateur",
         "value": "Valeur",
         "labels": [
-            "Titres AMDB stables",
+            "Groupes d'identités AMDB indexés",
             "Espaces d'ID fournisseurs",
             "Jeux sources",
             "Liens acceptés",
@@ -207,7 +196,6 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
             "p95",
             "p99",
             "Requêtes séquentielles/s",
-            "Téléchargement et construction",
         ],
         "snapshot": "Instantané de version",
         "latest": "Manifeste actuel",
@@ -215,12 +203,11 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
     },
     "it": {
         "title": "Il database in numeri",
-        "hero": "≈{rounded} titoli anime unici",
-        "sub": "**{titles} identità AMDB stabili verificate.** Non significa copertura totale da ogni provider.",
+        "sub": "Questa versione contiene **{identities} gruppi di identità AMDB indicizzati**. È una misura del database, **non un conteggio verificato di titoli anime unici**.",
         "metric": "Indicatore",
         "value": "Valore",
         "labels": [
-            "Titoli AMDB stabili",
+            "Gruppi di identità AMDB indicizzati",
             "Namespace di ID",
             "Dataset sorgenti",
             "Collegamenti accettati",
@@ -239,7 +226,6 @@ WORDS: dict[str, dict[str, str | list[str]]] = {
             "p95",
             "p99",
             "Query sequenziali/s",
-            "Download sorgenti e build DB",
         ],
         "snapshot": "Snapshot della release",
         "latest": "Manifest attuale",
@@ -279,7 +265,6 @@ def render_stats(
     counts = manifest["counts"]
     providers = manifest["providers"]
     assets = manifest["assets"]
-    rounded = max(1000, round(entities / 1000) * 1000)
     rows = [
         entities,
         len(providers),
@@ -298,9 +283,7 @@ def render_stats(
         BEGIN,
         f"## {t['title']}",
         "",
-        f"**{t['hero'].format(rounded=display_num(rounded))}**",
-        "",
-        t["sub"].format(titles=display_num(entities)),
+        t["sub"].format(identities=display_num(entities)),
         "",
         f"| {t['metric']} | {t['value']} |",
         "| --- | ---: |",
@@ -321,8 +304,6 @@ def render_stats(
             for k in ("median_ms", "mean_ms", "p95_ms", "p99_ms")
         ]
         vals.append(display_num(round(float(performance["lookups_per_second"]))))
-        build = performance.get("build_seconds")
-        vals.append(f"{int(build):,} s" if build is not None else "—")
         lines.extend([f"| {t['metric']} | {t['value']} |", "| --- | ---: |"])
         lines.extend(
             f"| {name} | **{value}** |" for name, value in zip(label, vals, strict=True)
