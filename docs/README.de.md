@@ -14,6 +14,23 @@
 
 Eine reproduzierbare Datenbank mit Herkunftsnachweisen für Anime-Titelkennungen verschiedener Dienste. Sie bietet stabile Projekt-IDs und kompakte SQLite-Abfragen.
 
+## Datenbank in Zahlen
+
+**Rund 35.000 unterschiedliche Anime-Titel** mit **34.851 stabilen AMDB-Identitäten** im geprüften Snapshot. Diese Zahl beschreibt das gemeinsame Identitätsverzeichnis und keine vollständige Abdeckung durch jeden Anbieter.
+
+| Kennzahl | Wert |
+| --- | ---: |
+| Stabile AMDB-Titelidentitäten | **34,851** (≈35k) |
+| Provider-ID-Namensräume | **55** |
+| Eingabedatensätze | **18** |
+| Akzeptierte Zuordnungskanten | **1,225,741** |
+| Sichere gerichtete Exportrouten | **2,386,529** |
+| Gerichtete Konflikte | **22,021** |
+| Importierte Quellrecords | **803,711** |
+| Evidenzbeziehungen | **2,346,745** |
+
+Stand: **5. November 2026**, Release [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Die Zahlen sind ein Snapshot, kein Live-Zähler. Aktuelle Werte stehen in [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Die AMDB-Anzahl wurde mit dem entsprechenden Timestamp-DB-Build abgeglichen.
+
 ## Funktionen
 
 - Dauerhafte `amdb:<anchor_id>`-Kennungen über mehrere Builds hinweg.
@@ -127,6 +144,67 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db anchors
 python -m anime_mapping_db package-release --tag v1.0.0 --output release
 ```
+
+## Möglichkeiten der Datenbanknutzung
+
+Die Release-Dateien können ohne eigenen Build oder API-Schlüssel für lokale ID-Abfragen verwendet werden. Wählen Sie je nach Anwendungsfall:
+
+- **Python-Integration.** `MappingResolver` für Zuordnungen in Bots, Webseiten und Medienkatalogen.
+- **Direktes SQLite.** SQLite-Treiber in Python, Rust, Go, Node.js und weiteren Sprachen ohne Netzwerk.
+- **Datenimport und Analysen.** TSV/JSONL in Datenbanken, Suchindizes und ETL-Prozesse importieren.
+- **Gemeinsame Titelreferenz.** `amdb:<anchor_id>` speichern und mit anderen Projekten verknüpfen.
+- **Quellenprüfung.** Die Evidenzdatenbank zur Nachverfolgung fraglicher Zuordnungen verwenden.
+
+Die veröffentlichte SQLite-Datei kann ohne Kompilierung heruntergeladen werden:
+
+```bash
+curl -fL -o mappings.db \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db
+```
+
+Für `MappingResolver` zuerst das Python-Paket installieren (`python -m pip install -e .`):
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("mappings.db")
+if resolver.available():
+    matches = resolver.resolve({"mal": "1"})
+    print(matches)  # Verified, direct and conflict-safe provider IDs
+```
+
+Beispiel für die stabile AMDB-ID und zugehörige Provider-IDs mit Pythons `sqlite3`:
+
+```python
+import sqlite3
+
+with sqlite3.connect("file:mappings.db?mode=ro", uri=True) as db:
+    rows = db.execute("""
+        SELECT entity.anchor_id, other.provider, other.external_id
+        FROM nodes AS seed
+        JOIN entity_nodes AS seed_member ON seed_member.node_id = seed.id
+        JOIN entities AS entity ON entity.entity_id = seed_member.entity_id
+        JOIN entity_nodes AS member ON member.entity_id = entity.entity_id
+        JOIN nodes AS other ON other.id = member.node_id
+        WHERE seed.provider = ? AND seed.external_id = ?
+        ORDER BY other.provider, other.external_id
+    """, ("mal", "1")).fetchall()
+
+for anchor_id, provider, external_id in rows:
+    print(f"amdb:{anchor_id}", provider, external_id)
+```
+
+Dieses SQL gibt **Mitglieder einer AMDB-Entität** wieder, nicht die streng gefilterten direkten Resolver-Routen. Für diese `MappingResolver.resolve()` verwenden und `anchor_id` statt `entity_id` speichern.
+
+Portable TSV-/JSONL-Routen können mit `zstd` entpackt werden. Die Felder stehen im Release-Abschnitt.
+
+```bash
+curl -fL -o mappings.tsv.zst \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.tsv.zst
+zstd -dc mappings.tsv.zst | head -n 5
+```
+
+Beim gemeinsamen Einsatz mit Timestamp DB kompatible Versionen auswählen sowie Manifeste und Prüfsummen validieren.
 
 ## Konfidenz und Konflikte
 

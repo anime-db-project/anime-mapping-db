@@ -14,6 +14,23 @@
 
 Base reproducible de correspondencias entre identificadores de anime de distintos servicios, con trazabilidad. Ofrece IDs estables propios y consultas SQLite compactas.
 
+## La base de datos en cifras
+
+**Unos 35.000 títulos de anime únicos**, con **34.851 identidades AMDB estables** en la instantánea verificada. Es un catálogo de identidades compartidas, no una promesa de cobertura total por proveedor.
+
+| Indicador | Valor |
+| --- | ---: |
+| Títulos AMDB estables y únicos | **34,851** (≈35k) |
+| Espacios de IDs de proveedores | **55** |
+| Datasets de entrada | **18** |
+| Relaciones aceptadas | **1,225,741** |
+| Rutas dirigidas seguras exportadas | **2,386,529** |
+| Conflictos dirigidos | **22,021** |
+| Registros de origen importados | **803,711** |
+| Relaciones de evidencia | **2,346,745** |
+
+Datos del **5 de noviembre de 2026**, versión [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Son valores de una instantánea, no contadores en directo. La información actualizada está en [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Las identidades AMDB se cotejaron con la compilación correspondiente de Timestamp DB.
+
 ## Funciones
 
 - IDs `amdb:<anchor_id>` estables entre compilaciones.
@@ -127,6 +144,67 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db anchors
 python -m anime_mapping_db package-release --tag v1.0.0 --output release
 ```
+
+## Formas de utilizar la base
+
+Los archivos publicados se pueden consultar sin ejecutar el generador ni obtener claves API. Elija la integración adecuada:
+
+- **Integración Python.** `MappingResolver` para relacionar IDs en bots, sitios y catálogos.
+- **SQLite directamente.** Lectura local desde Python, Rust, Go, Node.js y otros lenguajes.
+- **ETL y analítica.** Importar rutas TSV/JSONL en motores, buscadores y procesos de datos.
+- **Identificador común.** Guardar `amdb:<anchor_id>` y relacionar títulos con otros proyectos.
+- **Revisión de pruebas.** Abrir la base de evidencia para investigar relaciones dudosas.
+
+Descargue el SQLite publicado sin compilar:
+
+```bash
+curl -fL -o mappings.db \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db
+```
+
+Instale el paquete Python del repositorio (`python -m pip install -e .`) para usar `MappingResolver`:
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("mappings.db")
+if resolver.available():
+    matches = resolver.resolve({"mal": "1"})
+    print(matches)  # Verified, direct and conflict-safe provider IDs
+```
+
+Ejemplo de ID AMDB y sus IDs de proveedores con `sqlite3` integrado en Python:
+
+```python
+import sqlite3
+
+with sqlite3.connect("file:mappings.db?mode=ro", uri=True) as db:
+    rows = db.execute("""
+        SELECT entity.anchor_id, other.provider, other.external_id
+        FROM nodes AS seed
+        JOIN entity_nodes AS seed_member ON seed_member.node_id = seed.id
+        JOIN entities AS entity ON entity.entity_id = seed_member.entity_id
+        JOIN entity_nodes AS member ON member.entity_id = entity.entity_id
+        JOIN nodes AS other ON other.id = member.node_id
+        WHERE seed.provider = ? AND seed.external_id = ?
+        ORDER BY other.provider, other.external_id
+    """, ("mal", "1")).fetchall()
+
+for anchor_id, provider, external_id in rows:
+    print(f"amdb:{anchor_id}", provider, external_id)
+```
+
+Este SQL presenta **miembros de la entidad AMDB**, no las rutas directas estrictamente filtradas. Para resolver relaciones directas sin conflictos, use `MappingResolver.resolve()` y guarde `anchor_id` en vez de `entity_id`.
+
+Los archivos TSV/JSONL se descomprimen con `zstd`; el esquema está en la sección de publicaciones.
+
+```bash
+curl -fL -o mappings.tsv.zst \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.tsv.zst
+zstd -dc mappings.tsv.zst | head -n 5
+```
+
+Al integrar Timestamp DB, use releases compatibles y valide manifest y SHA-256.
 
 ## Confianza y conflictos
 

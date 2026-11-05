@@ -14,6 +14,23 @@
 
 Base reproductible des correspondances d'identifiants d'anime entre services, avec traçabilité des sources. Elle fournit des IDs stables et des recherches SQLite compactes.
 
+## La base en chiffres
+
+**Environ 35 000 titres d'anime distincts**, dont **34 851 identités AMDB stables** dans l'instantané vérifié. Il s'agit d'un catalogue d'identités, sans garantie que chaque service couvre tous ces titres.
+
+| Indicateur | Valeur |
+| --- | ---: |
+| Titres AMDB uniques et stables | **34,851** (≈35k) |
+| Espaces d'ID fournisseurs | **55** |
+| Jeux de données sources | **18** |
+| Liens acceptés | **1,225,741** |
+| Routes dirigées sûres exportées | **2,386,529** |
+| Conflits directionnels | **22,021** |
+| Enregistrements importés | **803,711** |
+| Relations de preuves | **2,346,745** |
+
+Instantané du **5 novembre 2026**, version [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Ce ne sont pas des compteurs en temps réel. Les valeurs récentes figurent dans [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Le nombre AMDB a été recoupé avec le build Timestamp DB correspondant.
+
 ## Fonctionnalités
 
 - Identifiants `amdb:<anchor_id>` stables entre les reconstructions.
@@ -127,6 +144,67 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db anchors
 python -m anime_mapping_db package-release --tag v1.0.0 --output release
 ```
+
+## Comment utiliser la base de données
+
+Les fichiers distribués permettent des consultations locales sans reconstruire la base ni obtenir de clé API. Plusieurs modes d'utilisation sont possibles :
+
+- **Intégration Python.** Utiliser `MappingResolver` dans un bot, un site ou un catalogue.
+- **SQLite directement.** Interroger la base hors ligne depuis Python, Rust, Go, Node.js, etc.
+- **Analytique et import.** Charger TSV/JSONL dans d'autres bases, moteurs de recherche ou ETL.
+- **Identifiant commun.** Enregistrer `amdb:<anchor_id>` pour relier plusieurs projets.
+- **Vérification des sources.** Examiner la base de preuves pour comprendre les correspondances incertaines.
+
+Téléchargez la base SQLite publiée sans la compiler :
+
+```bash
+curl -fL -o mappings.db \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db
+```
+
+Installez le paquet du dépôt (`python -m pip install -e .`) puis utilisez `MappingResolver` :
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("mappings.db")
+if resolver.available():
+    matches = resolver.resolve({"mal": "1"})
+    print(matches)  # Verified, direct and conflict-safe provider IDs
+```
+
+Exemple de récupération des IDs AMDB et fournisseurs avec `sqlite3` de Python :
+
+```python
+import sqlite3
+
+with sqlite3.connect("file:mappings.db?mode=ro", uri=True) as db:
+    rows = db.execute("""
+        SELECT entity.anchor_id, other.provider, other.external_id
+        FROM nodes AS seed
+        JOIN entity_nodes AS seed_member ON seed_member.node_id = seed.id
+        JOIN entities AS entity ON entity.entity_id = seed_member.entity_id
+        JOIN entity_nodes AS member ON member.entity_id = entity.entity_id
+        JOIN nodes AS other ON other.id = member.node_id
+        WHERE seed.provider = ? AND seed.external_id = ?
+        ORDER BY other.provider, other.external_id
+    """, ("mal", "1")).fetchall()
+
+for anchor_id, provider, external_id in rows:
+    print(f"amdb:{anchor_id}", provider, external_id)
+```
+
+Ce SQL affiche les **membres de l'entité AMDB**, et non les routes directes strictement filtrées. Utilisez `MappingResolver.resolve()` pour ces dernières et conservez `anchor_id`, jamais `entity_id`.
+
+Les exports TSV/JSONL peuvent être décompressés avec `zstd` ; leur format est détaillé dans les publications.
+
+```bash
+curl -fL -o mappings.tsv.zst \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.tsv.zst
+zstd -dc mappings.tsv.zst | head -n 5
+```
+
+Pour joindre Timestamp DB, sélectionner des versions compatibles et vérifier manifestes et SHA-256.
 
 ## Confiance et conflits
 

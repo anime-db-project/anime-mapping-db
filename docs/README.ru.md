@@ -14,6 +14,23 @@
 
 Воспроизводимая база соответствий идентификаторов аниме между сервисами с сохранением происхождения данных. Предоставляет стабильные ID проекта и компактный SQLite для других приложений.
 
+## Статистика базы данных
+
+**≈35 000 уникальных аниме-тайтлов**, из них **34 851 подтверждённая стабильная AMDB-сущность** в проверенном снимке. Это каталог идентичностей, а не утверждение, что каждый источник содержит сведения обо всех тайтлах.
+
+| Показатель | Значение |
+| --- | ---: |
+| Уникальные стабильные AMDB-тайтлы | **34,851** (≈35k) |
+| Пространства ID внешних сервисов | **55** |
+| Подключённые наборы источников | **18** |
+| Подтверждённые связи между ID | **1,225,741** |
+| Направленные безопасные маршруты экспорта | **2,386,529** |
+| Обнаруженные направленные конфликты | **22,021** |
+| Записи из исходных наборов | **803,711** |
+| Связи доказательств (evidence) | **2,346,745** |
+
+Снимок от **5 ноября 2026 года**, релиз [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Цифры относятся к конкретной сборке и не обновляются в README автоматически. Актуальные значения смотрите в [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Число AMDB-сущностей также сверено с идентичным снимком mappings в сборке Anime Timestamp DB.
+
 ## Возможности
 
 - Стабильные идентификаторы `amdb:<anchor_id>`, сохраняющиеся между пересборками.
@@ -127,6 +144,67 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db anchors
 python -m anime_mapping_db package-release --tag v1.0.0 --output release
 ```
+
+## Способы использования базы
+
+Артефакты релиза — обычные файлы: для локального поиска ID не требуется запускать сборщик или получать API-ключ. Выберите подходящий способ:
+
+- **Интеграция через Python.** Используйте `MappingResolver` для безопасного сопоставления ID в Telegram-боте, сайте, парсере или медиакаталоге.
+- **Прямые запросы SQLite.** Работайте через SQLite в Python, Rust, Go, Node.js и других языках без внешнего API.
+- **Импорт и аналитика.** Загружайте `mappings.tsv.zst` или `mappings.jsonl.zst` в другие базы данных, поисковые индексы и ETL-пайплайны.
+- **Общий ID между приложениями.** Сохраняйте `amdb:<anchor_id>` в собственном каталоге и связывайте записи с другими проектами по этому ID.
+- **Аудит и проверка.** Подключайте отдельную evidence-базу, чтобы изучить происхождение сомнительных сопоставлений.
+
+Скачайте готовую SQLite из релиза — пересобирать проект не требуется:
+
+```bash
+curl -fL -o mappings.db \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db
+```
+
+Для Python resolver установите пакет из репозитория (`python -m pip install -e .`):
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("mappings.db")
+if resolver.available():
+    matches = resolver.resolve({"mal": "1"})
+    print(matches)  # Verified, direct and conflict-safe provider IDs
+```
+
+Пример извлечения стабильного AMDB ID и связанных внешних ID через стандартный модуль Python `sqlite3`:
+
+```python
+import sqlite3
+
+with sqlite3.connect("file:mappings.db?mode=ro", uri=True) as db:
+    rows = db.execute("""
+        SELECT entity.anchor_id, other.provider, other.external_id
+        FROM nodes AS seed
+        JOIN entity_nodes AS seed_member ON seed_member.node_id = seed.id
+        JOIN entities AS entity ON entity.entity_id = seed_member.entity_id
+        JOIN entity_nodes AS member ON member.entity_id = entity.entity_id
+        JOIN nodes AS other ON other.id = member.node_id
+        WHERE seed.provider = ? AND seed.external_id = ?
+        ORDER BY other.provider, other.external_id
+    """, ("mal", "1")).fetchall()
+
+for anchor_id, provider, external_id in rows:
+    print(f"amdb:{anchor_id}", provider, external_id)
+```
+
+Второй пример показывает **состав AMDB-сущности**, а не строго прямые маршруты resolver. Для прямых соответствий с фильтрацией конфликтов используйте `MappingResolver.resolve()`. Сохраняйте `anchor_id`, а не временный `entity_id`.
+
+Для обработки текстовых маршрутов скачайте TSV или JSONL и распакуйте с помощью `zstd`. Формат полей описан в разделе релизов.
+
+```bash
+curl -fL -o mappings.tsv.zst \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.tsv.zst
+zstd -dc mappings.tsv.zst | head -n 5
+```
+
+При совместном использовании с базой таймкодов фиксируйте совместимые версии релизов и проверяйте манифесты и SHA-256.
 
 ## Достоверность и конфликты
 

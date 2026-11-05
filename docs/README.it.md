@@ -14,6 +14,23 @@
 
 Database riproducibile di corrispondenze fra ID anime di servizi diversi, con tracciabilità delle fonti. Offre ID stabili del progetto e interrogazioni SQLite compatte.
 
+## Il database in numeri
+
+**Circa 35.000 titoli anime unici**, rappresentati da **34.851 identità AMDB stabili** nello snapshot verificato. È un catalogo di identità comuni, non la garanzia di copertura completa di ogni provider.
+
+| Indicatore | Valore |
+| --- | ---: |
+| Titoli AMDB stabili e unici | **34,851** (≈35k) |
+| Namespace ID dei provider | **55** |
+| Dataset in ingresso | **18** |
+| Collegamenti accettati | **1,225,741** |
+| Percorsi diretti sicuri esportati | **2,386,529** |
+| Conflitti direzionali | **22,021** |
+| Record sorgenti importati | **803,711** |
+| Relazioni di evidenza | **2,346,745** |
+
+Snapshot del **5 novembre 2026**, release [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Sono dati della release, non contatori in tempo reale. I valori più recenti sono in [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Il numero AMDB è stato confrontato con il relativo build Timestamp DB.
+
 ## Funzionalità
 
 - Identificatori `amdb:<anchor_id>` stabili tra ricompilazioni.
@@ -127,6 +144,67 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db anchors
 python -m anime_mapping_db package-release --tag v1.0.0 --output release
 ```
+
+## Come utilizzare il database
+
+Gli artefatti pubblicati sono file locali: per consultare gli ID non è necessario ricompilare o usare API key. Sono disponibili più modalità:
+
+- **Integrazione Python.** Usare `MappingResolver` in bot, siti e cataloghi.
+- **SQLite diretto.** Interrogare offline con driver SQLite per Python, Rust, Go, Node.js e altri linguaggi.
+- **Import e analisi.** Caricare TSV/JSONL in altri database, indici e pipeline ETL.
+- **Identità comune.** Memorizzare `amdb:<anchor_id>` e unire record di progetti differenti.
+- **Controllo delle fonti.** Aprire il database delle prove per verificare mapping ambigui.
+
+Scarica direttamente SQLite dalla release:
+
+```bash
+curl -fL -o mappings.db \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db
+```
+
+Installa il pacchetto del repository (`python -m pip install -e .`) per `MappingResolver`:
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("mappings.db")
+if resolver.available():
+    matches = resolver.resolve({"mal": "1"})
+    print(matches)  # Verified, direct and conflict-safe provider IDs
+```
+
+Esempio di lettura dell'ID AMDB e dei relativi provider usando `sqlite3` di Python:
+
+```python
+import sqlite3
+
+with sqlite3.connect("file:mappings.db?mode=ro", uri=True) as db:
+    rows = db.execute("""
+        SELECT entity.anchor_id, other.provider, other.external_id
+        FROM nodes AS seed
+        JOIN entity_nodes AS seed_member ON seed_member.node_id = seed.id
+        JOIN entities AS entity ON entity.entity_id = seed_member.entity_id
+        JOIN entity_nodes AS member ON member.entity_id = entity.entity_id
+        JOIN nodes AS other ON other.id = member.node_id
+        WHERE seed.provider = ? AND seed.external_id = ?
+        ORDER BY other.provider, other.external_id
+    """, ("mal", "1")).fetchall()
+
+for anchor_id, provider, external_id in rows:
+    print(f"amdb:{anchor_id}", provider, external_id)
+```
+
+Questo SQL mostra **i membri dell'entità AMDB**, non i percorsi diretti filtrati del resolver. Per i mapping diretti usa `MappingResolver.resolve()` e salva `anchor_id`, non `entity_id`.
+
+I percorsi TSV/JSONL si possono decomprimere con `zstd`; i campi sono documentati nella sezione release.
+
+```bash
+curl -fL -o mappings.tsv.zst \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.tsv.zst
+zstd -dc mappings.tsv.zst | head -n 5
+```
+
+Per unire Timestamp DB usa release compatibili e verifica manifest e SHA-256.
 
 ## Affidabilità e conflitti
 

@@ -14,6 +14,23 @@
 
 A reproducible, provenance-aware database of cross-service anime title identifiers. It provides a stable project identity and compact SQLite lookups for other applications.
 
+## Database at a glance
+
+**≈35,000 unique anime titles**, represented by **34,851 stable AMDB identities** in this verified snapshot. This is a shared identity catalog, not a claim that every source covers every anime.
+
+| Metric | Value |
+| --- | ---: |
+| Unique stable AMDB title identities | **34,851** (≈35k) |
+| Provider ID namespaces | **55** |
+| Upstream dataset inputs | **18** |
+| Accepted mapping edges | **1,225,741** |
+| Resolver-safe directed export routes | **2,386,529** |
+| Directional conflicts detected | **22,021** |
+| Imported source records | **803,711** |
+| Evidence relationships | **2,346,745** |
+
+Snapshot: **5 November 2026**, release [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Counts describe that release and are not live counters; for newer releases, read the published [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). The anchor count was cross-checked against the matching Anime Timestamp DB build's recorded mapping fingerprint.
+
 ## Features
 
 - Stable `amdb:<anchor_id>` identifiers across database rebuilds.
@@ -127,6 +144,67 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db anchors
 python -m anime_mapping_db package-release --tag v1.0.0 --output release
 ```
+
+## Ways to use the database
+
+The release artifacts are ordinary files; applications do not need to run the dataset builder or keep an API token just to perform local ID lookups. Choose a consumption method based on your application:
+
+- **Python integration.** Use `MappingResolver` to obtain conservative cross-provider IDs in a bot, scraper or catalog.
+- **SQLite directly.** Use the built-in SQLite library of Python, Rust, Go, Node.js or another language; the schema is documented and read-only queries need no network calls.
+- **Portable ETL and analytics.** Load `mappings.tsv.zst` or `mappings.jsonl.zst` into data-processing pipelines, indexes or other database engines.
+- **Stable references across projects.** Persist `amdb:<anchor_id>` in a media catalog and join to another project using that shared identity.
+- **Provenance and reviews.** Inspect the separately published evidence database when validating suspicious mappings, attribution or importer behavior.
+
+Download the published SQLite file directly (no compilation required):
+
+```bash
+curl -fL -o mappings.db \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db
+```
+
+Use the project's Python resolver after installing the repository (`python -m pip install -e .`):
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("mappings.db")
+if resolver.available():
+    matches = resolver.resolve({"mal": "1"})
+    print(matches)  # Verified, direct and conflict-safe provider IDs
+```
+
+Query the stable AMDB identity and its member IDs using the standard Python `sqlite3` module, without installing the package:
+
+```python
+import sqlite3
+
+with sqlite3.connect("file:mappings.db?mode=ro", uri=True) as db:
+    rows = db.execute("""
+        SELECT entity.anchor_id, other.provider, other.external_id
+        FROM nodes AS seed
+        JOIN entity_nodes AS seed_member ON seed_member.node_id = seed.id
+        JOIN entities AS entity ON entity.entity_id = seed_member.entity_id
+        JOIN entity_nodes AS member ON member.entity_id = entity.entity_id
+        JOIN nodes AS other ON other.id = member.node_id
+        WHERE seed.provider = ? AND seed.external_id = ?
+        ORDER BY other.provider, other.external_id
+    """, ("mal", "1")).fetchall()
+
+for anchor_id, provider, external_id in rows:
+    print(f"amdb:{anchor_id}", provider, external_id)
+```
+
+This second example traverses the conservative **AMDB entity membership**, not the stricter single-hop resolver output. Use `MappingResolver.resolve()` when you need the project's conflict-filtered direct routes. Persist `anchor_id`, not build-local `entity_id`.
+
+To process resolver-safe text exports, download the TSV or JSONL asset and decompress it with `zstd`; the fields are documented in the release section.
+
+```bash
+curl -fL -o mappings.tsv.zst \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.tsv.zst
+zstd -dc mappings.tsv.zst | head -n 5
+```
+
+If using both databases, pin compatible release versions and verify checksums/manifest metadata before joining records.
 
 ## Confidence and conflicts
 

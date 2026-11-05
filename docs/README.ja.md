@@ -14,6 +14,23 @@
 
 アニメ作品のサービス間 ID 対応を、出典とともに再現可能な形でまとめるデータベースです。安定した独自 ID と軽量な SQLite 検索を提供します。
 
+## データベースの規模
+
+**約35,000作品**。確認済みスナップショットには **34,851件の安定した AMDB 作品 ID** が含まれます。これは共通の作品 ID カタログであり、すべてのサービスにすべての作品があることを意味しません。
+
+| 指標 | 値 |
+| --- | ---: |
+| 安定した AMDB 作品 ID | **34,851** (≈35k) |
+| プロバイダー ID の名前空間 | **55** |
+| 元データセット数 | **18** |
+| 確認済みマッピング | **1,225,741** |
+| 安全な方向付きエクスポート経路 | **2,386,529** |
+| 検出された方向付き競合 | **22,021** |
+| 取り込んだ元レコード | **803,711** |
+| エビデンスの関連数 | **2,346,745** |
+
+**2026年11月5日** の [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24) の値です。README の数字はリアルタイムではありません。最新の件数は [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json) を参照してください。AMDB 件数は同じマッピングを使った Timestamp DB ビルドとも照合しました。
+
 ## 主な機能
 
 - ビルドをまたいで維持される `amdb:<anchor_id>`。
@@ -127,6 +144,67 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db anchors
 python -m anime_mapping_db package-release --tag v1.0.0 --output release
 ```
+
+## データベースの利用方法
+
+公開済みのファイルを利用すれば、ID 検索のためにビルダーや API トークンは必要ありません。用途に合う方法を選べます。
+
+- **Python から利用.** `MappingResolver` を使いボット、収集ツール、作品カタログで ID を照合します。
+- **SQLite で直接照会.** Python、Rust、Go、Node.js などの SQLite ドライバーからオフラインで利用します。
+- **データ分析・インポート.** TSV / JSONL を分析処理や外部データベースへ取り込みます。
+- **共通の作品 ID.** `amdb:<anchor_id>` を保存して別プロジェクトの同じ作品へ接続します。
+- **出典を調査.** 証拠データベースで疑わしい対応の根拠を確認します。
+
+ビルドせずに配布 SQLite を取得できます。
+
+```bash
+curl -fL -o mappings.db \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.db
+```
+
+リポジトリの Python パッケージをインストールして `MappingResolver` を利用します（`python -m pip install -e .`）。
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("mappings.db")
+if resolver.available():
+    matches = resolver.resolve({"mal": "1"})
+    print(matches)  # Verified, direct and conflict-safe provider IDs
+```
+
+標準の Python `sqlite3` で安定した AMDB ID と外部 ID を読む例です。
+
+```python
+import sqlite3
+
+with sqlite3.connect("file:mappings.db?mode=ro", uri=True) as db:
+    rows = db.execute("""
+        SELECT entity.anchor_id, other.provider, other.external_id
+        FROM nodes AS seed
+        JOIN entity_nodes AS seed_member ON seed_member.node_id = seed.id
+        JOIN entities AS entity ON entity.entity_id = seed_member.entity_id
+        JOIN entity_nodes AS member ON member.entity_id = entity.entity_id
+        JOIN nodes AS other ON other.id = member.node_id
+        WHERE seed.provider = ? AND seed.external_id = ?
+        ORDER BY other.provider, other.external_id
+    """, ("mal", "1")).fetchall()
+
+for anchor_id, provider, external_id in rows:
+    print(f"amdb:{anchor_id}", provider, external_id)
+```
+
+この SQL は **AMDB 作品グループ**を表示し、厳密な一段階の resolver と同義ではありません。競合を除いた直接照会には `MappingResolver.resolve()` を使います。保存するのは `entity_id` ではなく `anchor_id` です。
+
+TSV / JSONL ファイルは `zstd` で展開して処理できます。フィールドはリリース節を参照してください。
+
+```bash
+curl -fL -o mappings.tsv.zst \
+  https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/mappings.tsv.zst
+zstd -dc mappings.tsv.zst | head -n 5
+```
+
+Timestamp DB と併用する場合は互換のあるリリースとマニフェストを確認し、SHA-256 を検証してください。
 
 ## 信頼度と競合
 
