@@ -14,22 +14,42 @@
 
 Base reproductible des correspondances d'identifiants d'anime entre services, avec traçabilité des sources. Elle fournit des IDs stables et des recherches SQLite compactes.
 
+<!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## La base en chiffres
 
-**Environ 35 000 titres d'anime distincts**, dont **34 851 identités AMDB stables** dans l'instantané vérifié. Il s'agit d'un catalogue d'identités, sans garantie que chaque service couvre tous ces titres.
+**≈35,000 titres d'anime distincts**
+
+**34,851 identités AMDB stables vérifiées.** Aucune garantie de couverture totale par fournisseur.
 
 | Indicateur | Valeur |
 | --- | ---: |
-| Titres AMDB uniques et stables | **34,851** (≈35k) |
+| Titres AMDB stables | **34,851** |
 | Espaces d'ID fournisseurs | **55** |
-| Jeux de données sources | **18** |
+| Jeux sources | **18** |
 | Liens acceptés | **1,225,741** |
-| Routes dirigées sûres exportées | **2,386,529** |
+| Routes dirigées sûres | **2,386,529** |
 | Conflits directionnels | **22,021** |
-| Enregistrements importés | **803,711** |
+| Enregistrements sources | **803,711** |
 | Relations de preuves | **2,346,745** |
+| Taille SQLite | **79.7 MiB** |
+| SQLite compressée | **16.5 MiB** |
 
-Instantané du **5 novembre 2026**, version [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Ce ne sont pas des compteurs en temps réel. Les valeurs récentes figurent dans [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Le nombre AMDB a été recoupé avec le build Timestamp DB correspondant.
+### Performance des recherches locales
+
+| Indicateur | Valeur |
+| --- | ---: |
+| Médiane | **0.489 ms** |
+| Moyenne | **0.505 ms** |
+| p95 | **0.657 ms** |
+| p99 | **0.689 ms** |
+| Requêtes séquentielles/s | **1,974** |
+| Téléchargement et construction | **—** |
+
+Appels séquentiels MappingResolver sur SQLite publiée avec cache chaud, Linux / Python 3.12. 180 IDs × 2 tours ; pas de latence réseau/API.
+
+Instantané de version: **2026-11-05**, [v2026.11.05.24](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). [Manifeste actuel](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+
+<!-- END AUTO-GENERATED DATABASE STATS -->
 
 ## Fonctionnalités
 

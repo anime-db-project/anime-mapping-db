@@ -14,22 +14,42 @@
 
 Eine reproduzierbare Datenbank mit Herkunftsnachweisen für Anime-Titelkennungen verschiedener Dienste. Sie bietet stabile Projekt-IDs und kompakte SQLite-Abfragen.
 
+<!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## Datenbank in Zahlen
 
-**Rund 35.000 unterschiedliche Anime-Titel** mit **34.851 stabilen AMDB-Identitäten** im geprüften Snapshot. Diese Zahl beschreibt das gemeinsame Identitätsverzeichnis und keine vollständige Abdeckung durch jeden Anbieter.
+**≈35,000 unterschiedliche Anime-Titel**
+
+**34,851 verifizierte stabile AMDB-Identitäten.** Nicht jeder Anbieter deckt alle diese Werke ab.
 
 | Kennzahl | Wert |
 | --- | ---: |
-| Stabile AMDB-Titelidentitäten | **34,851** (≈35k) |
+| Stabile AMDB-Titel | **34,851** |
 | Provider-ID-Namensräume | **55** |
-| Eingabedatensätze | **18** |
-| Akzeptierte Zuordnungskanten | **1,225,741** |
-| Sichere gerichtete Exportrouten | **2,386,529** |
+| Quelldatensätze | **18** |
+| Akzeptierte Mapping-Kanten | **1,225,741** |
+| Sichere gerichtete Routen | **2,386,529** |
 | Gerichtete Konflikte | **22,021** |
-| Importierte Quellrecords | **803,711** |
+| Quellrecords | **803,711** |
 | Evidenzbeziehungen | **2,346,745** |
+| SQLite-Größe | **79.7 MiB** |
+| Komprimierte SQLite-Größe | **16.5 MiB** |
 
-Stand: **5. November 2026**, Release [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Die Zahlen sind ein Snapshot, kein Live-Zähler. Aktuelle Werte stehen in [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Die AMDB-Anzahl wurde mit dem entsprechenden Timestamp-DB-Build abgeglichen.
+### Lokale Abfrageleistung
+
+| Kennzahl | Wert |
+| --- | ---: |
+| Median | **0.489 ms** |
+| Mittelwert | **0.505 ms** |
+| p95 | **0.657 ms** |
+| p99 | **0.689 ms** |
+| Sequentielle Abfragen/s | **1,974** |
+| Quellenbezug und DB-Aufbau | **—** |
+
+Sequentielle MappingResolver-Lookups auf der Release-SQLite mit warmem Cache, Linux / Python 3.12. 180 IDs × 2 Runden; keine Netzwerklatenz.
+
+Release-Snapshot: **2026-11-05**, [v2026.11.05.24](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). [Aktuelles Manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+
+<!-- END AUTO-GENERATED DATABASE STATS -->
 
 ## Funktionen
 

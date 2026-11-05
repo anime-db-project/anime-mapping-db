@@ -14,22 +14,42 @@
 
 Base reproducible de correspondencias entre identificadores de anime de distintos servicios, con trazabilidad. Ofrece IDs estables propios y consultas SQLite compactas.
 
+<!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## La base de datos en cifras
 
-**Unos 35.000 títulos de anime únicos**, con **34.851 identidades AMDB estables** en la instantánea verificada. Es un catálogo de identidades compartidas, no una promesa de cobertura total por proveedor.
+**≈35,000 títulos de anime únicos**
+
+**34,851 identidades AMDB estables verificadas.** No implica cobertura completa en cada proveedor.
 
 | Indicador | Valor |
 | --- | ---: |
-| Títulos AMDB estables y únicos | **34,851** (≈35k) |
-| Espacios de IDs de proveedores | **55** |
-| Datasets de entrada | **18** |
+| Títulos AMDB estables | **34,851** |
+| Espacios de ID | **55** |
+| Datasets de origen | **18** |
 | Relaciones aceptadas | **1,225,741** |
-| Rutas dirigidas seguras exportadas | **2,386,529** |
+| Rutas dirigidas seguras | **2,386,529** |
 | Conflictos dirigidos | **22,021** |
-| Registros de origen importados | **803,711** |
+| Registros de origen | **803,711** |
 | Relaciones de evidencia | **2,346,745** |
+| Tamaño SQLite | **79.7 MiB** |
+| SQLite comprimido | **16.5 MiB** |
 
-Datos del **5 de noviembre de 2026**, versión [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Son valores de una instantánea, no contadores en directo. La información actualizada está en [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Las identidades AMDB se cotejaron con la compilación correspondiente de Timestamp DB.
+### Velocidad de consulta local
+
+| Indicador | Valor |
+| --- | ---: |
+| Mediana | **0.489 ms** |
+| Media | **0.505 ms** |
+| p95 | **0.657 ms** |
+| p99 | **0.689 ms** |
+| Consultas secuenciales/s | **1,974** |
+| Descarga de fuentes y compilación | **—** |
+
+Consultas secuenciales MappingResolver con caché caliente sobre SQLite publicada, Linux / Python 3.12. 180 IDs × 2 rondas. No es latencia de red/API.
+
+Versión de referencia: **2026-11-05**, [v2026.11.05.24](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). [Manifiesto actual](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+
+<!-- END AUTO-GENERATED DATABASE STATS -->
 
 ## Funciones
 

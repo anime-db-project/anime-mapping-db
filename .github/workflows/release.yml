@@ -16,6 +16,7 @@ on:
     paths:
       - "anime_mapping_db/**"
       - "pyproject.toml"
+      - "scripts/**"
       - ".github/workflows/release.yml"
     tags:
       - "v*"
@@ -101,8 +102,13 @@ jobs:
           fi
 
       - name: Build fresh databases
+        id: build
         if: steps.existing_release.outputs.exists != 'true'
-        run: python -m anime_mapping_db build --force
+        shell: bash
+        run: |
+          started=$(date +%s)
+          python -m anime_mapping_db build --force
+          echo "seconds=$(($(date +%s) - started))" >> "$GITHUB_OUTPUT"
 
       - name: Choose release tag
         id: meta
@@ -156,6 +162,17 @@ jobs:
           print(f"engine_push={'true' if engine_push else 'false'}")
           PY
 
+      - name: Benchmark released SQLite
+        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
+        shell: bash
+        run: |
+          python scripts/benchmark_lookup.py \
+            --db release/mappings.db \
+            --samples 300 --rounds 2 \
+            --build-seconds "${{ steps.build.outputs.seconds }}" \
+            --output release/performance.json
+          (cd release && sha256sum performance.json >> SHA256SUMS)
+
       - name: Verify release checksums
         if: steps.existing_release.outputs.exists != 'true'
         run: cd release && sha256sum --check SHA256SUMS
@@ -173,6 +190,36 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "$tag" \
             --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. GitHub provides the repository Source code (zip) and Source code (tar.gz) archives automatically; this project does not upload duplicate source bundles. See manifest.json for source hashes, schemas and counts."
+
+      - name: Refresh seven README translations from published release
+        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            # The run may have started from a tag or before another main commit.
+            git fetch origin main
+            git switch -C automated-readme-stats origin/main
+            python scripts/update_readme_stats.py \
+              --manifest release/manifest.json \
+              --runtime release/mappings.db \
+              --performance release/performance.json
+            git add README.md docs/README.*.md
+            if git diff --cached --quiet; then
+              echo "README statistics already match the published release."
+              break
+            fi
+            git commit -m "docs: refresh stats for ${{ steps.meta.outputs.tag }} [skip ci]"
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [[ "$attempt" == 3 ]]; then
+              echo "Unable to update main after three non-force attempts" >&2
+              exit 1
+            fi
+          done
 
       - name: No source changes
         if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'

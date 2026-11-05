@@ -14,22 +14,42 @@
 
 A reproducible, provenance-aware database of cross-service anime title identifiers. It provides a stable project identity and compact SQLite lookups for other applications.
 
+<!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## Database at a glance
 
-**≈35,000 unique anime titles**, represented by **34,851 stable AMDB identities** in this verified snapshot. This is a shared identity catalog, not a claim that every source covers every anime.
+**≈35,000 unique anime titles**
+
+**34,851 verified stable AMDB identities.** Counts describe the versioned title-identity catalog, not coverage by every upstream provider.
 
 | Metric | Value |
 | --- | ---: |
-| Unique stable AMDB title identities | **34,851** (≈35k) |
+| Stable AMDB title identities | **34,851** |
 | Provider ID namespaces | **55** |
-| Upstream dataset inputs | **18** |
+| Source datasets | **18** |
 | Accepted mapping edges | **1,225,741** |
-| Resolver-safe directed export routes | **2,386,529** |
-| Directional conflicts detected | **22,021** |
-| Imported source records | **803,711** |
+| Safe directed export routes | **2,386,529** |
+| Directional conflicts | **22,021** |
+| Source records | **803,711** |
 | Evidence relationships | **2,346,745** |
+| Runtime SQLite size | **79.7 MiB** |
+| Compressed SQLite size | **16.5 MiB** |
 
-Snapshot: **5 November 2026**, release [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Counts describe that release and are not live counters; for newer releases, read the published [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). The anchor count was cross-checked against the matching Anime Timestamp DB build's recorded mapping fingerprint.
+### Local lookup performance
+
+| Metric | Value |
+| --- | ---: |
+| Median lookup | **0.489 ms** |
+| Mean lookup | **0.505 ms** |
+| p95 lookup | **0.657 ms** |
+| p99 lookup | **0.689 ms** |
+| Sequential queries per second | **1,974** |
+| Source download + database build time | **—** |
+
+Warm-cache, sequential, read-only MappingResolver calls against the released SQLite on Linux / Python 3.12. 180 IDs × 2 rounds. Not network/API latency.
+
+Release snapshot: **2026-11-05**, [v2026.11.05.24](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). [Current release manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+
+<!-- END AUTO-GENERATED DATABASE STATS -->
 
 ## Features
 

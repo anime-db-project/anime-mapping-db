@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import platform
+import sys
 import sqlite3
 import statistics
 import time
@@ -27,6 +29,8 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=1200)
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--seed", type=int, default=20261101)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--build-seconds", type=int)
     args = parser.parse_args()
 
     db = args.db.resolve()
@@ -55,6 +59,7 @@ def main() -> None:
 
     timings_ms: list[float] = []
     result_sizes: list[int] = []
+    benchmark_start = time.perf_counter()
     for _round in range(max(1, args.rounds)):
         for provider, external_id in sample:
             start = time.perf_counter_ns()
@@ -63,7 +68,13 @@ def main() -> None:
             timings_ms.append(elapsed / 1_000_000)
             result_sizes.append(len(result))
 
+    elapsed_seconds = max(time.perf_counter() - benchmark_start, 1e-9)
     payload = {
+        "kind": "mapping-resolver-warm-sequential-v1",
+        "environment": f"{platform.system()} / Python {sys.version_info.major}.{sys.version_info.minor}",
+        "cache_mode": "warm",
+        "build_seconds": args.build_seconds,
+        "lookups_per_second": round(len(timings_ms) / elapsed_seconds, 1),
         "database": str(db),
         "database_bytes": db.stat().st_size,
         "sampled_ids": sample_count,
@@ -76,7 +87,11 @@ def main() -> None:
         "max_ms": round(max(timings_ms), 4),
         "mean_targets": round(statistics.fmean(result_sizes), 3),
     }
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    report = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(report, encoding="utf-8")
+    print(report, end="")
 
 
 if __name__ == "__main__":

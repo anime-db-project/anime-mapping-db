@@ -14,22 +14,42 @@
 
 Database riproducibile di corrispondenze fra ID anime di servizi diversi, con tracciabilità delle fonti. Offre ID stabili del progetto e interrogazioni SQLite compatte.
 
+<!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## Il database in numeri
 
-**Circa 35.000 titoli anime unici**, rappresentati da **34.851 identità AMDB stabili** nello snapshot verificato. È un catalogo di identità comuni, non la garanzia di copertura completa di ogni provider.
+**≈35,000 titoli anime unici**
+
+**34,851 identità AMDB stabili verificate.** Non significa copertura totale da ogni provider.
 
 | Indicatore | Valore |
 | --- | ---: |
-| Titoli AMDB stabili e unici | **34,851** (≈35k) |
-| Namespace ID dei provider | **55** |
-| Dataset in ingresso | **18** |
+| Titoli AMDB stabili | **34,851** |
+| Namespace di ID | **55** |
+| Dataset sorgenti | **18** |
 | Collegamenti accettati | **1,225,741** |
-| Percorsi diretti sicuri esportati | **2,386,529** |
+| Percorsi diretti sicuri | **2,386,529** |
 | Conflitti direzionali | **22,021** |
-| Record sorgenti importati | **803,711** |
-| Relazioni di evidenza | **2,346,745** |
+| Record sorgenti | **803,711** |
+| Relazioni di prova | **2,346,745** |
+| Dimensione SQLite | **79.7 MiB** |
+| SQLite compresso | **16.5 MiB** |
 
-Snapshot del **5 novembre 2026**, release [`v2026.11.05.24`](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). Sono dati della release, non contatori in tempo reale. I valori più recenti sono in [`manifest.json`](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json). Il numero AMDB è stato confrontato con il relativo build Timestamp DB.
+### Prestazioni di ricerca locale
+
+| Indicatore | Valore |
+| --- | ---: |
+| Mediana | **0.489 ms** |
+| Media | **0.505 ms** |
+| p95 | **0.657 ms** |
+| p99 | **0.689 ms** |
+| Query sequenziali/s | **1,974** |
+| Download sorgenti e build DB | **—** |
+
+Query sequenziali MappingResolver con cache calda sul DB della release, Linux / Python 3.12. 180 ID × 2 round; non misura la latenza delle API.
+
+Snapshot della release: **2026-11-05**, [v2026.11.05.24](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). [Manifest attuale](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+
+<!-- END AUTO-GENERATED DATABASE STATS -->
 
 ## Funzionalità
 
