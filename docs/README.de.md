@@ -22,6 +22,22 @@ Eine reproduzierbare Datenbank mit Herkunftsnachweisen für Anime-Titelkennungen
 - Getrennte kompakte Laufzeit- und ausführliche Evidenzdatenbanken.
 - Versionierte Releases mit komprimierten DBs, Textexporten, Manifesten und Prüfsummen.
 
+## Identität und Zuordnungsregeln
+
+Anime Mapping DB stellt mit `amdb:<anchor_id>` eine eigene, dauerhaft stabile Titelkennung unabhängig von MAL, AniList und weiteren Diensten bereit. Diese darf über Builds hinweg gespeichert werden. `entity_id` ist dagegen nur ein dichter interner SQLite-Schlüssel einer bestimmten Datenbankversion.
+
+Externe Kennungen sind `(provider, external_id)`-Knoten. Bestätigte Knoten können eine Projekteinheit bilden, allerdings dürfen nicht zwei unterschiedliche IDs desselben Anbieters in einer Einheit landen. Mehrdeutige Zuordnungen werden nicht erraten.
+
+Bei Neubauten bleiben Anker für unveränderte oder erweiterte Einheiten erhalten. Gültige Zusammenführungen behalten einen Anker und speichern Weiterleitungen; Aufspaltungen erhalten nötigenfalls neue Kennungen. Ehemalige IDs werden nicht für fremde Titel wiederverwendet.
+
+```text
+(provider, external_id) ──accepted edge── (provider, external_id)
+          \                         /
+           \── stable amdb:<anchor_id> ──/
+                   │
+              anchor redirects
+```
+
 ## Datenquellen
 
 Der Builder kombiniert 18 Eingaben aus direkten Mapping-Datensätzen und streng geprüften ergänzenden Katalogen. Ergänzungen dürfen ohne unabhängige Bestätigung keine neue Titelidentität begründen. Quellen und Lizenzen stehen im Release-Manifest.
@@ -46,6 +62,39 @@ Der Builder kombiniert 18 Eingaben aus direkten Mapping-Datensätzen und streng 
 
 `amdb:<anchor_id>` ist die stabile Titelkennung. Externe IDs sind belegte Aliasse; die interne `entity_id` gilt nur für den jeweiligen Build. Mehrdeutige Zuordnungen werden nicht willkürlich ausgewählt. [Identity contract](../docs/IDENTITY.md).
 
+## Eingaben und Herkunft
+
+Der Builder lädt öffentliche Massendatensätze, speichert Quellbelege und erzeugt danach den Laufzeitgraphen. Datensätze erhalten Quellen- und Evidenzgruppen, sodass Spiegel und abgeleitete Daten nicht als unabhängige Bestätigung zählen.
+
+Direkte Quellen können Kanten begründen. Ergänzende Kataloge wie AnimeAPI, AnimeAggregations, AnimeThemes-Kennungen und Wikidata-Multi-ID ergänzen nur nach Prüfung von mindestens zwei bereits bekannten, konfliktfreien Ankern. Das verhindert die Gleichsetzung von Titel, Staffel und Franchise.
+
+Adressen, Hashes und Versionen stehen im Release-Manifest; `anime_mapping_db/config.py` enthält die Eingabekonfiguration. Für lokale SQLite-Auflösung ist keine externe REST-API nötig.
+
+```text
+1. Öffentliche Eingabedaten laden
+2. Evidenz nach Herkunft gruppieren
+3. Direkte Zuordnungen prüfen und bewerten
+4. Konflikte und stabile AMDB-IDs bestimmen
+5. Audit, Komprimierung und Paketierung
+```
+
+## Aufbau der Datenbanken
+
+Die kompakte `mappings.db` enthält Knoten, akzeptierte und offene Kanten, gerichtete Konflikte, stabile Einheiten, Weiterleitungen und manuelle Übersteuerungen. Sie ist für direkte indexierte Abfragen ausgelegt.
+
+Die getrennte `mappings-evidence.db` bewahrt Datensätze, Quellbeobachtungen, Evidenzgruppen und ursprüngliche Beziehungen. Reine ID-Resolver benötigen diese Datenbank nicht. Beide Dateien werden vor der Veröffentlichung geprüft.
+
+```text
+mappings.db
+  metadata · nodes · edges · conflicts
+  entities · entity_nodes · anchor_redirects
+  mapping_overrides · mapping_override_history
+
+mappings-evidence.db
+  metadata · datasets · nodes · evidence_groups
+  records · record_nodes · edge_evidence (view)
+```
+
 ## Schnellstart
 
 Python 3.11+:
@@ -56,6 +105,44 @@ cd anime-mapping-db
 python -m pip install -e .
 python -m anime_mapping_db build --force
 python -m anime_mapping_db status
+```
+
+## Resolver verwenden
+
+Ein Lookup erhält Namespace und externe ID und liefert nur eindeutige direkte Ziele. Gleiche numerische Kennungen bei MAL und AniList beweisen ohne belegte Kante keine Gleichheit.
+
+Anwendungen können den Python-Resolver oder SQLite verwenden. Die stabilen AMDB-IDs liegen in Entity- und Anchor-Tabellen; vermeiden Sie unbeschränkte rekursive Verknüpfungen.
+
+```python
+from anime_mapping_db.resolver import MappingResolver
+
+resolver = MappingResolver("data/mappings/mappings.db")
+ids = resolver.resolve({"mal": "1"})
+print(ids)
+```
+
+```bash
+python -m anime_mapping_db status
+python -m anime_mapping_db build --force
+python -m anime_mapping_db anchors
+python -m anime_mapping_db package-release --tag v1.0.0 --output release
+```
+
+## Konfidenz und Konflikte
+
+Die Konfidenz berücksichtigt die stärkste Quelle, unabhängige Evidenzgruppen und zusätzliche Belege. Eine ausreichend starke Einzelquelle oder zwei unabhängige Gruppen können eine Kante bestätigen. Schwächere Verbindungen bleiben Kandidaten.
+
+Konflikte sind gerichtet: `A → B` kann uneindeutig sein, obwohl die Umkehrung sicher ist. Manuelle Entscheidungen können gezielt annehmen oder verwerfen und bewahren eine Historie. Ihre Folgen für andere Verbraucher müssen berücksichtigt werden.
+
+```text
+confidence = min(100,
+    max_weight
+    + 8 × (distinct_evidence_groups - 1)
+    + 2 × min(5, evidence_count - distinct_evidence_groups)
+)
+
+accepted: max_weight >= 80 OR distinct_evidence_groups >= 2
+candidate: unconfirmed relationships
 ```
 
 ## Datenbanken und Releases
@@ -70,6 +157,51 @@ Für Anwendungen stehen `mappings.db.zst` und `manifest.json` im neuesten Releas
 data/mappings/mappings.db
 data/mappings/mappings-evidence.db
 ```
+
+## Release-Dateien und Nutzung
+
+Jedes Release enthält Laufzeit- und Evidenzdatenbanken, zstd-Dateien, portable gerichtete Exporte, ein Manifest und SHA-256. Die Textformate enthalten bereinigte eindeutige Resolver-Routen statt roher Graphkanten.
+
+`manifest.json` ist die maßgebliche Quelle für Schemas, Dateigrößen, Quellversionen, Hashes, Zahlen und Fingerprints. Diese Werte ändern sich; feste Gesamtzahlen im README wären veraltet. Prüfen Sie heruntergeladene Dateien anhand der Checksums.
+
+Releases werden nach Änderungen, regelmäßigen Quellprüfungen, Tags oder manuell erzeugt. Unveränderte Quellen können einen geplanten Release verhindern. GitHub liefert Quellarchive bereits standardmäßig.
+
+| Datei | Zweck |
+| --- | --- |
+| `mappings.db` | Kompakte Laufzeit-SQLite |
+| `mappings.db.zst` | Komprimierte Runtime-DB |
+| `mappings-evidence.db.zst` | Komprimierte Evidenz-DB |
+| `mappings.tsv.zst` | Gerichtete TSV-Routen |
+| `mappings.jsonl.zst` | Gerichtete JSON-Lines-Routen |
+| `manifest.json` | Schema, Quellen, Umfang und Hashes |
+| `SHA256SUMS` | SHA-256-Prüfsummen |
+
+```text
+source_provider
+source_id
+target_provider
+target_id
+confidence
+evidence_count
+evidence_group_count
+max_weight
+origin
+```
+
+`source_provider` — Quellanbieter; `source_id` — Quell-ID; `target_provider` — Zielanbieter; `target_id` — Ziel-ID; `confidence` — Konfidenz; `evidence_count` — Beleganzahl; `evidence_group_count` — Unabhängige Gruppen; `max_weight` — Maximalgewicht; `origin` — Herkunft
+
+## Prüfung und Entwicklung
+
+CI prüft Tests, Formatierung, SQLite-Integrität, Anker, Redirects, Vertrauen, Konflikte und Release-Pakete. Neue Importer sollten zusammen mit Tests geändert werden.
+
+```bash
+python -m pip install -e .
+python -m pip install pytest ruff
+python -m pytest -q
+python -m ruff check .
+```
+
+[Identitätsvertrag](../docs/IDENTITY.md)
 
 ## Dokumentation
 
