@@ -19,18 +19,18 @@ A reproducible, provenance-aware database of cross-service anime title identifie
 
 **≈35,000 unique anime titles**
 
-**34,851 verified stable AMDB identities.** Counts describe the versioned title-identity catalog, not coverage by every upstream provider.
+**34,853 verified stable AMDB identities.** Counts describe the versioned title-identity catalog, not coverage by every upstream provider.
 
 | Metric | Value |
 | --- | ---: |
-| Stable AMDB title identities | **34,851** |
+| Stable AMDB title identities | **34,853** |
 | Provider ID namespaces | **55** |
 | Source datasets | **18** |
-| Accepted mapping edges | **1,225,741** |
-| Safe directed export routes | **2,386,529** |
+| Accepted mapping edges | **1,225,745** |
+| Safe directed export routes | **2,386,537** |
 | Directional conflicts | **22,021** |
-| Source records | **803,711** |
-| Evidence relationships | **2,346,745** |
+| Source records | **803,716** |
+| Evidence relationships | **2,346,750** |
 | Runtime SQLite size | **79.7 MiB** |
 | Compressed SQLite size | **16.5 MiB** |
 
@@ -38,16 +38,16 @@ A reproducible, provenance-aware database of cross-service anime title identifie
 
 | Metric | Value |
 | --- | ---: |
-| Median lookup | **0.489 ms** |
-| Mean lookup | **0.505 ms** |
-| p95 lookup | **0.657 ms** |
-| p99 lookup | **0.689 ms** |
-| Sequential queries per second | **1,974** |
-| Source download + database build time | **—** |
+| Median lookup | **0.473 ms** |
+| Mean lookup | **0.476 ms** |
+| p95 lookup | **0.519 ms** |
+| p99 lookup | **0.570 ms** |
+| Sequential queries per second | **2,093** |
+| Source download + database build time | **99 s** |
 
-Warm-cache, sequential, read-only MappingResolver calls against the released SQLite on Linux / Python 3.12. 180 IDs × 2 rounds. Not network/API latency.
+Warm-cache, sequential, read-only MappingResolver calls against the released SQLite on Linux / Python 3.12. 300 IDs × 2 rounds. Not network/API latency.
 
-Release snapshot: **2026-11-05**, [v2026.11.05.24](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.24). [Current release manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Release snapshot: **2026-11-05**, [v2026.11.05.25](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.25). [Current release manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
