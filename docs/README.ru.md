@@ -36,15 +36,15 @@
 
 | Показатель | Значение |
 | --- | ---: |
-| Медианная задержка | **0.473 ms** |
-| Средняя задержка | **0.476 ms** |
-| Задержка p95 | **0.519 ms** |
-| Задержка p99 | **0.570 ms** |
-| Последовательные запросы/с | **2,093** |
+| Медианная задержка | **0.359 ms** |
+| Средняя задержка | **0.363 ms** |
+| Задержка p95 | **0.408 ms** |
+| Задержка p99 | **0.446 ms** |
+| Последовательные запросы/с | **2,744** |
 
 Последовательные запросы MappingResolver к релизной SQLite с прогретым кэшем, Linux / Python 3.12. 300 ID × 2 повторения. Это не задержка сетевых API.
 
-Снимок релиза: **2026-11-05**, [v2026.11.05.25](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.25). [Актуальный манифест](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Снимок релиза: **2026-11-06**, [v2026.11.06.27](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.06.27). [Актуальный манифест](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 

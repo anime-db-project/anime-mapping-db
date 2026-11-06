@@ -36,15 +36,15 @@ This release contains **34,853 indexed AMDB identity groups**. This measures ind
 
 | Metric | Value |
 | --- | ---: |
-| Median lookup | **0.473 ms** |
-| Mean lookup | **0.476 ms** |
-| p95 lookup | **0.519 ms** |
-| p99 lookup | **0.570 ms** |
-| Sequential queries per second | **2,093** |
+| Median lookup | **0.359 ms** |
+| Mean lookup | **0.363 ms** |
+| p95 lookup | **0.408 ms** |
+| p99 lookup | **0.446 ms** |
+| Sequential queries per second | **2,744** |
 
 Warm-cache, sequential, read-only MappingResolver calls against the released SQLite on Linux / Python 3.12. 300 IDs × 2 rounds. Not network/API latency.
 
-Release snapshot: **2026-11-05**, [v2026.11.05.25](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.05.25). [Current release manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Release snapshot: **2026-11-06**, [v2026.11.06.27](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.06.27). [Current release manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
