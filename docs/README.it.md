@@ -17,18 +17,18 @@ Database riproducibile di corrispondenze fra ID anime di servizi diversi, con tr
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## Il database in numeri
 
-Questa versione contiene **34,860 gruppi di identità AMDB indicizzati**. È una misura del database, **non un conteggio verificato di titoli anime unici**.
+Questa versione contiene **34,867 gruppi di identità AMDB indicizzati**. È una misura del database, **non un conteggio verificato di titoli anime unici**.
 
 | Indicatore | Valore |
 | --- | ---: |
-| Gruppi di identità AMDB indicizzati | **34,860** |
+| Gruppi di identità AMDB indicizzati | **34,867** |
 | Namespace di ID | **55** |
 | Dataset sorgenti | **18** |
-| Collegamenti accettati | **1,225,755** |
-| Percorsi diretti sicuri | **2,386,557** |
-| Conflitti direzionali | **22,021** |
-| Record sorgenti | **803,730** |
-| Relazioni di prova | **2,346,764** |
+| Collegamenti accettati | **1,225,739** |
+| Percorsi diretti sicuri | **2,386,612** |
+| Conflitti direzionali | **22,005** |
+| Record sorgenti | **803,590** |
+| Relazioni di prova | **2,346,631** |
 | Dimensione SQLite | **79.7 MiB** |
 | SQLite compresso | **16.5 MiB** |
 
@@ -36,15 +36,15 @@ Questa versione contiene **34,860 gruppi di identità AMDB indicizzati**. È una
 
 | Indicatore | Valore |
 | --- | ---: |
-| Mediana | **0.476 ms** |
-| Media | **0.480 ms** |
-| p95 | **0.518 ms** |
-| p99 | **0.551 ms** |
-| Query sequenziali/s | **2,075** |
+| Mediana | **0.339 ms** |
+| Media | **0.341 ms** |
+| p95 | **0.387 ms** |
+| p99 | **0.416 ms** |
+| Query sequenziali/s | **2,920** |
 
 Query sequenziali MappingResolver con cache calda sul DB della release, Linux / Python 3.12. 300 ID × 2 round; non misura la latenza delle API.
 
-Snapshot della release: **2026-11-07**, [v2026.11.07.29](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.07.29). [Manifest attuale](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Snapshot della release: **2026-11-09**, [v2026.11.09.31](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.09.31). [Manifest attuale](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
