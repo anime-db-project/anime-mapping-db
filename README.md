@@ -24,11 +24,11 @@ This release contains **34,867 indexed AMDB identity groups**. This measures ind
 | Indexed AMDB identity groups | **34,867** |
 | Provider ID namespaces | **55** |
 | Source datasets | **18** |
-| Accepted mapping edges | **1,225,739** |
-| Safe directed export routes | **2,386,612** |
-| Directional conflicts | **22,005** |
-| Source records | **803,590** |
-| Evidence relationships | **2,346,631** |
+| Accepted mapping edges | **1,225,854** |
+| Safe directed export routes | **2,386,752** |
+| Directional conflicts | **22,021** |
+| Source records | **803,856** |
+| Evidence relationships | **2,346,897** |
 | Runtime SQLite size | **79.7 MiB** |
 | Compressed SQLite size | **16.5 MiB** |
 
@@ -36,15 +36,15 @@ This release contains **34,867 indexed AMDB identity groups**. This measures ind
 
 | Metric | Value |
 | --- | ---: |
-| Median lookup | **0.339 ms** |
-| Mean lookup | **0.341 ms** |
-| p95 lookup | **0.387 ms** |
-| p99 lookup | **0.416 ms** |
-| Sequential queries per second | **2,920** |
+| Median lookup | **0.224 ms** |
+| Mean lookup | **0.227 ms** |
+| p95 lookup | **0.253 ms** |
+| p99 lookup | **0.282 ms** |
+| Sequential queries per second | **4,402** |
 
 Warm-cache, sequential, read-only MappingResolver calls against the released SQLite on Linux / Python 3.12. 300 IDs × 2 rounds. Not network/API latency.
 
-Release snapshot: **2026-11-09**, [v2026.11.09.31](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.09.31). [Current release manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Release snapshot: **2026-11-10**, [v2026.11.10.32](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.10.32). [Current release manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 

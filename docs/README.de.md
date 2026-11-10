@@ -24,11 +24,11 @@ Dieses Release enthält **34,867 indexierte AMDB-Identitätsgruppen**. Das ist e
 | Indexierte AMDB-Identitätsgruppen | **34,867** |
 | Provider-ID-Namensräume | **55** |
 | Quelldatensätze | **18** |
-| Akzeptierte Mapping-Kanten | **1,225,739** |
-| Sichere gerichtete Routen | **2,386,612** |
-| Gerichtete Konflikte | **22,005** |
-| Quellrecords | **803,590** |
-| Evidenzbeziehungen | **2,346,631** |
+| Akzeptierte Mapping-Kanten | **1,225,854** |
+| Sichere gerichtete Routen | **2,386,752** |
+| Gerichtete Konflikte | **22,021** |
+| Quellrecords | **803,856** |
+| Evidenzbeziehungen | **2,346,897** |
 | SQLite-Größe | **79.7 MiB** |
 | Komprimierte SQLite-Größe | **16.5 MiB** |
 
@@ -36,15 +36,15 @@ Dieses Release enthält **34,867 indexierte AMDB-Identitätsgruppen**. Das ist e
 
 | Kennzahl | Wert |
 | --- | ---: |
-| Median | **0.339 ms** |
-| Mittelwert | **0.341 ms** |
-| p95 | **0.387 ms** |
-| p99 | **0.416 ms** |
-| Sequentielle Abfragen/s | **2,920** |
+| Median | **0.224 ms** |
+| Mittelwert | **0.227 ms** |
+| p95 | **0.253 ms** |
+| p99 | **0.282 ms** |
+| Sequentielle Abfragen/s | **4,402** |
 
 Sequentielle MappingResolver-Lookups auf der Release-SQLite mit warmem Cache, Linux / Python 3.12. 300 IDs × 2 Runden; keine Netzwerklatenz.
 
-Release-Snapshot: **2026-11-09**, [v2026.11.09.31](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.09.31). [Aktuelles Manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Release-Snapshot: **2026-11-10**, [v2026.11.10.32](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.10.32). [Aktuelles Manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
