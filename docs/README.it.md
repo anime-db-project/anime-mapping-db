@@ -17,18 +17,18 @@ Database riproducibile di corrispondenze fra ID anime di servizi diversi, con tr
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## Il database in numeri
 
-Questa versione contiene **34,954 gruppi di identità AMDB indicizzati**. È una misura del database, **non un conteggio verificato di titoli anime unici**.
+Questa versione contiene **34,979 gruppi di identità AMDB indicizzati**. È una misura del database, **non un conteggio verificato di titoli anime unici**.
 
 | Indicatore | Valore |
 | --- | ---: |
-| Gruppi di identità AMDB indicizzati | **34,954** |
+| Gruppi di identità AMDB indicizzati | **34,979** |
 | Namespace di ID | **55** |
 | Dataset sorgenti | **18** |
-| Collegamenti accettati | **1,227,230** |
-| Percorsi diretti sicuri | **2,388,814** |
-| Conflitti direzionali | **22,136** |
-| Record sorgenti | **804,238** |
-| Relazioni di prova | **2,348,649** |
+| Collegamenti accettati | **1,227,606** |
+| Percorsi diretti sicuri | **2,389,010** |
+| Conflitti direzionali | **22,225** |
+| Record sorgenti | **804,542** |
+| Relazioni di prova | **2,349,244** |
 | Dimensione SQLite | **79.8 MiB** |
 | SQLite compresso | **16.5 MiB** |
 
@@ -40,11 +40,11 @@ Questa versione contiene **34,954 gruppi di identità AMDB indicizzati**. È una
 | Media | **0.359 ms** |
 | p95 | **0.395 ms** |
 | p99 | **0.432 ms** |
-| Query sequenziali/s | **2,776** |
+| Query sequenziali/s | **2,780** |
 
 Query sequenziali MappingResolver con cache calda sul DB della release, Linux / Python 3.12. 300 ID × 2 round; non misura la latenza delle API.
 
-Snapshot della release: **2026-11-16**, [v2026.11.16.38](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.16.38). [Manifest attuale](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Snapshot della release: **2026-11-17**, [v2026.11.17.39](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.17.39). [Manifest attuale](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 

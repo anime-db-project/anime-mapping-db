@@ -17,18 +17,18 @@ Base reproductible des correspondances d'identifiants d'anime entre services, av
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## La base en chiffres
 
-Cette version contient **34,954 groupes d'identités AMDB indexés**. Il s'agit d'une mesure de la base, **pas du nombre vérifié de titres d'anime distincts**.
+Cette version contient **34,979 groupes d'identités AMDB indexés**. Il s'agit d'une mesure de la base, **pas du nombre vérifié de titres d'anime distincts**.
 
 | Indicateur | Valeur |
 | --- | ---: |
-| Groupes d'identités AMDB indexés | **34,954** |
+| Groupes d'identités AMDB indexés | **34,979** |
 | Espaces d'ID fournisseurs | **55** |
 | Jeux sources | **18** |
-| Liens acceptés | **1,227,230** |
-| Routes dirigées sûres | **2,388,814** |
-| Conflits directionnels | **22,136** |
-| Enregistrements sources | **804,238** |
-| Relations de preuves | **2,348,649** |
+| Liens acceptés | **1,227,606** |
+| Routes dirigées sûres | **2,389,010** |
+| Conflits directionnels | **22,225** |
+| Enregistrements sources | **804,542** |
+| Relations de preuves | **2,349,244** |
 | Taille SQLite | **79.8 MiB** |
 | SQLite compressée | **16.5 MiB** |
 
@@ -40,11 +40,11 @@ Cette version contient **34,954 groupes d'identités AMDB indexés**. Il s'agit 
 | Moyenne | **0.359 ms** |
 | p95 | **0.395 ms** |
 | p99 | **0.432 ms** |
-| Requêtes séquentielles/s | **2,776** |
+| Requêtes séquentielles/s | **2,780** |
 
 Appels séquentiels MappingResolver sur SQLite publiée avec cache chaud, Linux / Python 3.12. 300 IDs × 2 tours ; pas de latence réseau/API.
 
-Instantané de version: **2026-11-16**, [v2026.11.16.38](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.16.38). [Manifeste actuel](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Instantané de version: **2026-11-17**, [v2026.11.17.39](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.17.39). [Manifeste actuel](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
