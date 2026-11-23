@@ -36,15 +36,15 @@ Esta versión contiene **34,997 grupos de identidades AMDB indexados**. Es una m
 
 | Indicador | Valor |
 | --- | ---: |
-| Mediana | **0.289 ms** |
-| Media | **0.295 ms** |
-| p95 | **0.350 ms** |
-| p99 | **0.419 ms** |
-| Consultas secuenciales/s | **3,383** |
+| Mediana | **0.358 ms** |
+| Media | **0.363 ms** |
+| p95 | **0.413 ms** |
+| p99 | **0.448 ms** |
+| Consultas secuenciales/s | **2,745** |
 
 Consultas secuenciales MappingResolver con caché caliente sobre SQLite publicada, Linux / Python 3.12. 300 IDs × 2 rondas. No es latencia de red/API.
 
-Versión de referencia: **2026-11-23**, [v2026.11.23.46](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.23.46). [Manifiesto actual](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Versión de referencia: **2026-11-23**, [v2026.11.23.47](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.23.47). [Manifiesto actual](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 

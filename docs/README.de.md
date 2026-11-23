@@ -36,15 +36,15 @@ Dieses Release enthält **34,997 indexierte AMDB-Identitätsgruppen**. Das ist e
 
 | Kennzahl | Wert |
 | --- | ---: |
-| Median | **0.289 ms** |
-| Mittelwert | **0.295 ms** |
-| p95 | **0.350 ms** |
-| p99 | **0.419 ms** |
-| Sequentielle Abfragen/s | **3,383** |
+| Median | **0.358 ms** |
+| Mittelwert | **0.363 ms** |
+| p95 | **0.413 ms** |
+| p99 | **0.448 ms** |
+| Sequentielle Abfragen/s | **2,745** |
 
 Sequentielle MappingResolver-Lookups auf der Release-SQLite mit warmem Cache, Linux / Python 3.12. 300 IDs × 2 Runden; keine Netzwerklatenz.
 
-Release-Snapshot: **2026-11-23**, [v2026.11.23.46](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.23.46). [Aktuelles Manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Release-Snapshot: **2026-11-23**, [v2026.11.23.47](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.23.47). [Aktuelles Manifest](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
