@@ -94,6 +94,8 @@ SELECT DISTINCT ?item ?prop ?id WHERE {
     wdt:P1985 wdt:P11349 wdt:P12489 wdt:P12427 wdt:P13424
     wdt:P5732 wdt:P5733 wdt:P11330 wdt:P5845 wdt:P12005
     wdt:P7017 wdt:P9573 wdt:P11039 wdt:P7886 wdt:P11551 wdt:P11176
+    wdt:P1874 wdt:P6466 wdt:P6467 wdt:P7595 wdt:P7596
+    wdt:P8055 wdt:P14440
   }
   ?item ?prop ?id .
 }

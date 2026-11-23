@@ -91,6 +91,16 @@ _WIKIDATA_PROPERTY_FIELDS: dict[str, tuple[str, bool]] = {
     "P7886": ("mediaarts", False),
     "P11551": ("nanime", False),
     "P11176": ("niconico", False),
+    # Streaming catalogue IDs are enrichment only. They do NOT assert
+    # direct equivalence between a season, episode, franchise and series.
+    "P1874": ("netflix", True),
+    "P6466": ("hulu_movie", False),
+    "P6467": ("hulu_series", False),
+    "P7595": ("disneyplus_movie", False),
+    "P7596": ("disneyplus_series", False),
+    # Amazon product ASIN differs from the 26-char Prime Video title URL ID.
+    "P8055": ("amazon_prime_video_asin", False),
+    "P14440": ("primevideo_title", False),
 }
 
 _WIKIDATA_ANCHOR_PROVIDERS: tuple[str, ...] = (
@@ -118,6 +128,13 @@ _WIKIDATA_ENRICHMENT_PROVIDERS = frozenset(
         "mediaarts",
         "nanime",
         "niconico",
+        "netflix",
+        "hulu_movie",
+        "hulu_series",
+        "disneyplus_movie",
+        "disneyplus_series",
+        "amazon_prime_video_asin",
+        "primevideo_title",
     }
 )
 

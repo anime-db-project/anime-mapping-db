@@ -344,12 +344,23 @@ class ExtendedSourceImporterTests(unittest.TestCase):
                 row("Q1", "P8729", "2"),
                 row("Q1", "P5732", "100"),
                 row("Q1", "P11330", "GNEW"),
+                row("Q1", "P1874", "81232639"),
+                row("Q1", "P6466", "e47078f3-1c0e-49a8-9da9-c571a7a20fec"),
+                row("Q1", "P6467", "8d0b59ed-a438-4730-abac-deedc8b6b73e"),
+                row("Q1", "P7595", "wd/abc"),
+                row("Q1", "P7596", "wd/xyz"),
+                row("Q1", "P8055", "B07J68L6MX"),
+                row("Q1", "P14440", "0P9LAJYCUNYVIPXAIRY5FGIGS3"),
                 # Two values for one provider are ambiguous and must not be emitted.
                 row("Q1", "P11176", "ch1"),
                 row("Q1", "P11176", "ch2"),
                 # This Q-item has only one known base anchor and must be ignored.
+                # Multiple different IDs of the same provider are ambiguous.
+                # SPARQL input is sorted by Q-item; keep Q1 rows together.
+                row("Q1", "P7596", "wd/another"),
                 row("Q2", "P4086", "1"),
                 row("Q2", "P5732", "200"),
+                row("Q2", "P7596", "SHOULD_NOT_MATCH"),
             ]
         )
         source.write_text(
@@ -367,6 +378,22 @@ class ExtendedSourceImporterTests(unittest.TestCase):
         self.assertIn("wikidata", providers)
         self.assertIn("bangumi", providers)
         self.assertIn("crunchyroll", providers)
+        self.assertIn("netflix", providers)
+        self.assertTrue(any(r.ids.get("netflix") == ("81232639",) for r in records))
+        self.assertTrue(
+            any(
+                r.ids.get("amazon_prime_video_asin") == ("B07J68L6MX",) for r in records
+            )
+        )
+        for provider in (
+            "hulu_movie",
+            "hulu_series",
+            "disneyplus_movie",
+            "amazon_prime_video_asin",
+            "primevideo_title",
+        ):
+            self.assertIn(provider, providers)
+        self.assertNotIn("disneyplus_series", providers)
         self.assertNotIn("niconico", providers)
         self.assertNotIn("200", values)
         self.assertTrue(

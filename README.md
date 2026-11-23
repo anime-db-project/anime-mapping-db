@@ -91,6 +91,7 @@ The builder combines 18 configured inputs, including direct mapping datasets and
 - [shinkro/community-mapping](https://github.com/shinkro/community-mapping)
 - [notseteve/AnimeAggregations](https://github.com/notseteve/AnimeAggregations)
 - [Wikidata multi-ID](https://www.wikidata.org/)
+  - Extended streaming IDs: Netflix, Disney+, Hulu, and the two distinct Prime Video schemes. Only already-confirmed identities are enriched.
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
