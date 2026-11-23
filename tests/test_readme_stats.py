@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 import tempfile
+from contextlib import closing
 import unittest
 from pathlib import Path
 
@@ -22,9 +23,10 @@ class ReadmeStatisticsTests(unittest.TestCase):
         self.root = Path(self.tempdir.name)
         (self.root / "docs").mkdir()
         self.db = self.root / "mappings.db"
-        with sqlite3.connect(self.db) as conn:
+        with closing(sqlite3.connect(self.db)) as conn:
             conn.execute("CREATE TABLE entities (entity_id INTEGER PRIMARY KEY)")
             conn.executemany("INSERT INTO entities VALUES(?)", [(1,), (2,), (3,)])
+            conn.commit()
         for lang in LANGUAGES:
             path = self.root / (
                 "README.md" if lang == "en" else f"docs/README.{lang}.md"

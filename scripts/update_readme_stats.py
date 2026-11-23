@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -245,7 +246,9 @@ def mib(value: int) -> str:
 def read_entities(path: Path) -> int:
     if not path.is_file():
         raise ValueError(f"Runtime database does not exist: {path}")
-    with sqlite3.connect(f"file:{path.resolve().as_posix()}?mode=ro", uri=True) as db:
+    with closing(
+        sqlite3.connect(f"file:{path.resolve().as_posix()}?mode=ro", uri=True)
+    ) as db:
         count = int(db.execute("SELECT COUNT(*) FROM entities").fetchone()[0])
     if count <= 0:
         raise ValueError("Runtime database contains no AMDB entities")
