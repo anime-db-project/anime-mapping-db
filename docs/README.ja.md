@@ -17,18 +17,18 @@
 <!-- BEGIN AUTO-GENERATED DATABASE STATS -->
 ## データベースの規模
 
-このリリースには **34,990件の AMDB ID グループ**があります。これはデータベース上の識別子数であり、**重複のないアニメ作品数を証明する数値ではありません**。
+このリリースには **34,992件の AMDB ID グループ**があります。これはデータベース上の識別子数であり、**重複のないアニメ作品数を証明する数値ではありません**。
 
 | 指標 | 値 |
 | --- | ---: |
-| インデックスされた AMDB ID グループ | **34,990** |
+| インデックスされた AMDB ID グループ | **34,992** |
 | プロバイダー ID 空間 | **61** |
 | 入力データセット | **18** |
-| 確認済みの対応エッジ | **1,233,345** |
-| 安全な方向付き出力経路 | **2,398,471** |
+| 確認済みの対応エッジ | **1,233,396** |
+| 安全な方向付き出力経路 | **2,398,573** |
 | 方向付き競合 | **22,880** |
-| 元レコード | **806,972** |
-| 証拠関係 | **2,356,547** |
+| 元レコード | **807,025** |
+| 証拠関係 | **2,356,600** |
 | SQLite サイズ | **80.2 MiB** |
 | 圧縮 SQLite サイズ | **16.6 MiB** |
 
@@ -36,15 +36,15 @@
 
 | 指標 | 値 |
 | --- | ---: |
-| 中央値 | **0.470 ms** |
-| 平均 | **0.478 ms** |
-| p95 | **0.537 ms** |
-| p99 | **0.615 ms** |
-| 逐次検索/秒 | **2,086** |
+| 中央値 | **0.353 ms** |
+| 平均 | **0.356 ms** |
+| p95 | **0.406 ms** |
+| p99 | **0.446 ms** |
+| 逐次検索/秒 | **2,796** |
 
 リリース SQLite に対するキャッシュ済み MappingResolver の逐次読み取り、Linux / Python 3.12。300 ID × 2 回。ネットワーク API の遅延ではありません。
 
-リリース時点: **2026-11-26**, [v2026.11.26.50](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.26.50). [最新マニフェスト](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+リリース時点: **2026-11-27**, [v2026.11.27.51](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.27.51). [最新マニフェスト](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
