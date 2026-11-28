@@ -119,12 +119,13 @@ def assemble(
     if summary:
         with Path(summary).open("a", encoding="utf-8") as handle:
             handle.write(
-                "## Combined source collection\n\n| Source | Status | Bytes |\n"
+                "## Combined source collection\n\n| Source | Mode | Status | Bytes |\n"
             )
-            handle.write("| --- | --- | ---: |\n")
+            handle.write("| --- | --- | --- | ---: |\n")
             for item in outcomes:
                 handle.write(
-                    f"| {item['source']} | {item['status']} | {item['bytes']:,} |\n"
+                    f"| {item['source']} | {item['collection_mode']} | "
+                    f"{item['status']} | {item['bytes']:,} |\n"
                 )
     return manifest
 

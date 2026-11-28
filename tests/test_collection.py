@@ -81,6 +81,10 @@ class CollectionTests(unittest.TestCase):
             self.assertEqual(len(load_snapshot(snapshots, specs)), 2)
             report = json.loads((snapshots / "collection-report.json").read_text())
             self.assertEqual(
+                [item["collection_mode"] for item in report["sources"]],
+                ["single", "single"],
+            )
+            self.assertEqual(
                 [item["status"] for item in report["sources"]],
                 ["retained", "unchanged"],
             )

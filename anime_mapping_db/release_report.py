@@ -194,8 +194,8 @@ def render(report: dict) -> str:
             "",
             "Distinct IDs within each input; totals overlap and are not additive.",
             "",
-            "| Dataset | IDs | Records | Record change | Snapshot | Collection |",
-            "| --- | ---: | ---: | ---: | --- | --- |",
+            "| Dataset | IDs | Records | Record change | Snapshot | Collection | Mode |",
+            "| --- | ---: | ---: | ---: | --- | --- | --- |",
         ]
     )
     for item in report["sources"]:
@@ -203,7 +203,8 @@ def render(report: dict) -> str:
         lines.append(
             f"| {item['name']} | {item['distinct_ids']:,} | "
             f"{item['records']:,} | {_delta(item['record_delta'])} | {status} | "
-            f"{item['collection_status'] or '—'} |"
+            f"{item['collection_status'] or '—'} | "
+            f"{item.get('collection_mode') or '—'} |"
         )
     lines.extend(["", "## Assets", "", "| File | Size (MiB) |", "| --- | ---: |"])
     for item in report["assets"].values():

@@ -53,15 +53,20 @@ class NativeCatalogueTests(unittest.TestCase):
                 self.assertEqual(path.read_bytes(), original)
 
     def test_docchi_projects_explicit_ids(self) -> None:
-        with httpx.Client(
-            transport=httpx.MockTransport(
-                lambda _: httpx.Response(
-                    200, json=[{"slug": "title-1", "mal_id": 101, "title": "discard"}]
-                )
+        requests = []
+
+        def respond(request):
+            requests.append(request)
+            return httpx.Response(
+                200, json=[{"slug": "title-1", "mal_id": 101, "title": "discard"}]
             )
+
+        with httpx.Client(
+            transport=httpx.MockTransport(respond)
         ) as client:
             rows = fetch_docchi(client, "https://example.invalid/catalogue")
         self.assertEqual(rows, [{"id": "title-1", "mal": "101"}])
+        self.assertEqual(len(requests), 1)
 
     def test_animelib_pages_and_duplicate_rejection(self) -> None:
         def run(duplicate: bool):

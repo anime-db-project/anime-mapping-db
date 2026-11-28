@@ -254,7 +254,7 @@ _SYNCDATA_VALIDATORS = {
 }
 
 
-def normalize_syncdata(path: Path, provider: str) -> None:
+def _syncdata_rows(path: Path, provider: str) -> list[dict]:
     validate = _SYNCDATA_VALIDATORS[provider]
     rows = []
     for item in _read(path):
@@ -280,14 +280,18 @@ def normalize_syncdata(path: Path, provider: str) -> None:
                 "anilist": next(iter(ani_values), None),
             }
         )
-    _write(path, rows)
+    return rows
+
+
+def normalize_syncdata(path: Path, provider: str) -> None:
+    _write(path, _syncdata_rows(path, provider))
 
 
 def _import_syncdata(
     path: Path, conn: sqlite3.Connection, provider: str
 ) -> Iterator[MappingRecord]:
     yield from enrich_native_ids(
-        _read(path),
+        _syncdata_rows(path, provider),
         conn,
         namespace=provider,
         lineage=f"{provider}-native",
