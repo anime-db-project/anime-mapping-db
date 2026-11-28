@@ -220,6 +220,52 @@ def fetch_web_catalogue(client: httpx.Client, provider: str, origin: str) -> lis
             raise ValueError("Unexpected catalogue response")
         return response
 
+    if provider == "animeunity":
+        # Native archive API after the Inertia redesign. The public client
+        # uses current_page, last_page and data[].id/slug. Never retry an
+        # access denial by switching to a different endpoint.
+        archive = origin + "/api/archive"
+        titles = []
+        seen_ids = set()
+        last = None
+        page_size = None
+        page = 1
+        while last is None or page <= last:
+            response = get(f"{archive}?page={page}")
+            payload = response.json()
+            if not isinstance(payload, dict):
+                raise ValueError("Invalid AnimeUnity archive")
+            data = payload.get("data")
+            end = payload.get("last_page")
+            if (
+                type(payload.get("current_page")) is not int
+                or payload["current_page"] != page
+                or type(end) is not int
+                or not page <= end <= 1000
+                or (last is not None and last != end)
+                or not isinstance(data, list)
+                or not data
+            ):
+                raise ValueError("Incomplete AnimeUnity archive")
+            last = end
+            if page_size is None:
+                page_size = len(data)
+            if len(data) > page_size or (page < last and len(data) != page_size):
+                raise ValueError("Inconsistent AnimeUnity page size")
+            for item in data:
+                if not isinstance(item, dict):
+                    raise ValueError("Invalid AnimeUnity title")
+                native = positive_id(item.get("id"))
+                slug = slug_id(item.get("slug"))
+                if native is None or slug is None or native in seen_ids:
+                    raise ValueError("Invalid or duplicate AnimeUnity title ID")
+                seen_ids.add(native)
+                titles.append(f"{origin}/anime/{native}-{slug}")
+            page += 1
+        if len(titles) > paced.policy.max_requests - paced.requests:
+            raise ValueError("Full catalogue exceeds source request budget")
+        return [extract_title(provider, url, get(url).text) for url in titles]
+
     pending = [
         line.split(":", 1)[1].strip()
         for line in rules

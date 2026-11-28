@@ -23,7 +23,6 @@ _WEB = {
     "AniDream",
     "Aninexus",
     "animepahe",
-    "AnimeUnity",
     "AnimeOnsen",
     "AnimeWho",
     "HinataSoul",
@@ -260,6 +259,8 @@ def inventory(root: Path, revision: str) -> dict:
             status = "partial_release_import"
         elif name in _NATIVE:
             status = "native_catalog_collector"
+        elif name == "AnimeUnity":
+            status = "native_api_collector_unverified"
         elif name in _WEB:
             status = "native_web_collector_unverified"
         elif name in _OPTIONAL:
