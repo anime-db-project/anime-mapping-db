@@ -64,3 +64,26 @@ jobs:
         run: |
           coverage run -m unittest discover -s tests -v
           coverage report --fail-under=70
+
+  malsync-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: MALSync/MALSync
+          ref: dbab01079ba3752a4c32946deb8c40117dbf0a66
+          path: upstream-malsync
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Audit pinned real upstream fixture
+        run: |
+          python -m anime_mapping_db.malsync_registry --upstream upstream-malsync --revision dbab01079ba3752a4c32946deb8c40117dbf0a66 --output malsync-audit/inventory.json
+          python -c 'import json; d=json.load(open("malsync-audit/inventory.json")); assert d["anime_integrations"]==96; print(d["status_counts"])'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: malsync-inventory-test
+          path: malsync-audit/inventory.json

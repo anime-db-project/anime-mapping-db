@@ -32,7 +32,10 @@ class MALSyncRegistryTests(unittest.TestCase):
                 "import { ADN } from './implementations/ADN/main';", encoding="utf-8"
             )
             for folder, code in (
-                (legacy / "Example", "name: 'Example', getIdentifier() {}, getMalUrl() {}"),
+                (
+                    legacy / "Example",
+                    "name: 'Example', getIdentifier() {}, getMalUrl() {}",
+                ),
                 (chibi / "implementations" / "ADN", "name: 'ADN', getIdentifier() {}"),
             ):
                 folder.mkdir(parents=True)

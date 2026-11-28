@@ -79,8 +79,11 @@ def _read_json(path: Path) -> dict:
 def _anchor(url: object) -> tuple[str, str] | None:
     if not isinstance(url, str):
         return None
-    parts = urlsplit(url)
-    host = parts.hostname
+    try:
+        parts = urlsplit(url)
+        host = parts.hostname
+    except ValueError:
+        return None
     if parts.scheme != "https" or parts.username or parts.password:
         return None
     providers = {
@@ -102,6 +105,8 @@ def _implementations(root: Path) -> dict[str, list[dict]]:
         text = registry.read_text(encoding="utf-8-sig")
         for relative in _IMPORT.findall(text):
             path = registry.parent / (relative + ".ts")
+            if not path.resolve().is_relative_to(root.resolve()):
+                raise ValueError("MALSync adapter path escapes checkout")
             code = path.read_text(encoding="utf-8-sig")
             fixtures = _read_json(path.with_name("tests.json"))
             names = {_key(path.parent.name)}
@@ -112,8 +117,14 @@ def _implementations(root: Path) -> dict[str, list[dict]]:
                 names.add(_key(fixtures["title"]))
             candidates = set()
             cases = fixtures.get("testCases", [])
+            if not isinstance(cases, list):
+                cases = []
             for case in cases:
+                if not isinstance(case, dict):
+                    continue
                 expected = case.get("expected", {})
+                if not isinstance(expected, dict):
+                    continue
                 anchor = _anchor(expected.get("malUrl"))
                 identifier = expected.get("identifier")
                 if (
@@ -200,7 +211,9 @@ def main() -> None:
         json.dumps(report, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    print(f"## MALSync source inventory ({report['anime_integrations']} anime integrations)")
+    print(
+        f"## MALSync source inventory ({report['anime_integrations']} anime integrations)"
+    )
     print()
     print(f"Upstream revision: `{args.revision}`")
     print()
