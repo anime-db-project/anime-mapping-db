@@ -77,9 +77,7 @@ class MALSyncTests(unittest.TestCase):
                         {
                             "seasons": {
                                 "12345678": {"override": {"malId": 101}},
-                                "12345679": {
-                                    "override": {"malId": 102, "offset": 45}
-                                },
+                                "12345679": {"override": {"malId": 102, "offset": 45}},
                             }
                         }
                     ),
