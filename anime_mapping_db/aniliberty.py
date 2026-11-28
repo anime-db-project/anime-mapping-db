@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Iterator
 
@@ -141,9 +141,11 @@ def import_aniliberty_enrichment(
     claims: dict[int, set[str]] = defaultdict(set)
     reverse: dict[str, set[int]] = defaultdict(set)
     candidates = []
+    outcomes: Counter[str] = Counter()
     for row in rows:
         release = _id(row.get("id"))
         if release is None:
+            outcomes["invalid_id"] += 1
             continue
         anchors = []
         for provider in ("mal", "shikimori"):
@@ -156,6 +158,12 @@ def import_aniliberty_enrichment(
             claims[group].add(release)
             reverse[release].add(group)
         if len(groups) != 1:
+            if groups:
+                outcomes["conflicting_groups"] += 1
+            elif any(_id(row.get(provider)) for provider in ("mal", "shikimori")):
+                outcomes["unknown_anchor"] += 1
+            else:
+                outcomes["no_external_id"] += 1
             continue
         group = next(iter(groups))
         if any(
@@ -164,10 +172,13 @@ def import_aniliberty_enrichment(
             and _id(row.get(provider)) != group_ids[(group, provider)]
             for provider in ("mal", "shikimori")
         ):
+            outcomes["contradictory_id"] += 1
             continue
         if group in occupied or ("aniliberty", release) in lookup:
+            outcomes["existing_namespace"] += 1
             continue
         if any((node, "aniliberty") in conflicts for node in components[group]):
+            outcomes["directional_conflict"] += 1
             continue
         if any(
             (node, other) in conflicts
@@ -175,13 +186,16 @@ def import_aniliberty_enrichment(
             for other, _, _ in anchors
             if provider != other
         ):
+            outcomes["directional_conflict"] += 1
             continue
         candidates.append((release, group, anchors))
 
     emitted = set()
     for release, group, anchors in candidates:
         if len(claims[group]) != 1 or len(reverse[release]) != 1:
+            outcomes["ambiguous_claim"] += 1
             continue
+        outcomes["accepted"] += 1
         for provider, external, _node in anchors:
             key = (release, provider, external)
             if key in emitted:
@@ -193,3 +207,4 @@ def import_aniliberty_enrichment(
                 evidence_group="aniliberty-native",
                 weight=85,
             )
+    logging.info("AniLiberty matching outcomes: %s", dict(sorted(outcomes.items())))

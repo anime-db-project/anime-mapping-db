@@ -77,6 +77,47 @@ def _normalize_media_index(path: Path) -> None:
     )
 
 
+def _normalize_wikidata(path: Path, importer: str) -> None:
+    # Only binding values are used by the importers. Ignore endpoint-specific
+    # head/diagnostics and ordering, but keep rows grouped by QID.
+    fields = (
+        ("item", "bahamut", "mal", "anilist", "anidb")
+        if importer == "wikidata_bahamut"
+        else ("item", "prop", "id")
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    bindings = payload["results"]["bindings"]
+    if not isinstance(bindings, list) or not bindings:
+        raise ValueError("Empty Wikidata bindings")
+    rows = set()
+    for binding in bindings:
+        if not isinstance(binding, dict):
+            raise ValueError("Invalid Wikidata binding")
+        values = tuple(
+            str(binding.get(field, {}).get("value", "")).strip() for field in fields
+        )
+        if not values[0]:
+            raise ValueError("Missing Wikidata item")
+        rows.add(values)
+    normalized = {
+        "head": {"vars": list(fields)},
+        "results": {
+            "bindings": [
+                {
+                    field: {"value": value}
+                    for field, value in zip(fields, row, strict=True)
+                    if value
+                }
+                for row in sorted(rows)
+            ]
+        },
+    }
+    path.write_text(
+        json.dumps(normalized, sort_keys=True, separators=(",", ":")),
+        encoding="utf-8",
+    )
+
+
 def _validate_payload(spec: MappingSourceSpec, path: Path) -> None:
     # Reject malformed successful HTTP responses before replacing the last
     # known good snapshot. Full graph validation remains in the release job.
@@ -129,6 +170,8 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
             _download(spec, temp)
             if spec.importer == "media_index":
                 _normalize_media_index(temp)
+            elif spec.importer.startswith("wikidata_"):
+                _normalize_wikidata(temp, spec.importer)
             if not temp.stat().st_size:
                 raise ValueError("Empty source download")
             _validate_payload(spec, temp)
