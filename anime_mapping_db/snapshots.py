@@ -18,7 +18,10 @@ def _filename(spec: MappingSourceSpec) -> str:
 
 
 def load_snapshot(
-    directory: Path, specs: tuple[MappingSourceSpec, ...]
+    directory: Path,
+    specs: tuple[MappingSourceSpec, ...],
+    *,
+    allow_spec_changes: bool = False,
 ) -> dict[str, dict]:
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
     if manifest["version"] != 1:
@@ -38,6 +41,8 @@ def load_snapshot(
         seen.add(name)
         spec = configured.get(name)
         if spec is None:
+            continue
+        if allow_spec_changes and item["url"] != spec.url:
             continue
         if item["file"] != _filename(spec) or item["url"] != spec.url:
             raise ValueError(f"Snapshot source specification mismatch: {name}")
@@ -72,6 +77,34 @@ def _normalize_media_index(path: Path) -> None:
     )
 
 
+def _validate_payload(spec: MappingSourceSpec, path: Path) -> None:
+    # Reject malformed successful HTTP responses before replacing the last
+    # known good snapshot. Full graph validation remains in the release job.
+    from anime_mapping_db.importers import IMPORTERS
+
+    if not spec.supplemental:
+        if next(iter(IMPORTERS[spec.importer](path)), None) is None:
+            raise ValueError("Source contains no mapping records")
+    if spec.importer == "animeapi":
+        with path.open(encoding="utf-8") as handle:
+            if "myanimelist" not in handle.readline().strip().split("\t"):
+                raise ValueError("Unexpected AnimeAPI TSV header")
+    elif spec.supplemental or spec.url.endswith(".json"):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, (dict, list)) or not payload:
+            raise ValueError("Empty or invalid JSON source")
+    elif spec.url.endswith(".xml"):
+        from xml.etree.ElementTree import iterparse
+
+        for _, element in iterparse(path, events=("end",)):
+            element.clear()
+    elif spec.url.endswith(".jsonl"):
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                if line.strip():
+                    json.loads(line)
+
+
 def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
     directory.mkdir(parents=True, exist_ok=True)
     previous = {}
@@ -81,7 +114,9 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
         from dataclasses import replace
 
         previous = load_snapshot(
-            directory, tuple(replace(spec, required=False) for spec in specs)
+            directory,
+            tuple(replace(spec, required=False) for spec in specs),
+            allow_spec_changes=True,
         )
     entries = []
     for spec in specs:
@@ -94,6 +129,7 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
                 _normalize_media_index(temp)
             if not temp.stat().st_size:
                 raise ValueError("Empty source download")
+            _validate_payload(spec, temp)
             sha = _sha256_file(temp)
             old = previous.get(spec.name)
             if old and old["sha256"] == sha:

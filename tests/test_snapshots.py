@@ -21,7 +21,7 @@ class SnapshotTests(unittest.TestCase):
             snapshots = root / "snapshots"
 
             def download(_spec, target):
-                target.write_text("fixture", encoding="utf-8")
+                target.write_text('[{"id":1}]', encoding="utf-8")
                 return "unused"
 
             def importer(_path):
@@ -29,7 +29,10 @@ class SnapshotTests(unittest.TestCase):
                     "1", {"mal": ("1",), "anilist": ("2",)}, "test", 95
                 )
 
-            with patch("anime_mapping_db.snapshots._download", side_effect=download):
+            with (
+                patch("anime_mapping_db.snapshots._download", side_effect=download),
+                patch("anime_mapping_db.importers.IMPORTERS", {"base": importer}),
+            ):
                 first = collect(snapshots, (spec,))
                 second = collect(snapshots, (spec,))
             self.assertEqual(first, second)

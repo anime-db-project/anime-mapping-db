@@ -53,10 +53,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e .
 
-      - name: Unit tests
-        if: steps.existing_release.outputs.exists != 'true'
-        run: python -m unittest discover -s tests -v
-
       - name: Restore latest successful collection
         id: snapshots
         if: steps.existing_release.outputs.exists != 'true'
@@ -65,7 +61,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          run_id=$(gh run list --workflow collect-sources.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          run_id=""
+          for candidate in $(gh run list --workflow collect-sources.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId'); do
+            artifact=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$candidate/artifacts" --jq '.artifacts[] | select(.name == "mapping-source-snapshots" and .expired == false) | .id')
+            if [[ -n "$artifact" ]]; then
+              run_id="$candidate"
+              break
+            fi
+          done
           if [[ -z "$run_id" ]]; then
             echo "available=false" >> "$GITHUB_OUTPUT"
             echo "No successful collection yet; release skipped."
@@ -89,13 +92,18 @@ jobs:
             --directory snapshots --previous previous-manifest.json \
             >> "$GITHUB_OUTPUT"
 
+      - name: Unit tests
+        if: steps.preflight.outputs.build == 'true'
+        run: python -m unittest discover -s tests -v
+
       - name: Seed previous validated dataset when available
         if: steps.preflight.outputs.build == 'true'
         shell: bash
         run: |
           mkdir -p data/mappings
-          base=https://github.com/anime-db-project/anime-mapping-db/releases/latest/download
           if [[ -f previous-manifest.json ]]; then
+            tag=$(python -c 'import json; print(json.load(open("previous-manifest.json"))["release_tag"])')
+            base="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag"
             curl -fsSL "$base/mappings.db.zst" -o previous-runtime.zst
             curl -fsSL "$base/mappings-evidence.db.zst" -o previous-evidence.zst
             python - <<'PYSEED'

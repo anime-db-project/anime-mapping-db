@@ -409,6 +409,10 @@ def update_mapping_database(
                         downloaded_at=snapshot_dates.get(spec.name, checked_at),
                     )
                     if record_count <= 0:
+                        if snapshot_dir is not None and spec.name in state:
+                            raise RuntimeError(
+                                f"Previously published source is empty: {spec.name}"
+                            )
                         if spec.required:
                             raise RuntimeError(
                                 f"Required mapping source produced zero usable records: {spec.name}"
@@ -522,6 +526,10 @@ def update_mapping_database(
                         downloaded_at=snapshot_dates.get(spec.name, checked_at),
                     )
                     if record_count <= 0:
+                        if snapshot_dir is not None and spec.name in state:
+                            raise RuntimeError(
+                                f"Previously published source is empty: {spec.name}"
+                            )
                         failed_optional[spec.name] = (
                             "supplemental source produced zero anchor-validated records"
                         )

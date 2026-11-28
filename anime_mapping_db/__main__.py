@@ -59,10 +59,14 @@ def main() -> None:
         return
     if command == "build":
         if args.snapshot_dir is not None:
-            stats = update_mapping_database(force=True, snapshot_dir=args.snapshot_dir)
+            stats = update_mapping_database(
+                force=True, snapshot_dir=args.snapshot_dir
+            )
         else:
             stats = (
-                update_mapping_database(force=True) if args.force else update_if_stale()
+                update_mapping_database(force=True)
+                if args.force
+                else update_if_stale()
             )
         runtime = mappings_db_path()
         anchor_stats = _materialize(runtime)
