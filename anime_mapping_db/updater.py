@@ -355,7 +355,10 @@ def update_mapping_database(
                         sha256 = _download(spec, download_path)
                         staged[spec.name] = (download_path, sha256)
                         previous = state.get(spec.name)
-                        if previous is None or previous[0].casefold() != sha256.casefold():
+                        if (
+                            previous is None
+                            or previous[0].casefold() != sha256.casefold()
+                        ):
                             changed_sources.add(spec.name)
                     except Exception as exc:
                         download_path.unlink(missing_ok=True)

@@ -25,9 +25,7 @@ class SnapshotTests(unittest.TestCase):
                 return "unused"
 
             def importer(_path):
-                yield MappingRecord(
-                    "1", {"mal": ("1",), "anilist": ("2",)}, "test", 95
-                )
+                yield MappingRecord("1", {"mal": ("1",), "anilist": ("2",)}, "test", 95)
 
             with (
                 patch("anime_mapping_db.snapshots._download", side_effect=download),
@@ -57,7 +55,8 @@ class SnapshotTests(unittest.TestCase):
                 self.assertTrue(compare(snapshots, first, force=True))
                 self.assertIsNotNone(update_mapping_database(snapshot_dir=snapshots))
             with patch(
-                "anime_mapping_db.snapshots._download", side_effect=RuntimeError("offline")
+                "anime_mapping_db.snapshots._download",
+                side_effect=RuntimeError("offline"),
             ):
                 self.assertEqual(collect(snapshots, (spec,)), first)
             entry = load_snapshot(snapshots, (spec,))[spec.name]
