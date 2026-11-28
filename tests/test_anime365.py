@@ -11,7 +11,7 @@ import httpx
 from anime_mapping_db.anime365 import fetch_catalog, import_anime365_enrichment
 from anime_mapping_db.config import MappingSourceSpec
 from anime_mapping_db.database import MappingDatabaseBuilder, MappingRecord
-from anime_mapping_db.importers.native_ids import enrich_native_ids
+from anime_mapping_db.native_ids import enrich_native_ids
 
 
 class Anime365Tests(unittest.TestCase):

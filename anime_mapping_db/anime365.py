@@ -12,7 +12,7 @@ import httpx
 
 from anime_mapping_db.crawler_policy import PacedClient, load_policy, user_agent
 from anime_mapping_db.database import MappingRecord
-from anime_mapping_db.importers.native_ids import enrich_native_ids, positive_id
+from anime_mapping_db.native_ids import enrich_native_ids, positive_id
 
 _PAGE_SIZE = 500
 
@@ -53,7 +53,10 @@ def fetch_catalog(client: httpx.Client, url: str) -> list[dict]:
                 raise ValueError("Anime365 external ID field missing")
             raw_mal = item["myAnimeListId"]
             mal = positive_id(raw_mal)
-            if mal is None and raw_mal not in (None, 0, "0", ""):
+            if mal is None and not (
+                raw_mal is None
+                or (type(raw_mal) in (int, str) and raw_mal in (0, "0", ""))
+            ):
                 raise ValueError("Invalid Anime365 MAL ID")
             cursor = int(native)
             rows.append({"id": native, "mal": mal})
