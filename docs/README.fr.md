@@ -74,7 +74,7 @@ Une reconstruction préserve les anchors des œuvres conservées ou enrichies. L
 
 ## Sources de données
 
-Le constructeur regroupe 23 entrées, entre jeux de données directs et catalogues complémentaires vérifiés. Ces compléments ne peuvent pas créer une identité sans confirmation indépendante. Entrées et licences figurent dans le manifeste.
+Le constructeur regroupe 24 entrées, entre jeux de données directs et catalogues complémentaires vérifiés. Ces compléments ne peuvent pas créer une identité sans confirmation indépendante. Entrées et licences figurent dans le manifeste.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -96,6 +96,7 @@ Le constructeur regroupe 23 entrées, entre jeux de données directs et catalogu
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — ID numériques des sorties avec références explicites à MAL/Shikimori ; correspondances ambiguës exclues.
 - [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — ID historiques SovetRomantica avec références explicites à Shikimori.
 - [MALSync](https://github.com/MALSync/MALSync) — correspondances MAL explicites des saisons Crunchyroll et Netflix, sans décalage d’épisodes. La collecte quotidienne audite tous les adaptateurs anime dans `malsync-inventory`, sans utiliser les attentes des tests comme preuves.
+- [Anime365](https://github.com/ragedrugg/anime365) — ID numériques de séries avec références MAL explicites.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` est l'identifiant stable d'un titre. Les IDs externes sont des alias justifiés; `entity_id` est propre à une compilation. Les relations ambiguës ne sont pas choisies automatiquement. [Identity contract](../docs/IDENTITY.md).

@@ -15,6 +15,7 @@ import httpx
 
 from anime_mapping_db.anchors import materialize_anchor_index
 from anime_mapping_db.aniliberty import download_aniliberty
+from anime_mapping_db.anime365 import download_anime365
 from anime_mapping_db.config import (
     SOURCE_SPECS,
     MappingSourceSpec,
@@ -59,6 +60,9 @@ def _bootstrap_path(spec: MappingSourceSpec) -> Path | None:
 
 
 def _download(spec: MappingSourceSpec, target: Path) -> str:
+    if spec.importer == "anime365":
+        download_anime365(spec.url, target, timeout=mappings_request_timeout_seconds())
+        return _sha256_file(target)
     if spec.importer == "aniliberty":
         download_aniliberty(
             spec.url, target, timeout=mappings_request_timeout_seconds()
@@ -523,6 +527,7 @@ def update_mapping_database(
                         "sovetromantica",
                         "malsync_crunchyroll",
                         "malsync_netflix",
+                        "anime365",
                     }:
                         builder.finalize(built_at=checked_at)
                     supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
@@ -559,6 +564,7 @@ def update_mapping_database(
                         "sovetromantica",
                         "malsync_crunchyroll",
                         "malsync_netflix",
+                        "anime365",
                     }
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the

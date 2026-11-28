@@ -74,7 +74,7 @@ Bei Neubauten bleiben Anker für unveränderte oder erweiterte Einheiten erhalte
 
 ## Datenquellen
 
-Der Builder kombiniert 23 Eingaben aus direkten Mapping-Datensätzen und streng geprüften ergänzenden Katalogen. Ergänzungen dürfen ohne unabhängige Bestätigung keine neue Titelidentität begründen. Quellen und Lizenzen stehen im Release-Manifest.
+Der Builder kombiniert 24 Eingaben aus direkten Mapping-Datensätzen und streng geprüften ergänzenden Katalogen. Ergänzungen dürfen ohne unabhängige Bestätigung keine neue Titelidentität begründen. Quellen und Lizenzen stehen im Release-Manifest.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -96,6 +96,7 @@ Der Builder kombiniert 23 Eingaben aus direkten Mapping-Datensätzen und streng 
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — numerische Release-IDs mit expliziten MAL-/Shikimori-Verweisen; mehrdeutige Zuordnungen werden ausgeschlossen.
 - [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — historische SovetRomantica-IDs mit expliziten Shikimori-Referenzen.
 - [MALSync](https://github.com/MALSync/MALSync) — explizite MAL-Staffelzuordnungen für Crunchyroll und Netflix, ohne Episodenversatz. Der tägliche Sammler prüft alle Anime-Adapter in einem separaten `malsync-inventory`; Testerwartungen sind keine Mapping-Belege.
+- [Anime365](https://github.com/ragedrugg/anime365) — numerische Serien-IDs mit expliziten MAL-Referenzen.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` ist die stabile Titelkennung. Externe IDs sind belegte Aliasse; die interne `entity_id` gilt nur für den jeweiligen Build. Mehrdeutige Zuordnungen werden nicht willkürlich ausgewählt. [Identity contract](../docs/IDENTITY.md).
