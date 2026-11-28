@@ -388,9 +388,7 @@ def _export_options(provider: str, *, direct_url: str = "") -> dict:
             "paginated" if api or (direct_url and not snapshot) else "single"
         ),
         "export_api": bool(api),
-        "credential_env": (
-            f"{prefix}_API_TOKEN" if api and requires_token else None
-        ),
+        "credential_env": (f"{prefix}_API_TOKEN" if api and requires_token else None),
         "permission_env": f"{prefix}_PERMISSION_CONFIRMED",
         "collection_interval_hours": _env_float(
             f"{prefix}_INTERVAL_HOURS", 168.0, 24.0
