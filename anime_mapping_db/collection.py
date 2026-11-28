@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from anime_mapping_db.catalogue_report import catalogue_stats, shrink_reason
-from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec
+from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec, source_preflight
 from anime_mapping_db.release import source_fingerprint
 from anime_mapping_db.snapshots import _filename, collect, load_snapshot
 from anime_mapping_db.updater import _utc_now
@@ -36,6 +36,8 @@ def _previous_outcomes(directory: Path | None) -> dict:
 
 
 def _due(spec: MappingSourceSpec, old: dict, now: datetime) -> bool:
+    if old.get("status") in {"missing_api_key", "permission_not_confirmed"}:
+        return True
     if not old or not spec.collection_interval_hours:
         return True
     if old.get("source_url", spec.url) != spec.url:
@@ -77,7 +79,9 @@ def matrix(
 def collect_one(
     directory: Path, spec: MappingSourceSpec, *, deferred: bool = False
 ) -> dict:
-    if deferred:
+    reason = source_preflight(spec) or ("deferred" if deferred else None)
+    if reason:
+        logging.info("Skipping %s: %s", spec.name, reason)
         directory.mkdir(parents=True, exist_ok=True)
         manifest = {
             "version": 1,
@@ -90,7 +94,7 @@ def collect_one(
                 {
                     "checked_at": _utc_now(),
                     "sources": [
-                        {"source": spec.name, "status": "deferred", "bytes": 0}
+                        {"source": spec.name, "status": reason, "bytes": 0}
                     ],
                 }
             ),
@@ -137,10 +141,15 @@ def assemble(
             "bootstrap",
             "unavailable",
             "deferred",
+            "missing_api_key",
+            "permission_not_confirmed",
         }:
             raise ValueError(f"Invalid collection status for {spec.name}")
         fresh = load_snapshot(part, (replace(spec, required=False),)).get(spec.name)
-        if (fresh is None) != (status in {"unavailable", "deferred"}):
+        if (fresh is None) != (
+            status
+            in {"unavailable", "deferred", "missing_api_key", "permission_not_confirmed"}
+        ):
             raise ValueError(f"Collection report disagrees with data: {spec.name}")
         old = previous.get(spec.name)
         fresh_metrics = catalogue_stats(
@@ -151,7 +160,10 @@ def assemble(
         )
         warning = shrink_reason(old_metrics, fresh_metrics)
         reason = None
-        if status == "deferred":
+        if status in {"missing_api_key", "permission_not_confirmed"}:
+            selected = old
+            reason = status
+        elif status == "deferred":
             if not previous_outcomes.get(spec.name, {}).get("last_attempted_at"):
                 raise ValueError(
                     f"No previous attempt for deferred source: {spec.name}"
@@ -188,8 +200,9 @@ def assemble(
                 "collection_interval_hours": spec.collection_interval_hours,
                 "source_url": spec.url,
                 "last_attempted_at": (
-                    previous_outcomes[spec.name]["last_attempted_at"]
-                    if status == "deferred"
+                    previous_outcomes.get(spec.name, {}).get("last_attempted_at")
+                    if status
+                    in {"deferred", "missing_api_key", "permission_not_confirmed"}
                     else report["checked_at"]
                 ),
                 "catalogue": metrics,

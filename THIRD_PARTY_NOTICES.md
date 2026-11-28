@@ -37,7 +37,7 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 
 | Aniyan / AniDream / Aninexus | Optional supplemental | MALSync `syncData` adapter definitions. No accessible authorized catalogue endpoint confirmed; no direct automated requests to these domains. Explicit operator-provided public JSON snapshots only, with native ID and MAL/AniList references. |
 
-| YummyAnime / Yani | Optional supplemental | [Official API documentation](https://api.yani.tv/swagger). Personal use only by default; public redistribution requires provider permission. Disabled by default; use `MAPPINGS_ENABLE_YUMMYANI=1` only with permission and a provider-issued `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`. Only native numeric ID, slug and explicit MAL/Shikimori IDs are retained. |
+| YummyAnime / Yani | Optional supplemental | [Official API documentation](https://api.yani.tv/swagger). Personal use only by default; public redistribution requires provider permission. Configured by default; network collection requires `MAPPINGS_YUMMYANI_PERMISSION_CONFIRMED=1` and a provider-issued `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`. Disable with `MAPPINGS_ENABLE_YUMMYANI=0`. Only native numeric ID, slug and explicit MAL/Shikimori IDs are retained. |
 
 ## Supplemental lineage policy
 

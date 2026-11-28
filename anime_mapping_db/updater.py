@@ -28,6 +28,7 @@ from anime_mapping_db.config import (
     mappings_request_timeout_seconds,
     mappings_update_max_age_hours,
     mappings_wikidata_check_interval_hours,
+    source_preflight,
 )
 from anime_mapping_db.database import (
     MappingBuildStats,
@@ -71,6 +72,9 @@ _NATIVE_DOWNLOADERS = {
 
 
 def _download(spec: MappingSourceSpec, target: Path) -> str:
+    reason = source_preflight(spec)
+    if reason:
+        raise ValueError(f"Source preflight: {reason}")
     registration = _NATIVE_DOWNLOADERS.get(spec.importer)
     if registration:
         mode, downloader = registration

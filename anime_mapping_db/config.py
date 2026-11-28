@@ -22,6 +22,8 @@ class MappingSourceSpec:
     fallback_urls: tuple[str, ...] = ()
     collection_mode: Literal["single", "paginated"] = "single"
     collection_interval_hours: float = 0.0
+    credential_env: str | None = None
+    permission_env: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -414,13 +416,17 @@ for _provider, _display in (
     )
 
 # YummyAnime's API is documented for personal use. Public redistribution
-# requires provider permission; only enable when that permission is obtained.
-if _env_bool("MAPPINGS_ENABLE_YUMMYANI", False):
+# requires provider permission. Configured by default; preflight gates requests.
+if not os.environ.get("MAPPINGS_ENABLE_YUMMYANI", "").strip() or _env_bool(
+    "MAPPINGS_ENABLE_YUMMYANI", True
+):
     SOURCE_SPECS += (
         MappingSourceSpec(
             name="YummyAnime authorized catalogue",
             url="https://api.yani.tv/anime",
             importer="yummyani",
+            credential_env="MAPPINGS_YUMMYANI_APPLICATION_TOKEN",
+            permission_env="MAPPINGS_YUMMYANI_PERMISSION_CONFIRMED",
             collection_interval_hours=_env_float(
                 "MAPPINGS_YUMMYANI_INTERVAL_HOURS", 72.0, 24.0
             ),
@@ -430,6 +436,15 @@ if _env_bool("MAPPINGS_ENABLE_YUMMYANI", False):
             supplemental=True,
         ),
     )
+
+
+def source_preflight(spec: MappingSourceSpec) -> str | None:
+    """Return a non-sensitive skip reason, never a credential value."""
+    if spec.credential_env and not os.environ.get(spec.credential_env, "").strip():
+        return "missing_api_key"
+    if spec.permission_env and not _env_bool(spec.permission_env, False):
+        return "permission_not_confirmed"
+    return None
 
 
 def mappings_db_path() -> Path:
