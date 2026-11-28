@@ -460,6 +460,48 @@ if not os.environ.get("MAPPINGS_ENABLE_ANNICT", "").strip() or _env_bool(
     )
 
 
+# Authorized title-only exports discovered through MALSync. An empty URL
+# means that no export has been supplied; do not contact a guessed endpoint.
+for _provider, _display in (
+    ("animepahe", "animepahe"),
+    ("animeunity", "AnimeUnity"),
+    ("animeko", "AnimeKO"),
+    ("animeonsen", "AnimeOnsen"),
+    ("animewho", "AnimeWho"),
+    ("animeworld", "Animeworld"),
+    ("hinatasoul", "HinataSoul"),
+    ("witanime", "WitAnime"),
+    ("tioanime", "tioanime"),
+):
+    _prefix = f"MAPPINGS_{_provider.upper()}"
+    _url = os.environ.get(f"{_prefix}_SNAPSHOT_URL", "").strip()
+    _enabled = os.environ.get(f"MAPPINGS_ENABLE_{_provider.upper()}", "").strip()
+    if not _url or (_enabled and not _env_bool(f"MAPPINGS_ENABLE_{_provider.upper()}", True)):
+        continue
+    _parts = urlsplit(_url)
+    if (
+        _parts.scheme != "https"
+        or not _parts.hostname
+        or _parts.username
+        or _parts.password
+        or _parts.query
+        or _parts.fragment
+    ):
+        raise ValueError(f"{_display} requires a public HTTPS snapshot URL")
+    SOURCE_SPECS += (
+        MappingSourceSpec(
+            name=f"{_display} authorized title ID export",
+            url=_url,
+            importer=_provider,
+            permission_env=f"{_prefix}_PERMISSION_CONFIRMED",
+            collection_interval_hours=168.0,
+            required=False,
+            license_note="Provider-authorized title-ID export; public redistribution permission required.",
+            supplemental=True,
+        ),
+    )
+
+
 def source_preflight(spec: MappingSourceSpec) -> str | None:
     """Return a non-sensitive skip reason, never a credential value."""
     if spec.credential_env and not os.environ.get(spec.credential_env, "").strip():

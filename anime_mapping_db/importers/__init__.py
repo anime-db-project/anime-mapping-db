@@ -29,6 +29,7 @@ from anime_mapping_db.importers.malsync import (
     import_malsync_netflix,
 )
 from anime_mapping_db.importers.media_index import import_media_index_enrichment
+from anime_mapping_db.malsync_authorized import AUTHORIZED_IMPORTERS
 from anime_mapping_db.malsync_native import (
     import_adkami,
     import_anidream,
@@ -63,6 +64,7 @@ IMPORTERS = {
 }
 
 SUPPLEMENTAL_IMPORTERS = {
+    **AUTHORIZED_IMPORTERS,
     "animeapi": import_animeapi_enrichment,
     "animethemes": import_animethemes_enrichment,
     "animeaggregations": import_animeaggregations_enrichment,

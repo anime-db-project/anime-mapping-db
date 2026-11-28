@@ -6,9 +6,11 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+from anime_mapping_db.malsync_authorized import PROVIDERS
 from anime_mapping_db.native_ids import ANCHORS, positive_id
 
 _NATIVE = {
+    *PROVIDERS,
     "aniliberty",
     "anime365",
     "docchi",

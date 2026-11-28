@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 
 from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec
+from anime_mapping_db.malsync_authorized import PROVIDERS, normalize_authorized
 from anime_mapping_db.release import source_fingerprint
 from anime_mapping_db.updater import _bootstrap_path, _download, _sha256_file, _utc_now
 
@@ -176,6 +177,8 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
                 from anime_mapping_db.importers.sovetromantica import normalize_snapshot
 
                 normalize_snapshot(temp)
+            elif spec.importer in PROVIDERS:
+                normalize_authorized(temp, spec.importer)
             elif spec.importer == "adkami":
                 from anime_mapping_db.malsync_native import normalize_adkami
 

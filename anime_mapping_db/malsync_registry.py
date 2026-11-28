@@ -14,6 +14,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from anime_mapping_db.malsync_authorized import PROVIDERS as AUTHORIZED_PROVIDERS
+
 _UPSTREAM = "https://github.com/MALSync/MALSync"
 _NON_CATALOGUES = {"emby", "jellyfin", "plex", "myanimelist"}
 _ACTIVE = {"Crunchyroll", "Netflix"}
@@ -245,6 +247,8 @@ def inventory(root: Path, revision: str) -> dict:
         elif name in _NATIVE:
             status = "native_catalog_collector"
         elif name in _OPTIONAL:
+            status = "authorized_snapshot_only"
+        elif key in AUTHORIZED_PROVIDERS:
             status = "authorized_snapshot_only"
         elif name in _AUDIT:
             status = _AUDIT[name][0]
