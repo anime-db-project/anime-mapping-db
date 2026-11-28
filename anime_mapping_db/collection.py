@@ -36,7 +36,7 @@ def _previous_outcomes(directory: Path | None) -> dict:
 
 
 def _due(spec: MappingSourceSpec, old: dict, now: datetime) -> bool:
-    if old.get("status") in {"missing_api_key", "permission_not_confirmed"}:
+    if old.get("status") in {"missing_api_key", "permission_not_confirmed", "missing_source_url"}:
         return True
     if not old or not spec.collection_interval_hours:
         return True
@@ -141,6 +141,7 @@ def assemble(
             "deferred",
             "missing_api_key",
             "permission_not_confirmed",
+            "missing_source_url",
         }:
             raise ValueError(f"Invalid collection status for {spec.name}")
         fresh = load_snapshot(part, (replace(spec, required=False),)).get(spec.name)
@@ -151,6 +152,7 @@ def assemble(
                 "deferred",
                 "missing_api_key",
                 "permission_not_confirmed",
+            "missing_source_url",
             }
         ):
             raise ValueError(f"Collection report disagrees with data: {spec.name}")
@@ -163,7 +165,7 @@ def assemble(
         )
         warning = shrink_reason(old_metrics, fresh_metrics)
         reason = None
-        if status in {"missing_api_key", "permission_not_confirmed"}:
+        if status in {"missing_api_key", "permission_not_confirmed", "missing_source_url"}:
             selected = old
             reason = status
         elif status == "deferred":
@@ -205,7 +207,7 @@ def assemble(
                 "last_attempted_at": (
                     previous_outcomes.get(spec.name, {}).get("last_attempted_at")
                     if status
-                    in {"deferred", "missing_api_key", "permission_not_confirmed"}
+                    in {"deferred", "missing_api_key", "permission_not_confirmed", "missing_source_url"}
                     else report["checked_at"]
                 ),
                 "catalogue": metrics,

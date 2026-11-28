@@ -24,6 +24,7 @@ class MappingSourceSpec:
     collection_interval_hours: float = 0.0
     credential_env: str | None = None
     permission_env: str | None = None
+    export_api: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -357,63 +358,66 @@ if _env_bool("MAPPINGS_ENABLE_DOCCHI", True):
 if _env_bool("MAPPINGS_ENABLE_ANIMELIB", True):
     SOURCE_SPECS += (ANIMELIB_SOURCE,)
 
-# ADKami's catalogue was inaccessible (HTTP 403). Only accept an explicitly
-# supplied public, authorized JSON snapshot, never bypass the site's controls.
-_adkami_url = os.environ.get("MAPPINGS_ADKAMI_SNAPSHOT_URL", "").strip()
-if _adkami_url and _env_bool("MAPPINGS_ENABLE_ADKAMI", True):
-    _adkami_parts = urlsplit(_adkami_url)
-    if (
-        _adkami_parts.scheme != "https"
-        or not _adkami_parts.hostname
-        or _adkami_parts.username
-        or _adkami_parts.password
-        or _adkami_parts.query
-        or _adkami_parts.fragment
+# Authorized syncData exports; do not guess undocumented catalogue endpoints.
+def _export_options(provider: str, *, direct_url: str = "") -> dict:
+    prefix = f"MAPPINGS_{provider.upper()}"
+    api = os.environ.get(f"{prefix}_EXPORT_API_URL", "").strip()
+    snapshot = os.environ.get(f"{prefix}_SNAPSHOT_URL", "").strip()
+    if api and snapshot:
+        raise ValueError(f"{provider}: choose one export endpoint")
+    url = api or snapshot or direct_url
+    parts = urlsplit(url)
+    if url and (
+        parts.scheme != "https"
+        or not parts.hostname
+        or parts.username
+        or parts.password
+        or parts.query
+        or parts.fragment
     ):
-        raise ValueError(
-            "ADKami requires a public HTTPS snapshot URL without credentials"
-        )
-    SOURCE_SPECS += (
-        MappingSourceSpec(
-            name="ADKami authorized syncData snapshot",
-            url=_adkami_url,
-            importer="adkami",
-            required=False,
-            license_note="Operator-supplied authorized ADKami snapshot; explicit native season IDs only.",
-            supplemental=True,
+        raise ValueError(f"{provider}: HTTPS export URL without credentials required")
+    return {
+        "url": url,
+        "collection_mode": (
+            "paginated" if api or (direct_url and not snapshot) else "single"
         ),
-    )
+        "export_api": bool(api),
+        "credential_env": (
+            f"{prefix}_API_TOKEN"
+            if api and _env_bool(f"{prefix}_API_REQUIRES_TOKEN", True)
+            else None
+        ),
+        "permission_env": f"{prefix}_PERMISSION_CONFIRMED",
+        "collection_interval_hours": _env_float(
+            f"{prefix}_INTERVAL_HOURS", 168.0, 24.0
+        ),
+    }
 
-# No accessible public bulk endpoint was confirmed for these adapters.
+
+def _export_enabled(provider: str) -> bool:
+    name = f"MAPPINGS_ENABLE_{provider.upper()}"
+    return not os.environ.get(name, "").strip() or _env_bool(name, True)
+
+
 for _provider, _display in (
+    ("adkami", "ADKami"),
     ("aniyan", "Aniyan"),
     ("anidream", "AniDream"),
     ("aninexus", "Aninexus"),
 ):
-    _prefix = f"MAPPINGS_{_provider.upper()}"
-    _url = os.environ.get(f"{_prefix}_SNAPSHOT_URL", "").strip()
-    if not _url or not _env_bool(f"MAPPINGS_ENABLE_{_provider.upper()}", True):
+    if not _export_enabled(_provider):
         continue
-    _parts = urlsplit(_url)
-    if (
-        _parts.scheme != "https"
-        or not _parts.hostname
-        or _parts.username
-        or _parts.password
-        or _parts.query
-        or _parts.fragment
-    ):
-        raise ValueError(f"{_display} requires a public HTTPS snapshot URL")
     SOURCE_SPECS += (
         MappingSourceSpec(
             name=f"{_display} authorized syncData snapshot",
-            url=_url,
             importer=_provider,
             required=False,
-            license_note="Authorized operator-supplied snapshot; explicit native title references only.",
+            license_note="Authorized syncData export; explicit native ID references only.",
             supplemental=True,
+            **_export_options(_provider),
         ),
     )
+
 
 # YummyAnime's API is documented for personal use. Public redistribution
 # requires provider permission. Configured by default; preflight gates requests.
@@ -480,43 +484,30 @@ for _provider, _display in (
     ("crunchyroll_season", "Crunchyroll"),
     ("netflix_season", "Netflix"),
 ):
-    _prefix = f"MAPPINGS_{_provider.upper()}"
-    _url = os.environ.get(f"{_prefix}_SNAPSHOT_URL", "").strip()
-    _enabled = os.environ.get(f"MAPPINGS_ENABLE_{_provider.upper()}", "").strip()
-    if _enabled and not _env_bool(f"MAPPINGS_ENABLE_{_provider.upper()}", True):
+    if not _export_enabled(_provider):
         continue
-    _direct = _provider == "tioanime" and not _url
-    if _direct:
-        _url = "https://tioanime.com/directorio"
-    if not _url:
-        continue
-    _parts = urlsplit(_url)
-    if (
-        _parts.scheme != "https"
-        or not _parts.hostname
-        or _parts.username
-        or _parts.password
-        or _parts.query
-        or _parts.fragment
-    ):
-        raise ValueError(f"{_display} requires a public HTTPS snapshot URL")
+    _scope = "season" if _provider.endswith("_season") else "title"
     SOURCE_SPECS += (
         MappingSourceSpec(
-            name=f"{_display} authorized {'season' if _provider.endswith('_season') else 'title'} ID export",
-            url=_url,
+            name=f"{_display} authorized {_scope} ID export",
             importer=_provider,
-            permission_env=f"{_prefix}_PERMISSION_CONFIRMED",
-            collection_mode="paginated" if _direct else "single",
-            collection_interval_hours=168.0,
             required=False,
-            license_note="Provider-authorized title-ID export; public redistribution permission required.",
+            license_note="Authorized ID export; public redistribution permission required.",
             supplemental=True,
+            **_export_options(
+                _provider,
+                direct_url=(
+                    "https://tioanime.com/directorio" if _provider == "tioanime" else ""
+                ),
+            ),
         ),
     )
 
 
 def source_preflight(spec: MappingSourceSpec) -> str | None:
     """Return a non-sensitive skip reason, never a credential value."""
+    if not spec.url:
+        return "missing_source_url"
     if spec.credential_env and not os.environ.get(spec.credential_env, "").strip():
         return "missing_api_key"
     if spec.permission_env and not _env_bool(spec.permission_env, False):
