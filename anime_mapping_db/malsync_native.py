@@ -18,7 +18,13 @@ from anime_mapping_db.native_ids import enrich_native_ids, positive_id
 
 
 def slug_id(value: object) -> str | None:
-    if isinstance(value, str) and re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,255}", value):
+    if (
+        isinstance(value, str)
+        and 0 < len(value) <= 256
+        and value not in {".", ".."}
+        and all(c.isprintable() and not c.isspace() for c in value)
+        and not any(c in value for c in "/\\?#%")
+    ):
         return value
     return None
 
@@ -140,7 +146,7 @@ def fetch_animelib(client: httpx.Client, url: str) -> list[dict]:
                 raise ValueError("Contradictory AnimeLib AniList ID")
             shiki = _link(
                 item.get("shikimori_href"),
-                {"shikimori.one", "shikimori.me", "shikimori.org"},
+                {"shikimori.one", "shikimori.me", "shikimori.org", "shikimori.io"},
                 r"/animes/[az]?([1-9]\d*)(?:-[^/]*)?/?",
             )
             rows.append({"id": native, "anilist": ani or ani_url, "shikimori": shiki})
@@ -187,8 +193,10 @@ def download_animelib(url: str, target: Path, *, timeout: float) -> None:
 
 def _read(path: Path) -> list[dict]:
     rows = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(rows, list) or not rows or not all(
-        isinstance(row, dict) for row in rows
+    if (
+        not isinstance(rows, list)
+        or not rows
+        or not all(isinstance(row, dict) for row in rows)
     ):
         raise ValueError("Invalid native ID snapshot")
     return rows

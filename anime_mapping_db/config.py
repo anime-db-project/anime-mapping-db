@@ -356,7 +356,9 @@ if _adkami_url and _env_bool("MAPPINGS_ENABLE_ADKAMI", True):
         or _adkami_parts.query
         or _adkami_parts.fragment
     ):
-        raise ValueError("ADKami requires a public HTTPS snapshot URL without credentials")
+        raise ValueError(
+            "ADKami requires a public HTTPS snapshot URL without credentials"
+        )
     SOURCE_SPECS += (
         MappingSourceSpec(
             name="ADKami authorized syncData snapshot",

@@ -17,10 +17,17 @@ from anime_mapping_db.malsync_native import (
     import_animelib,
     import_docchi,
     normalize_adkami,
+    slug_id,
 )
 
 
 class NativeCatalogueTests(unittest.TestCase):
+    def test_docchi_slug_preserves_native_punctuation_and_unicode(self) -> None:
+        for slug in ("-kouhai", "historié", "bang-dream!-yume∞mita"):
+            self.assertEqual(slug_id(slug), slug)
+        for slug in ("../title", "a/b", "a?b", "a b", "%2F"):
+            self.assertIsNone(slug_id(slug))
+
     def test_docchi_projects_explicit_ids(self) -> None:
         with httpx.Client(
             transport=httpx.MockTransport(
@@ -47,7 +54,7 @@ class NativeCatalogueTests(unittest.TestCase):
                                 "model": "anime",
                                 "anilist_id": 200 + page,
                                 "anilist_href": f"https://anilist.co/anime/{200 + page}",
-                                "shikimori_href": f"https://shikimori.one/animes/{300 + page}",
+                                "shikimori_href": f"https://shikimori.io/animes/{300 + page}",
                             }
                         ],
                         "meta": {"current_page": page, "per_page": 1},
@@ -117,9 +124,7 @@ class NativeCatalogueTests(unittest.TestCase):
                 )
                 self.assertEqual(list(import_animelib(path, builder.conn)), [])
                 path.write_text(
-                    json.dumps(
-                        [{"id": "123-2-1", "mal_id": 101, "anilist_id": 201}]
-                    ),
+                    json.dumps([{"id": "123-2-1", "mal_id": 101, "anilist_id": 201}]),
                     encoding="utf-8",
                 )
                 normalize_adkami(path)
