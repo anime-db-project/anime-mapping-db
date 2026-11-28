@@ -7,12 +7,28 @@ from pathlib import Path
 from unittest.mock import patch
 
 from anime_mapping_db.collection import assemble, collect_one, matrix, source_key
-from anime_mapping_db.config import MappingSourceSpec
+from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec
 from anime_mapping_db.database import MappingRecord
 from anime_mapping_db.snapshots import _normalize_wikidata, load_snapshot
 
 
 class CollectionTests(unittest.TestCase):
+    def test_collection_modes(self) -> None:
+        modes = {spec.importer: spec.collection_mode for spec in SOURCE_SPECS}
+        self.assertEqual(modes["docchi"], "single")
+        self.assertEqual(modes["aniliberty"], "paginated")
+        self.assertEqual(modes["anime365"], "paginated")
+        self.assertEqual(modes["animelib"], "paginated")
+        self.assertEqual(
+            {key for key, mode in modes.items() if mode == "paginated"},
+            {"aniliberty", "anime365", "animelib"},
+        )
+        entries = matrix(SOURCE_SPECS)["include"]
+        self.assertEqual(
+            {item["key"]: item["mode"] for item in entries},
+            {source_key(spec): spec.collection_mode for spec in SOURCE_SPECS},
+        )
+
     def test_matrix_merge_retains_previous_data(self) -> None:
         specs = (
             MappingSourceSpec(
@@ -64,6 +80,10 @@ class CollectionTests(unittest.TestCase):
             self.assertEqual(first, second)
             self.assertEqual(len(load_snapshot(snapshots, specs)), 2)
             report = json.loads((snapshots / "collection-report.json").read_text())
+            self.assertEqual(
+                [item["collection_mode"] for item in report["sources"]],
+                ["single", "single"],
+            )
             self.assertEqual(
                 [item["status"] for item in report["sources"]],
                 ["retained", "unchanged"],

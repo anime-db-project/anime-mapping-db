@@ -15,6 +15,9 @@ concurrency:
 
 env:
   MAPPINGS_ADKAMI_SNAPSHOT_URL: ${{ vars.MAPPINGS_ADKAMI_SNAPSHOT_URL }}
+  MAPPINGS_ANIYAN_SNAPSHOT_URL: ${{ vars.MAPPINGS_ANIYAN_SNAPSHOT_URL }}
+  MAPPINGS_ANIDREAM_SNAPSHOT_URL: ${{ vars.MAPPINGS_ANIDREAM_SNAPSHOT_URL }}
+  MAPPINGS_ANINEXUS_SNAPSHOT_URL: ${{ vars.MAPPINGS_ANINEXUS_SNAPSHOT_URL }}
 
 jobs:
   malsync-inventory:
@@ -66,7 +69,7 @@ jobs:
 
   collect:
     needs: plan
-    name: Collect ${{ matrix.name }}
+    name: Collect ${{ matrix.name }} (${{ matrix.mode }})
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:

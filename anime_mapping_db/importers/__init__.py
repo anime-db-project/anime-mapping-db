@@ -30,7 +30,10 @@ from anime_mapping_db.importers.malsync import (
 from anime_mapping_db.importers.media_index import import_media_index_enrichment
 from anime_mapping_db.malsync_native import (
     import_adkami,
+    import_anidream,
     import_animelib,
+    import_aninexus,
+    import_aniyan,
     import_docchi,
 )
 from anime_mapping_db.importers.sovetromantica import import_sovetromantica_enrichment
@@ -68,6 +71,9 @@ SUPPLEMENTAL_IMPORTERS = {
     "docchi": import_docchi,
     "animelib": import_animelib,
     "adkami": import_adkami,
+    "aniyan": import_aniyan,
+    "anidream": import_anidream,
+    "aninexus": import_aninexus,
     "sovetromantica": import_sovetromantica_enrichment,
     "malsync_crunchyroll": import_malsync_crunchyroll,
     "malsync_netflix": import_malsync_netflix,
@@ -80,6 +86,9 @@ __all__ = [
     "import_aniliberty_enrichment",
     "import_anime365_enrichment",
     "import_adkami",
+    "import_aniyan",
+    "import_anidream",
+    "import_aninexus",
     "import_animelib",
     "import_docchi",
     "import_anime_and_manga_lists",

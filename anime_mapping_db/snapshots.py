@@ -180,6 +180,10 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
                 from anime_mapping_db.malsync_native import normalize_adkami
 
                 normalize_adkami(temp)
+            elif spec.importer in {"aniyan", "anidream", "aninexus"}:
+                from anime_mapping_db.malsync_native import normalize_syncdata
+
+                normalize_syncdata(temp, spec.importer)
             elif spec.importer.startswith("malsync_"):
                 from anime_mapping_db.importers.malsync import normalize_snapshot
 
@@ -230,6 +234,7 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
             outcomes.append(
                 {
                     "source": spec.name,
+                    "collection_mode": spec.collection_mode,
                     "status": status,
                     "bytes": target.stat().st_size if target.exists() else 0,
                 }
