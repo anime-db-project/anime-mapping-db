@@ -13,6 +13,9 @@ concurrency:
   group: anime-mapping-db-collection
   cancel-in-progress: false
 
+env:
+  MAPPINGS_ADKAMI_SNAPSHOT_URL: ${{ vars.MAPPINGS_ADKAMI_SNAPSHOT_URL }}
+
 jobs:
   malsync-inventory:
     name: Audit MALSync adapter inventory

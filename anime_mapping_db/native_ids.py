@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 
 from anime_mapping_db.anchors import _union_find_components
 from anime_mapping_db.database import MappingRecord
@@ -29,6 +29,7 @@ def enrich_native_ids(
     namespace: str,
     lineage: str,
     weight: int = 80,
+    native_id: Callable[[object], str | None] = positive_id,
 ) -> Iterator[MappingRecord]:
     if namespace in ANCHORS:
         raise ValueError("Target namespace must not be an anchor")
@@ -55,7 +56,7 @@ def enrich_native_ids(
     by_group: dict[int, set[str]] = defaultdict(set)
     outcomes: Counter[str] = Counter()
     for row in rows:
-        native = positive_id(row.get("id"))
+        native = native_id(row.get("id"))
         if native is None:
             raise ValueError("Invalid native ID")
         anchors = tuple(

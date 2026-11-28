@@ -74,7 +74,7 @@ Las recompilaciones conservan anchors existentes cuando identifican las mismas e
 
 ## Fuentes de datos
 
-El generador combina 24 entradas entre datasets directos y catálogos complementarios validados. Los datos complementarios no establecen identidades nuevas sin confirmación independiente. Las fuentes y licencias se documentan en el manifiesto.
+El generador combina 26 entradas entre datasets directos y catálogos complementarios validados. Los datos complementarios no establecen identidades nuevas sin confirmación independiente. Las fuentes y licencias se documentan en el manifiesto.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -97,6 +97,7 @@ El generador combina 24 entradas entre datasets directos y catálogos complement
 - [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — IDs históricos de SovetRomantica con referencias explícitas a Shikimori.
 - [MALSync](https://github.com/MALSync/MALSync) — referencias MAL explícitas a temporadas de Crunchyroll y Netflix, sin desplazamientos de episodios. La recopilación diaria audita todos los adaptadores de anime en `malsync-inventory`, sin usar resultados esperados de pruebas como evidencia.
 - [Anime365](https://github.com/ragedrugg/anime365) — IDs numéricos de series con referencias MAL explícitas.
+- [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — IDs de Docchi y AnimeLib; ADKami opcional mediante `MAPPINGS_ADKAMI_SNAPSHOT_URL`.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` identifica un título de forma estable. Los IDs externos son alias respaldados por evidencia; el `entity_id` interno solo vale para la compilación. No se eligen automáticamente relaciones ambiguas. [Identity contract](../docs/IDENTITY.md).

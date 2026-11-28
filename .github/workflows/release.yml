@@ -19,6 +19,9 @@ concurrency:
   group: anime-mapping-db-release
   cancel-in-progress: false
 
+env:
+  MAPPINGS_ADKAMI_SNAPSHOT_URL: ${{ vars.MAPPINGS_ADKAMI_SNAPSHOT_URL }}
+
 jobs:
   build-release:
     runs-on: ubuntu-latest

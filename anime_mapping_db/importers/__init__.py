@@ -28,6 +28,11 @@ from anime_mapping_db.importers.malsync import (
     import_malsync_netflix,
 )
 from anime_mapping_db.importers.media_index import import_media_index_enrichment
+from anime_mapping_db.malsync_native import (
+    import_adkami,
+    import_animelib,
+    import_docchi,
+)
 from anime_mapping_db.importers.sovetromantica import import_sovetromantica_enrichment
 from anime_mapping_db.importers.wikidata import (
     import_wikidata_bahamut,
@@ -60,6 +65,9 @@ SUPPLEMENTAL_IMPORTERS = {
     "media_index": import_media_index_enrichment,
     "aniliberty": import_aniliberty_enrichment,
     "anime365": import_anime365_enrichment,
+    "docchi": import_docchi,
+    "animelib": import_animelib,
+    "adkami": import_adkami,
     "sovetromantica": import_sovetromantica_enrichment,
     "malsync_crunchyroll": import_malsync_crunchyroll,
     "malsync_netflix": import_malsync_netflix,
@@ -71,6 +79,9 @@ __all__ = [
     "import_anibridge",
     "import_aniliberty_enrichment",
     "import_anime365_enrichment",
+    "import_adkami",
+    "import_animelib",
+    "import_docchi",
     "import_anime_and_manga_lists",
     "import_anime_lists",
     "import_animeaggregations_enrichment",
