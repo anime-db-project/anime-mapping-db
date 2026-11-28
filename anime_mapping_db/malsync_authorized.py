@@ -35,7 +35,9 @@ def _native(provider: str, value: object) -> str | None:
         # Numeric catalogue IDs only, not rotating playback session UUIDs.
         return positive_id(value)
     if provider == "animewho":
-        if isinstance(value, str) and re.fullmatch(r"anime-[A-Za-z0-9][A-Za-z0-9_-]*", value):
+        if isinstance(value, str) and re.fullmatch(
+            r"anime-[A-Za-z0-9][A-Za-z0-9_-]*", value
+        ):
             return value
         return None
     if provider == "miruro":

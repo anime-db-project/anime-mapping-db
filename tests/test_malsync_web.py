@@ -50,7 +50,8 @@ class WebCatalogueTests(unittest.TestCase):
             calls.append(str(request.url))
             if request.url.path == "/robots.txt":
                 return httpx.Response(
-                    200, text="User-agent: *\nAllow: /\nSitemap: " + origin + "/sitemap.xml"
+                    200,
+                    text="User-agent: *\nAllow: /\nSitemap: " + origin + "/sitemap.xml",
                 )
             if request.url.path == "/sitemap.xml":
                 return httpx.Response(
@@ -75,7 +76,8 @@ class WebCatalogueTests(unittest.TestCase):
             rows = fetch_web_catalogue(client, "witanime", origin)
         self.assertEqual(rows[0]["mal"], "123")
         self.assertEqual(
-            calls, [origin + "/robots.txt", origin + "/sitemap.xml", origin + "/anime/test"]
+            calls,
+            [origin + "/robots.txt", origin + "/sitemap.xml", origin + "/anime/test"],
         )
 
     def test_disallowed_sitemap_is_not_fetched(self) -> None:

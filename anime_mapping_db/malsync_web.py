@@ -178,11 +178,7 @@ def extract_title(provider: str, url: str, html: str) -> dict:
         cls = "mbottom" if provider == "hinatasoul" else "anime-mal"
         row.update(
             _link_ids(
-                [
-                    link
-                    for link in page.links
-                    if cls in link.get("class", "").split()
-                ]
+                [link for link in page.links if cls in link.get("class", "").split()]
             )
         )
         if provider == "hinatasoul":
@@ -247,11 +243,7 @@ def fetch_web_catalogue(client: httpx.Client, provider: str, origin: str) -> lis
             raise ValueError("Unrecognized sitemap format")
         for node in root:
             loc = next(
-                (
-                    child.text
-                    for child in node
-                    if child.tag.rsplit("}", 1)[-1] == "loc"
-                ),
+                (child.text for child in node if child.tag.rsplit("}", 1)[-1] == "loc"),
                 None,
             )
             if not loc:
@@ -263,15 +255,12 @@ def fetch_web_catalogue(client: httpx.Client, provider: str, origin: str) -> lis
             elif _same_origin(loc, origin):
                 parts = urlsplit(loc)
                 if not parts.query and re.fullmatch(pattern, parts.path):
-                    titles.add(loc.rstrip("/"))
+                    titles.add(loc)
     if not titles:
         raise ValueError("No title pages discovered in public sitemap")
     if len(titles) > paced.policy.max_requests - paced.requests:
         raise ValueError("Full catalogue exceeds source request budget")
-    return [
-        extract_title(provider, url, get(url).text)
-        for url in sorted(titles)
-    ]
+    return [extract_title(provider, url, get(url).text) for url in sorted(titles)]
 
 
 def download_web_catalogue(
@@ -280,7 +269,10 @@ def download_web_catalogue(
     with httpx.Client(
         timeout=timeout,
         follow_redirects=False,
-        headers={"Accept": "text/html,application/xml,text/plain", "User-Agent": user_agent()},
+        headers={
+            "Accept": "text/html,application/xml,text/plain",
+            "User-Agent": user_agent(),
+        },
     ) as client:
         rows = fetch_web_catalogue(client, provider, origin)
     target.write_text(json.dumps(rows), encoding="utf-8")
