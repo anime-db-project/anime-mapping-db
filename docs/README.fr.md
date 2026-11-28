@@ -22,29 +22,29 @@ Cette version contient **34,995 groupes d'identités AMDB indexés**. Il s'agit 
 | Indicateur | Valeur |
 | --- | ---: |
 | Groupes d'identités AMDB indexés | **34,995** |
-| Espaces d'ID fournisseurs | **62** |
-| Jeux sources | **20** |
-| Liens acceptés | **1,255,214** |
-| Routes dirigées sûres | **2,442,197** |
+| Espaces d'ID fournisseurs | **63** |
+| Jeux sources | **21** |
+| Liens acceptés | **1,256,760** |
+| Routes dirigées sûres | **2,445,289** |
 | Conflits directionnels | **22,886** |
-| Enregistrements sources | **828,844** |
-| Relations de preuves | **2,378,419** |
-| Taille SQLite | **81.8 MiB** |
-| SQLite compressée | **17.0 MiB** |
+| Enregistrements sources | **830,390** |
+| Relations de preuves | **2,379,965** |
+| Taille SQLite | **81.9 MiB** |
+| SQLite compressée | **17.1 MiB** |
 
 ### Performance des recherches locales
 
 | Indicateur | Valeur |
 | --- | ---: |
-| Médiane | **0.233 ms** |
-| Moyenne | **0.235 ms** |
-| p95 | **0.262 ms** |
-| p99 | **0.288 ms** |
-| Requêtes séquentielles/s | **4,238** |
+| Médiane | **0.240 ms** |
+| Moyenne | **0.244 ms** |
+| p95 | **0.281 ms** |
+| p99 | **0.308 ms** |
+| Requêtes séquentielles/s | **4,082** |
 
 Appels séquentiels MappingResolver sur SQLite publiée avec cache chaud, Linux / Python 3.12. 300 IDs × 2 tours ; pas de latence réseau/API.
 
-Instantané de version: **2026-11-28**, [v2026.11.28.55](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.55). [Manifeste actuel](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Instantané de version: **2026-11-28**, [v2026.11.28.56](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.56). [Manifeste actuel](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 

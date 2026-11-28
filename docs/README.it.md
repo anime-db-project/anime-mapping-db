@@ -22,29 +22,29 @@ Questa versione contiene **34,995 gruppi di identità AMDB indicizzati**. È una
 | Indicatore | Valore |
 | --- | ---: |
 | Gruppi di identità AMDB indicizzati | **34,995** |
-| Namespace di ID | **62** |
-| Dataset sorgenti | **20** |
-| Collegamenti accettati | **1,255,214** |
-| Percorsi diretti sicuri | **2,442,197** |
+| Namespace di ID | **63** |
+| Dataset sorgenti | **21** |
+| Collegamenti accettati | **1,256,760** |
+| Percorsi diretti sicuri | **2,445,289** |
 | Conflitti direzionali | **22,886** |
-| Record sorgenti | **828,844** |
-| Relazioni di prova | **2,378,419** |
-| Dimensione SQLite | **81.8 MiB** |
-| SQLite compresso | **17.0 MiB** |
+| Record sorgenti | **830,390** |
+| Relazioni di prova | **2,379,965** |
+| Dimensione SQLite | **81.9 MiB** |
+| SQLite compresso | **17.1 MiB** |
 
 ### Prestazioni di ricerca locale
 
 | Indicatore | Valore |
 | --- | ---: |
-| Mediana | **0.233 ms** |
-| Media | **0.235 ms** |
-| p95 | **0.262 ms** |
-| p99 | **0.288 ms** |
-| Query sequenziali/s | **4,238** |
+| Mediana | **0.240 ms** |
+| Media | **0.244 ms** |
+| p95 | **0.281 ms** |
+| p99 | **0.308 ms** |
+| Query sequenziali/s | **4,082** |
 
 Query sequenziali MappingResolver con cache calda sul DB della release, Linux / Python 3.12. 300 ID × 2 round; non misura la latenza delle API.
 
-Snapshot della release: **2026-11-28**, [v2026.11.28.55](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.55). [Manifest attuale](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Snapshot della release: **2026-11-28**, [v2026.11.28.56](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.56). [Manifest attuale](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
