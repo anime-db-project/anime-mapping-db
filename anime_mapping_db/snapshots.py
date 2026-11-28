@@ -176,6 +176,10 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
                 from anime_mapping_db.importers.sovetromantica import normalize_snapshot
 
                 normalize_snapshot(temp)
+            elif spec.importer == "adkami":
+                from anime_mapping_db.malsync_native import normalize_adkami
+
+                normalize_adkami(temp)
             elif spec.importer.startswith("malsync_"):
                 from anime_mapping_db.importers.malsync import normalize_snapshot
 

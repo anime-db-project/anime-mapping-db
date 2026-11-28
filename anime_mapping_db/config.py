@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
@@ -321,6 +321,52 @@ ANIME365_SOURCE = MappingSourceSpec(
 )
 if _env_bool("MAPPINGS_ENABLE_ANIME365", True):
     SOURCE_SPECS += (ANIME365_SOURCE,)
+
+DOCCHI_SOURCE = MappingSourceSpec(
+    name="Docchi catalog",
+    url="https://api.docchi.pl/v1/series/list",
+    importer="docchi",
+    required=False,
+    license_note="Public catalogue API; explicit slug and MAL ID only; upstream data terms apply.",
+    supplemental=True,
+)
+ANIMELIB_SOURCE = MappingSourceSpec(
+    name="AnimeLib catalog",
+    url="https://api.cdnlibs.org/api/anime",
+    importer="animelib",
+    required=False,
+    license_note="Public LibSocial catalogue; explicit AnimeLib, AniList and Shikimori IDs only; upstream data terms apply.",
+    supplemental=True,
+)
+if _env_bool("MAPPINGS_ENABLE_DOCCHI", True):
+    SOURCE_SPECS += (DOCCHI_SOURCE,)
+if _env_bool("MAPPINGS_ENABLE_ANIMELIB", True):
+    SOURCE_SPECS += (ANIMELIB_SOURCE,)
+
+# ADKami's catalogue was inaccessible (HTTP 403). Only accept an explicitly
+# supplied public, authorized JSON snapshot, never bypass the site's controls.
+_adkami_url = os.environ.get("MAPPINGS_ADKAMI_SNAPSHOT_URL", "").strip()
+if _adkami_url and _env_bool("MAPPINGS_ENABLE_ADKAMI", True):
+    _adkami_parts = urlsplit(_adkami_url)
+    if (
+        _adkami_parts.scheme != "https"
+        or not _adkami_parts.hostname
+        or _adkami_parts.username
+        or _adkami_parts.password
+        or _adkami_parts.query
+        or _adkami_parts.fragment
+    ):
+        raise ValueError("ADKami requires a public HTTPS snapshot URL without credentials")
+    SOURCE_SPECS += (
+        MappingSourceSpec(
+            name="ADKami authorized syncData snapshot",
+            url=_adkami_url,
+            importer="adkami",
+            required=False,
+            license_note="Operator-supplied authorized ADKami snapshot; explicit native season IDs only.",
+            supplemental=True,
+        ),
+    )
 
 
 def mappings_db_path() -> Path:

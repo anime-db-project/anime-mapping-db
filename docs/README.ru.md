@@ -74,7 +74,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 
 ## Источники данных
 
-Сборщик объединяет 24 входных набора: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
+Сборщик объединяет 26 входных наборов: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -97,6 +97,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 - [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — исторический дамп ID SovetRomantica с явными ссылками на Shikimori.
 - [MALSync](https://github.com/MALSync/MALSync) — явные MAL-сопоставления сезонов Crunchyroll и Netflix; отдельные пространства ID, без смещений эпизодов. Ежедневный сбор также проверяет все аниме-адаптеры MALSync и сохраняет отдельный `malsync-inventory`; тестовые ожидания не являются доказательством сопоставления.
 - [Anime365](https://github.com/ragedrugg/anime365) — собственные числовые ID каталога с явными MAL-ссылками; источник найден через MALSync.
+- [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — ID каталогов Docchi и AnimeLib; ADKami — опциональный разрешённый снимок (`MAPPINGS_ADKAMI_SNAPSHOT_URL`).
 
 Дополнительный источник [media-index](https://github.com/anilifecommunity/media-index) по умолчанию отключён до проверки прав на данные. После подтверждения прав можно использовать `MAPPINGS_ENABLE_MEDIA_INDEX=1` с отдельной новой директорией сборки. Импортируются только отсутствующие Bangumi, Kitsu и Simkl ID при двух подтверждённых якорях и отсутствии конфликтов между записями; TVDB/TMDB исключены.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
