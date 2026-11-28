@@ -22,29 +22,29 @@ Esta versión contiene **34,995 grupos de identidades AMDB indexados**. Es una m
 | Indicador | Valor |
 | --- | ---: |
 | Grupos de identidades AMDB indexados | **34,995** |
-| Espacios de ID | **61** |
-| Datasets de origen | **19** |
-| Relaciones aceptadas | **1,251,888** |
-| Rutas dirigidas seguras | **2,435,545** |
+| Espacios de ID | **62** |
+| Datasets de origen | **20** |
+| Relaciones aceptadas | **1,255,214** |
+| Rutas dirigidas seguras | **2,442,197** |
 | Conflictos dirigidos | **22,886** |
-| Registros de origen | **825,518** |
-| Relaciones de evidencia | **2,375,093** |
-| Tamaño SQLite | **81.5 MiB** |
+| Registros de origen | **828,844** |
+| Relaciones de evidencia | **2,378,419** |
+| Tamaño SQLite | **81.8 MiB** |
 | SQLite comprimido | **17.0 MiB** |
 
 ### Velocidad de consulta local
 
 | Indicador | Valor |
 | --- | ---: |
-| Mediana | **0.356 ms** |
-| Media | **0.363 ms** |
-| p95 | **0.410 ms** |
-| p99 | **0.549 ms** |
-| Consultas secuenciales/s | **2,748** |
+| Mediana | **0.358 ms** |
+| Media | **0.360 ms** |
+| p95 | **0.400 ms** |
+| p99 | **0.433 ms** |
+| Consultas secuenciales/s | **2,764** |
 
 Consultas secuenciales MappingResolver con caché caliente sobre SQLite publicada, Linux / Python 3.12. 300 IDs × 2 rondas. No es latencia de red/API.
 
-Versión de referencia: **2026-11-28**, [v2026.11.28.52](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.52). [Manifiesto actual](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+Versión de referencia: **2026-11-28**, [v2026.11.28.53](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.53). [Manifiesto actual](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 

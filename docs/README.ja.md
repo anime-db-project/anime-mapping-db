@@ -22,29 +22,29 @@
 | 指標 | 値 |
 | --- | ---: |
 | インデックスされた AMDB ID グループ | **34,995** |
-| プロバイダー ID 空間 | **61** |
-| 入力データセット | **19** |
-| 確認済みの対応エッジ | **1,251,888** |
-| 安全な方向付き出力経路 | **2,435,545** |
+| プロバイダー ID 空間 | **62** |
+| 入力データセット | **20** |
+| 確認済みの対応エッジ | **1,255,214** |
+| 安全な方向付き出力経路 | **2,442,197** |
 | 方向付き競合 | **22,886** |
-| 元レコード | **825,518** |
-| 証拠関係 | **2,375,093** |
-| SQLite サイズ | **81.5 MiB** |
+| 元レコード | **828,844** |
+| 証拠関係 | **2,378,419** |
+| SQLite サイズ | **81.8 MiB** |
 | 圧縮 SQLite サイズ | **17.0 MiB** |
 
 ### ローカル検索速度
 
 | 指標 | 値 |
 | --- | ---: |
-| 中央値 | **0.356 ms** |
-| 平均 | **0.363 ms** |
-| p95 | **0.410 ms** |
-| p99 | **0.549 ms** |
-| 逐次検索/秒 | **2,748** |
+| 中央値 | **0.358 ms** |
+| 平均 | **0.360 ms** |
+| p95 | **0.400 ms** |
+| p99 | **0.433 ms** |
+| 逐次検索/秒 | **2,764** |
 
 リリース SQLite に対するキャッシュ済み MappingResolver の逐次読み取り、Linux / Python 3.12。300 ID × 2 回。ネットワーク API の遅延ではありません。
 
-リリース時点: **2026-11-28**, [v2026.11.28.52](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.52). [最新マニフェスト](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+リリース時点: **2026-11-28**, [v2026.11.28.53](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.53). [最新マニフェスト](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
