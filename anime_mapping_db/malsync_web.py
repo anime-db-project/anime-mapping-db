@@ -212,10 +212,10 @@ def fetch_web_catalogue(client: httpx.Client, provider: str, origin: str) -> lis
     robots = RobotFileParser()
     robots.parse(rules)
 
-    def get(url: str) -> httpx.Response:
+    def get(url: str, *, accept: str | None = None) -> httpx.Response:
         if not _same_origin(url, origin) or not robots.can_fetch(user_agent(), url):
             raise ValueError("Off-origin or disallowed catalogue URL")
-        response = paced.get(url)
+        response = paced.get(url, headers={"Accept": accept} if accept else None)
         if response.status_code != 200:
             raise ValueError("Unexpected catalogue response")
         return response
@@ -231,7 +231,7 @@ def fetch_web_catalogue(client: httpx.Client, provider: str, origin: str) -> lis
         page_size = None
         page = 1
         while last is None or page <= last:
-            response = get(f"{archive}?page={page}")
+            response = get(f"{archive}?page={page}", accept="application/json")
             payload = response.json()
             if not isinstance(payload, dict):
                 raise ValueError("Invalid AnimeUnity archive")

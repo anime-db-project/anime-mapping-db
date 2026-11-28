@@ -29,16 +29,27 @@ _WEB = {
     "WitAnime",
     "Miruro",
 }
-_OPTIONAL = set()
 # Dated audit observations, not automatic availability or permission checks.
 _AUDIT = {
     "AnimeUnity": (
         "access_unavailable",
-        "HTTP 403 on robots.txt; no authorized bulk catalogue verified.",
+        "GitHub runner robots.txt returned HTTP 403; native archive API schema confirmed in public client, not live.",
     ),
     "AnimeKO": (
         "access_unavailable",
         "Original domain parked on 2026-11-28; no verified successor or free API.",
+    ),
+    "Aniyan": (
+        "access_restricted",
+        "GitHub runner robots.txt disallowed the catalogue sitemap.",
+    ),
+    "AniDream": (
+        "access_unavailable",
+        "GitHub runner connection failed; no compatible successor confirmed.",
+    ),
+    "Aninexus": (
+        "access_unavailable",
+        "GitHub runner connection failed; no compatible successor confirmed.",
     ),
     "ADKami": (
         "access_unavailable",
@@ -50,11 +61,11 @@ _AUDIT = {
     ),
     "AnimeOnsen": (
         "access_unavailable",
-        "HTTP 403 on robots.txt; no authorized bulk export confirmed.",
+        "GitHub runner robots.txt returned HTTP 403 for both web and API hosts; native API uses authorization.",
     ),
     "AnimeWho": (
         "access_unavailable",
-        "Domain lookup failed during audit; explicit page references in adapter only.",
+        "GitHub runner connection failed; title-level adapter parser prepared.",
     ),
     "Animeworld": (
         "permission_required",
@@ -66,15 +77,15 @@ _AUDIT = {
     ),
     "HinataSoul": (
         "page_reference_only",
-        "MAL reference in overview adapter; no bulk ID export verified.",
+        "GitHub runner robots.txt returned 200; sitemap returned 403.",
     ),
     "WitAnime": (
         "access_unavailable",
-        "TLS connection failed; overview MAL link exists in adapter.",
+        "GitHub runner connection failed; no verified successor domain.",
     ),
     "tioanime": (
         "page_reference_only",
-        "Jikan link in page markup; no verified bulk ID export.",
+        "GitHub runner robots.txt and public directory returned HTTP 200; full crawl not tested.",
     ),
     "YummyAni": (
         "permission_required",
@@ -90,11 +101,11 @@ _AUDIT = {
     ),
     "Miruro": (
         "page_reference_only",
-        "Overview adapter exposes MAL/AniList links; internal API excluded in robots.txt.",
+        "GitHub runner robots.txt returned HTTP 403; title-page extractor prepared.",
     ),
     "animepahe": (
         "page_reference_only",
-        "Adapter exposes numeric MAL, AniList and Kitsu metadata; bulk ID export not verified.",
+        "GitHub runner robots.txt returned 200; sitemap returned HTTP 301; no canonical catalogue confirmed.",
     ),
     "Kaguya": (
         "existing_namespace_alias",
@@ -263,8 +274,6 @@ def inventory(root: Path, revision: str) -> dict:
             status = "native_api_collector_unverified"
         elif name in _WEB:
             status = "native_web_collector_unverified"
-        elif name in _OPTIONAL:
-            status = "authorized_snapshot_only"
         elif name in _AUDIT:
             status = _AUDIT[name][0]
         elif any(entry["external_id_hook"] for entry in entries):
