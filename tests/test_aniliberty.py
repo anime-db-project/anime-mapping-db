@@ -43,7 +43,7 @@ class AniLibertyTests(unittest.TestCase):
 
         with (
             httpx.Client(transport=httpx.MockTransport(respond)) as client,
-            patch("anime_mapping_db.aniliberty.time.sleep"),
+            patch("anime_mapping_db.crawler_policy.time.sleep"),
         ):
             rows = _fetch_catalog(client, "https://example.invalid/catalog")
         self.assertEqual(len(rows), 51)

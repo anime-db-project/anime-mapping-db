@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
-import time
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
@@ -12,6 +11,7 @@ import httpx
 
 from anime_mapping_db.anchors import _union_find_components
 from anime_mapping_db.database import MappingRecord
+from anime_mapping_db.crawler_policy import PacedClient, load_policy, user_agent
 
 _PAGE_SIZE = 50
 _MAX_PAGES = 500
@@ -35,10 +35,9 @@ def _fetch_catalog(client: httpx.Client, url: str) -> list[dict]:
     rows: dict[str, dict] = {}
     expected_total = None
     expected_pages = None
+    paced = PacedClient(client, load_policy("aniliberty"))
     for page in range(1, _MAX_PAGES + 1):
-        if page > 1:
-            time.sleep(1.0)
-        response = client.get(
+        response = paced.get(
             url,
             params={
                 "page": page,
@@ -47,7 +46,7 @@ def _fetch_catalog(client: httpx.Client, url: str) -> list[dict]:
                 "f[sorting]": "FRESH_AT_ASC",
             },
         )
-        # Do not continue on 403/429 or publish a partial snapshot.
+        # Never publish a partial snapshot after rate limiting or other errors.
         response.raise_for_status()
         payload = response.json()
         items = payload["data"]
@@ -101,7 +100,7 @@ def download_aniliberty(url: str, target: Path, *, timeout: float) -> None:
         follow_redirects=True,
         headers={
             "Accept": "application/json",
-            "User-Agent": "anime-db-project/anime-mapping-db",
+            "User-Agent": user_agent(),
         },
     ) as client:
         rows = _fetch_catalog(client, url)
