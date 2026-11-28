@@ -30,19 +30,22 @@ def enrich_native_ids(
     lineage: str,
     weight: int = 80,
     native_id: Callable[[object], str | None] = positive_id,
+    anchor_providers: tuple[str, ...] = ANCHORS,
 ) -> Iterator[MappingRecord]:
-    if namespace in ANCHORS:
+    if namespace in anchor_providers:
         raise ValueError("Target namespace must not be an anchor")
     components = _union_find_components(runtime_conn)
     membership = {
         node: group for group, nodes in enumerate(components) for node in nodes
     }
+    providers = (*anchor_providers, namespace)
+    placeholders = ",".join("?" for _ in providers)
     lookup = {
         (provider, external): node
         for node, provider, external in runtime_conn.execute(
             "SELECT id, provider, external_id FROM nodes "
-            "WHERE provider IN ('mal', 'anilist', 'shikimori', ?)",
-            (namespace,),
+            f"WHERE provider IN ({placeholders})",
+            providers,
         )
     }
     group_ids: dict[tuple[int, str], set[str]] = defaultdict(set)
@@ -61,7 +64,7 @@ def enrich_native_ids(
             raise ValueError("Invalid native ID")
         anchors = tuple(
             (provider, external)
-            for provider in ANCHORS
+            for provider in anchor_providers
             if (external := positive_id(row.get(provider))) is not None
         )
         by_id[native].add(anchors)

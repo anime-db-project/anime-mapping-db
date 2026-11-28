@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from anime_mapping_db.config import MappingSourceSpec
+from anime_mapping_db.database import MappingDatabaseBuilder, MappingRecord
 from anime_mapping_db.malsync_authorized import (
     AUTHORIZED_IMPORTERS,
     PROVIDERS,
@@ -46,6 +48,7 @@ class AuthorizedCatalogueTests(unittest.TestCase):
                             "mal": "101",
                             "anilist": "201",
                             "shikimori": None,
+                            "kitsu": None,
                         }
                     ],
                 )
@@ -63,3 +66,45 @@ class AuthorizedCatalogueTests(unittest.TestCase):
                 path.write_text(json.dumps([row]), encoding="utf-8")
                 with self.assertRaises(ValueError):
                     normalize_authorized(path, "animepahe")
+
+    def test_kitsu_only_anchor_and_conflicting_claims(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "source.json"
+            spec = MappingSourceSpec(
+                "base", "https://example.invalid/base", "test", True, "test"
+            )
+            with MappingDatabaseBuilder(
+                root / "runtime.db", evidence_path=root / "evidence.db"
+            ) as builder:
+                builder.ingest_dataset(
+                    spec,
+                    [
+                        MappingRecord(
+                            str(i),
+                            {"mal": (str(100 + i),), "kitsu": (str(200 + i),)},
+                            "trusted",
+                            95,
+                        )
+                        for i in (1, 2)
+                    ],
+                    sha256="base",
+                    downloaded_at="2026-11-28",
+                )
+                builder.finalize(built_at="2026-11-28")
+                path.write_text(
+                    json.dumps([{"id": "7", "scope": "title", "kitsu": 201}]),
+                    encoding="utf-8",
+                )
+                records = list(AUTHORIZED_IMPORTERS["animepahe"](path, builder.conn))
+                self.assertEqual(records[0].ids["animepahe"], ("7",))
+                self.assertEqual(records[0].ids["kitsu"], ("201",))
+                path.write_text(
+                    json.dumps(
+                        [{"id": "7", "scope": "title", "kitsu": 201, "mal": 102}]
+                    ),
+                    encoding="utf-8",
+                )
+                self.assertEqual(
+                    list(AUTHORIZED_IMPORTERS["animepahe"](path, builder.conn)), []
+                )

@@ -14,7 +14,7 @@ from pathlib import Path
 
 from anime_mapping_db.database import MappingRecord
 from anime_mapping_db.malsync_native import slug_id
-from anime_mapping_db.native_ids import enrich_native_ids, positive_id
+from anime_mapping_db.native_ids import ANCHORS, enrich_native_ids, positive_id
 
 PROVIDERS = (
     "animepahe",
@@ -34,9 +34,7 @@ def _native(provider: str, value: object) -> str | None:
         # Numeric catalogue IDs only, not rotating playback session UUIDs.
         return positive_id(value)
     if provider == "animewho":
-        if isinstance(value, str) and re.fullmatch(
-            r"[A-Za-z0-9_]+-[1-9][0-9]*", value
-        ):
+        if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_]+-[1-9][0-9]*", value):
             return value
         return None
     return slug_id(value) or positive_id(value)
@@ -60,6 +58,7 @@ def _rows(path: Path, provider: str) -> list[dict]:
             ("mal", ("mal", "mal_id", "myanimelist_id")),
             ("anilist", ("anilist", "anilist_id")),
             ("shikimori", ("shikimori", "shikimori_id")),
+            ("kitsu", ("kitsu", "kitsu_id")),
         ):
             values = set()
             for alias in aliases:
@@ -76,7 +75,9 @@ def _rows(path: Path, provider: str) -> list[dict]:
                 raise ValueError("Conflicting external ID aliases")
             row[anchor] = next(iter(values), None)
         rows.append(row)
-    if not any(row["mal"] or row["anilist"] or row["shikimori"] for row in rows):
+    if not any(
+        row["mal"] or row["anilist"] or row["shikimori"] or row["kitsu"] for row in rows
+    ):
         raise ValueError("No explicit supported external IDs in export")
     return sorted(rows, key=lambda row: (row["id"], json.dumps(row, sort_keys=True)))
 
@@ -97,6 +98,7 @@ def _importer(provider: str):
             lineage=f"{provider}-authorized-title-export",
             native_id=lambda value: _native(provider, value),
             weight=85,
+            anchor_providers=(*ANCHORS, "kitsu"),
         )
 
     return importer
