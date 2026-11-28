@@ -74,7 +74,7 @@ During rebuilds, existing anchors are retained for matching or enriched entities
 
 ## Data sources
 
-The builder combines 20 configured inputs, including direct mapping datasets and strictly validated supplemental catalogs. Supplemental records cannot establish new anime identities without independent anchor confirmation; exact inputs and their licensing are tracked in the release manifest.
+The builder combines 21 configured inputs, including direct mapping datasets and strictly validated supplemental catalogs. Supplemental records cannot establish new anime identities without independent anchor confirmation; exact inputs and their licensing are tracked in the release manifest.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -95,6 +95,7 @@ The builder combines 20 configured inputs, including direct mapping datasets and
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
 - [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — missing Bangumi, Kitsu and Simkl IDs only; two conflict-free existing anchors and snapshot-wide ambiguity checks are required. TVDB/TMDB are excluded. Upstream data terms still apply; see [third-party notices](THIRD_PARTY_NOTICES.md).
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — numeric release IDs attached to existing explicit MAL/Shikimori references; conflicting or duplicate claims are excluded.
+- [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — historical API-derived SovetRomantica IDs, attached via explicit Shikimori references.
 
 Optional [media-index](https://github.com/anilifecommunity/media-index) enrichment is disabled by default pending upstream data-rights review. After confirming the applicable rights, use `MAPPINGS_ENABLE_MEDIA_INDEX=1` with a fresh, separate build directory. It imports only missing Bangumi, Kitsu and Simkl IDs, requires two conflict-free existing anchors, and rejects cross-record ambiguities; TVDB/TMDB series IDs are excluded.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)

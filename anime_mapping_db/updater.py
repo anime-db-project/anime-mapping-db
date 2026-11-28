@@ -517,7 +517,7 @@ def update_mapping_database(
                     download_path, sha256 = staged_item
                     # Validate these sources against prior supplemental inputs as
                     # well, so an already attached target cannot be reassigned.
-                    if spec.importer in {"media_index", "aniliberty"}:
+                    if spec.importer in {"media_index", "aniliberty", "sovetromantica"}:
                         builder.finalize(built_at=checked_at)
                     supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
                     if supplemental_importer is None:
@@ -546,7 +546,7 @@ def update_mapping_database(
                     and evidence_path.is_file()
                     and spec.name in state
                     and not base_changed
-                    and spec.importer not in {"media_index", "aniliberty"}
+                    and spec.importer not in {"media_index", "aniliberty", "sovetromantica"}
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the
                     # supplemental source is unavailable, omit old enrichment rather than

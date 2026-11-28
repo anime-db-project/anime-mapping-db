@@ -17,6 +17,7 @@ class AniLibertyTests(unittest.TestCase):
     def test_catalog_projection(self) -> None:
         def respond(request: httpx.Request) -> httpx.Response:
             self.assertEqual(request.url.params["include"], "id,mal.id,shikimori.id")
+            self.assertEqual(request.url.params["f[sorting]"], "YEAR_ASC")
             page = int(request.url.params["page"])
             start = (page - 1) * 50
             return httpx.Response(

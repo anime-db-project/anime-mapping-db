@@ -172,6 +172,10 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
                 _normalize_media_index(temp)
             elif spec.importer.startswith("wikidata_"):
                 _normalize_wikidata(temp, spec.importer)
+            elif spec.importer == "sovetromantica":
+                from anime_mapping_db.importers.sovetromantica import normalize_snapshot
+
+                normalize_snapshot(temp)
             if not temp.stat().st_size:
                 raise ValueError("Empty source download")
             _validate_payload(spec, temp)

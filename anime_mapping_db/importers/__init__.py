@@ -23,6 +23,7 @@ from anime_mapping_db.importers.enrichment import (
     import_animethemes_enrichment,
 )
 from anime_mapping_db.importers.media_index import import_media_index_enrichment
+from anime_mapping_db.importers.sovetromantica import import_sovetromantica_enrichment
 from anime_mapping_db.importers.wikidata import (
     import_wikidata_bahamut,
     import_wikidata_enrichment,
@@ -53,6 +54,7 @@ SUPPLEMENTAL_IMPORTERS = {
     "wikidata_multi": import_wikidata_enrichment,
     "media_index": import_media_index_enrichment,
     "aniliberty": import_aniliberty_enrichment,
+    "sovetromantica": import_sovetromantica_enrichment,
 }
 
 __all__ = [
@@ -76,6 +78,7 @@ __all__ = [
     "import_manami",
     "import_notify_rensetsu",
     "import_shinkro",
+    "import_sovetromantica_enrichment",
     "import_silveryasha",
     "import_wikidata_bahamut",
     "import_wikidata_enrichment",
