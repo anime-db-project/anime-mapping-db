@@ -6,6 +6,7 @@ from unittest.mock import patch
 import httpx
 
 from anime_mapping_db.authorized_export_api import fetch_export
+from anime_mapping_db.config import MappingSourceSpec, _export_options, source_preflight
 
 
 class ExportApiTests(unittest.TestCase):
@@ -47,3 +48,32 @@ class ExportApiTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     fetch_export(client, "https://example.invalid/export")
             self.assertEqual(len(calls), 1)
+
+    def test_missing_url_and_blank_token_option_fail_closed(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {
+                "MAPPINGS_FIREANIME_EXPORT_API_URL": "https://example.invalid/export",
+                "MAPPINGS_FIREANIME_API_REQUIRES_TOKEN": "",
+                "MAPPINGS_FIREANIME_API_TOKEN": "",
+                "MAPPINGS_FIREANIME_PERMISSION_CONFIRMED": "1",
+            },
+            clear=True,
+        ):
+            spec = MappingSourceSpec(
+                name="fixture",
+                importer="fireanime",
+                required=False,
+                license_note="test",
+                **_export_options("fireanime"),
+            )
+            self.assertEqual(source_preflight(spec), "missing_api_key")
+        with patch.dict("os.environ", {}, clear=True):
+            spec = MappingSourceSpec(
+                name="fixture",
+                importer="fireanime",
+                required=False,
+                license_note="test",
+                **_export_options("fireanime"),
+            )
+            self.assertEqual(source_preflight(spec), "missing_source_url")

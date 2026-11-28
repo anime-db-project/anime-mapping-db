@@ -63,13 +63,19 @@ def fetch_export(client: httpx.Client, url: str) -> list[dict]:
             if len(rows) != total:
                 raise ValueError("Export terminated before declared total")
             break
-        if not isinstance(next_page, str) or not next_page.strip() or len(rows) == total:
+        if (
+            not isinstance(next_page, str)
+            or not next_page.strip()
+            or len(rows) == total
+        ):
             raise ValueError("Invalid export continuation")
         url = urljoin(url, next_page)
     return rows
 
 
-def download_export_api(spec: MappingSourceSpec, target: Path, *, timeout: float) -> None:
+def download_export_api(
+    spec: MappingSourceSpec, target: Path, *, timeout: float
+) -> None:
     if not spec.export_api:
         raise ValueError("Export API transport not selected")
     reason = source_preflight(spec)
@@ -78,6 +84,8 @@ def download_export_api(spec: MappingSourceSpec, target: Path, *, timeout: float
     headers = {"Accept": "application/json", "User-Agent": user_agent()}
     if spec.credential_env:
         headers["Authorization"] = "Bearer " + os.environ[spec.credential_env].strip()
-    with httpx.Client(timeout=timeout, follow_redirects=False, headers=headers) as client:
+    with httpx.Client(
+        timeout=timeout, follow_redirects=False, headers=headers
+    ) as client:
         rows = fetch_export(client, spec.url)
     target.write_text(json.dumps(rows), encoding="utf-8")

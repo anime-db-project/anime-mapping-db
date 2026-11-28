@@ -359,6 +359,8 @@ if _env_bool("MAPPINGS_ENABLE_ANIMELIB", True):
     SOURCE_SPECS += (ANIMELIB_SOURCE,)
 
 # Authorized syncData exports; do not guess undocumented catalogue endpoints.
+
+
 def _export_options(provider: str, *, direct_url: str = "") -> dict:
     prefix = f"MAPPINGS_{provider.upper()}"
     api = os.environ.get(f"{prefix}_EXPORT_API_URL", "").strip()
@@ -376,6 +378,10 @@ def _export_options(provider: str, *, direct_url: str = "") -> dict:
         or parts.fragment
     ):
         raise ValueError(f"{provider}: HTTPS export URL without credentials required")
+    token_option = f"{prefix}_API_REQUIRES_TOKEN"
+    requires_token = not os.environ.get(token_option, "").strip() or _env_bool(
+        token_option, True
+    )
     return {
         "url": url,
         "collection_mode": (
@@ -383,9 +389,7 @@ def _export_options(provider: str, *, direct_url: str = "") -> dict:
         ),
         "export_api": bool(api),
         "credential_env": (
-            f"{prefix}_API_TOKEN"
-            if api and _env_bool(f"{prefix}_API_REQUIRES_TOKEN", True)
-            else None
+            f"{prefix}_API_TOKEN" if api and requires_token else None
         ),
         "permission_env": f"{prefix}_PERMISSION_CONFIRMED",
         "collection_interval_hours": _env_float(

@@ -129,8 +129,12 @@ class AuthorizedCatalogueTests(unittest.TestCase):
                 ("fireanime", {"id": "x", "scope": "title", "anilist": 101}),
                 (
                     "miruro",
-                    {"id": "101", "scope": "title", "anilist": 101,
-                     "native_id_verified": True},
+                    {
+                        "id": "101",
+                        "scope": "title",
+                        "anilist": 101,
+                        "native_id_verified": True,
+                    },
                 ),
                 (
                     "anikoto_season",
@@ -138,8 +142,13 @@ class AuthorizedCatalogueTests(unittest.TestCase):
                 ),
                 (
                     "netflix_season",
-                    {"id": "123", "scope": "season", "mal": 101,
-                     "full_season": True, "offset": 12},
+                    {
+                        "id": "123",
+                        "scope": "season",
+                        "mal": 101,
+                        "full_season": True,
+                        "offset": 12,
+                    },
                 ),
             ):
                 path.write_text(json.dumps([row]), encoding="utf-8")

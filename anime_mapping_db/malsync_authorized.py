@@ -73,7 +73,10 @@ def _rows(path: Path, provider: str) -> list[dict]:
             or item["offset"] != 0
         ):
             raise ValueError("Full season equivalence and zero offset required")
-        if provider in INDEPENDENT_ID_REQUIRED and item.get("native_id_verified") is not True:
+        if (
+            provider in INDEPENDENT_ID_REQUIRED
+            and item.get("native_id_verified") is not True
+        ):
             raise ValueError("Independent stable native ID must be verified")
         native = _native(provider, item.get("id"))
         if native is None:
@@ -104,7 +107,10 @@ def _rows(path: Path, provider: str) -> list[dict]:
                 raise ValueError("Conflicting external ID aliases")
             row[anchor] = next(iter(values), None)
         if provider in INDEPENDENT_ID_REQUIRED and native in (
-            row["mal"], row["anilist"], row["shikimori"], row["kitsu"]
+            row["mal"],
+            row["anilist"],
+            row["shikimori"],
+            row["kitsu"],
         ):
             raise ValueError("Potential reuse of external identifier")
         rows.append(row)
