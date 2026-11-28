@@ -91,12 +91,15 @@ def _rows(path: Path) -> Iterator[dict[str, tuple[str, ...]]]:
                 normalized = {}
                 for p, values in item.items():
                     pattern = (
-                        r"[a-z0-9][a-z0-9_-]*"
-                        if p == "animeplanet"
-                        else r"[1-9][0-9]*"
+                        r"[a-z0-9][a-z0-9_-]*" if p == "animeplanet" else r"[1-9][0-9]*"
                     )
-                    if not isinstance(values, list) or not values or not all(
-                        isinstance(v, str) and re.fullmatch(pattern, v) for v in values
+                    if (
+                        not isinstance(values, list)
+                        or not values
+                        or not all(
+                            isinstance(v, str) and re.fullmatch(pattern, v)
+                            for v in values
+                        )
                     ):
                         raise ValueError("Invalid normalized aggregate ID")
                     normalized[p] = tuple(sorted(set(values)))

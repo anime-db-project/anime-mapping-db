@@ -72,7 +72,9 @@ class AggregateUrlTests(unittest.TestCase):
                 ],
             ]
             path.write_text(
-                json.dumps({"data": [{"sources": x, "title": "discard"} for x in rows]}),
+                json.dumps(
+                    {"data": [{"sources": x, "title": "discard"} for x in rows]}
+                ),
                 encoding="utf-8",
             )
             normalize_snapshot(path)
