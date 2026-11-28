@@ -288,6 +288,28 @@ SOVETROMANTICA_SOURCE = MappingSourceSpec(
 if _env_bool("MAPPINGS_ENABLE_SOVETROMANTICA", True):
     SOURCE_SPECS += (SOVETROMANTICA_SOURCE,)
 
+# Explicit season-to-MAL overrides only, not the discontinued mapping backup.
+MALSYNC_CRUNCHYROLL_SOURCE = MappingSourceSpec(
+    name="MALSync Crunchyroll season overrides",
+    url="https://raw.githubusercontent.com/MALSync/MALSync/master/src/pages-chibi/implementations/Crunchyroll/catalog.json",
+    importer="malsync_crunchyroll",
+    required=False,
+    license_note="GPL-3.0-only repository; explicit zero-offset MAL season overrides only; upstream data terms apply.",
+    supplemental=True,
+)
+MALSYNC_NETFLIX_SOURCE = MappingSourceSpec(
+    name="MALSync Netflix season overrides",
+    url="https://raw.githubusercontent.com/MALSync/MALSync/master/src/pages-chibi/implementations/Netflix/overrides.json",
+    importer="malsync_netflix",
+    required=False,
+    license_note="GPL-3.0-only repository; explicit zero-offset MAL season overrides only; upstream data terms apply.",
+    supplemental=True,
+)
+if _env_bool("MAPPINGS_ENABLE_MALSYNC_CRUNCHYROLL", True):
+    SOURCE_SPECS += (MALSYNC_CRUNCHYROLL_SOURCE,)
+if _env_bool("MAPPINGS_ENABLE_MALSYNC_NETFLIX", True):
+    SOURCE_SPECS += (MALSYNC_NETFLIX_SOURCE,)
+
 
 def mappings_db_path() -> Path:
     return get_settings().db_path
