@@ -14,6 +14,7 @@ from contextlib import closing
 import httpx
 
 from anime_mapping_db.anchors import materialize_anchor_index
+from anime_mapping_db.aniliberty import download_aniliberty
 from anime_mapping_db.config import (
     SOURCE_SPECS,
     MappingSourceSpec,
@@ -56,6 +57,11 @@ def _bootstrap_path(spec: MappingSourceSpec) -> Path | None:
 
 
 def _download(spec: MappingSourceSpec, target: Path) -> str:
+    if spec.importer == "aniliberty":
+        download_aniliberty(
+            spec.url, target, timeout=mappings_request_timeout_seconds()
+        )
+        return _sha256_file(target)
     timeout = httpx.Timeout(
         connect=30.0,
         read=mappings_request_timeout_seconds(),
@@ -473,9 +479,9 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                 staged_item = staged.get(spec.name)
                 if staged_item is not None:
                     download_path, sha256 = staged_item
-                    # Validate media-index against prior supplemental inputs as
+                    # Validate these sources against prior supplemental inputs as
                     # well, so an already attached target cannot be reassigned.
-                    if spec.importer == "media_index":
+                    if spec.importer in {"media_index", "aniliberty"}:
                         builder.finalize(built_at=checked_at)
                     supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
                     if supplemental_importer is None:
@@ -499,7 +505,7 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                     evidence_path.is_file()
                     and spec.name in state
                     and not base_changed
-                    and spec.importer != "media_index"
+                    and spec.importer not in {"media_index", "aniliberty"}
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the
                     # supplemental source is unavailable, omit old enrichment rather than
