@@ -36,15 +36,15 @@
 
 | 指標 | 値 |
 | --- | ---: |
-| 中央値 | **0.358 ms** |
-| 平均 | **0.360 ms** |
-| p95 | **0.400 ms** |
-| p99 | **0.433 ms** |
-| 逐次検索/秒 | **2,764** |
+| 中央値 | **0.469 ms** |
+| 平均 | **0.474 ms** |
+| p95 | **0.522 ms** |
+| p99 | **0.561 ms** |
+| 逐次検索/秒 | **2,105** |
 
 リリース SQLite に対するキャッシュ済み MappingResolver の逐次読み取り、Linux / Python 3.12。300 ID × 2 回。ネットワーク API の遅延ではありません。
 
-リリース時点: **2026-11-28**, [v2026.11.28.53](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.53). [最新マニフェスト](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
+リリース時点: **2026-11-28**, [v2026.11.28.54](https://github.com/anime-db-project/anime-mapping-db/releases/tag/v2026.11.28.54). [最新マニフェスト](https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json).
 
 <!-- END AUTO-GENERATED DATABASE STATS -->
 
