@@ -70,6 +70,7 @@ def build_report(
                 "snapshot_changed": old is None or item["sha256"] != old["sha256"],
                 "downloaded_at": item["downloaded_at"],
                 "collection_status": health.get(item["name"], {}).get("status"),
+                "collection_mode": health.get(item["name"], {}).get("collection_mode"),
             }
         )
     return {

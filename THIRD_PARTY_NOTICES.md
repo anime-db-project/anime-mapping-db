@@ -35,6 +35,8 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 | AnimeLib | Supplemental | [MALSync adapter](https://github.com/MALSync/MALSync/blob/master/src/pages-chibi/implementations/animeLib/main.ts). Public LibSocial metadata catalogue; explicit numeric series IDs, AniList and Shikimori links only. Upstream data terms apply. |
 | ADKami | Optional supplemental | [MALSync adapter](https://github.com/MALSync/MALSync/blob/master/src/pages/ADKami/main.ts). Direct catalogue access unavailable (403 during audit); no live scraping. Only an explicitly supplied authorized public JSON snapshot of native season IDs and external references can be imported. |
 
+| Aniyan / AniDream / Aninexus | Optional supplemental | MALSync `syncData` adapter definitions. No accessible authorized catalogue endpoint confirmed; no direct automated requests to these domains. Explicit operator-provided public JSON snapshots only, with native ID and MAL/AniList references. |
+
 ## Supplemental lineage policy
 
 AnimeAPI, media-index and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.

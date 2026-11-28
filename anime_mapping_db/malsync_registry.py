@@ -17,6 +17,8 @@ from urllib.parse import urlsplit
 _UPSTREAM = "https://github.com/MALSync/MALSync"
 _NON_CATALOGUES = {"emby", "jellyfin", "plex", "myanimelist"}
 _ACTIVE = {"Crunchyroll", "Netflix"}
+_NATIVE = {"Anime365", "Docchi", "AnimeLib"}
+_OPTIONAL = {"ADKami", "Aniyan", "AniDream", "Aninexus"}
 _IMPORT = re.compile(r"from\s+['\"](\./[^'\"]+/main)['\"]")
 _NAME = re.compile(r"\bname:\s*['\"]([^'\"]+)['\"]")
 _ID = re.compile(r"\bgetIdentifier\s*(?:\(|:)")
@@ -173,6 +175,10 @@ def inventory(root: Path, revision: str) -> dict:
             status = "not_global_catalogue"
         elif name in _ACTIVE:
             status = "partial_release_import"
+        elif name in _NATIVE:
+            status = "native_catalog_collector"
+        elif name in _OPTIONAL:
+            status = "authorized_snapshot_only"
         elif any(entry["external_id_hook"] for entry in entries):
             status = "explicit_hook_requires_verification"
         elif entries:

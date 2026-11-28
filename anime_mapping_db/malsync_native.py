@@ -245,3 +245,64 @@ def import_adkami(path: Path, conn: sqlite3.Connection) -> Iterator[MappingRecor
         native_id=adkami_id,
         weight=85,
     )
+
+
+_SYNCDATA_VALIDATORS = {
+    "aniyan": positive_id,
+    "anidream": slug_id,
+    "aninexus": positive_id,
+}
+
+
+def normalize_syncdata(path: Path, provider: str) -> None:
+    validate = _SYNCDATA_VALIDATORS[provider]
+    rows = []
+    for item in _read(path):
+        native = validate(item.get("anime_id", item.get("id")))
+        if native is None:
+            raise ValueError(f"Invalid {provider} native ID")
+        mal_values = {
+            value
+            for key in ("myanimelist_id", "mal_id", "mal")
+            if (value := _external(item.get(key))) is not None
+        }
+        ani_values = {
+            value
+            for key in ("anilist_id", "anilist")
+            if (value := _external(item.get(key))) is not None
+        }
+        if len(mal_values) > 1 or len(ani_values) > 1:
+            raise ValueError(f"Contradictory {provider} snapshot row")
+        rows.append(
+            {
+                "id": native,
+                "mal": next(iter(mal_values), None),
+                "anilist": next(iter(ani_values), None),
+            }
+        )
+    _write(path, rows)
+
+
+def _import_syncdata(
+    path: Path, conn: sqlite3.Connection, provider: str
+) -> Iterator[MappingRecord]:
+    yield from enrich_native_ids(
+        _read(path),
+        conn,
+        namespace=provider,
+        lineage=f"{provider}-native",
+        native_id=_SYNCDATA_VALIDATORS[provider],
+        weight=85,
+    )
+
+
+def import_aniyan(path: Path, conn: sqlite3.Connection) -> Iterator[MappingRecord]:
+    yield from _import_syncdata(path, conn, "aniyan")
+
+
+def import_anidream(path: Path, conn: sqlite3.Connection) -> Iterator[MappingRecord]:
+    yield from _import_syncdata(path, conn, "anidream")
+
+
+def import_aninexus(path: Path, conn: sqlite3.Connection) -> Iterator[MappingRecord]:
+    yield from _import_syncdata(path, conn, "aninexus")

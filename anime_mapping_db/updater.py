@@ -60,19 +60,24 @@ def _bootstrap_path(spec: MappingSourceSpec) -> Path | None:
     return path if path.is_file() else None
 
 
+_NATIVE_DOWNLOADERS = {
+    "docchi": ("single", download_docchi),
+    "animelib": ("paginated", download_animelib),
+    "anime365": ("paginated", download_anime365),
+    "aniliberty": ("paginated", download_aniliberty),
+}
+
+
 def _download(spec: MappingSourceSpec, target: Path) -> str:
-    if spec.importer in {"docchi", "animelib"}:
-        downloader = download_docchi if spec.importer == "docchi" else download_animelib
+    registration = _NATIVE_DOWNLOADERS.get(spec.importer)
+    if registration:
+        mode, downloader = registration
+        if spec.collection_mode != mode:
+            raise ValueError(f"Incorrect collection mode for {spec.name}: {mode}")
         downloader(spec.url, target, timeout=mappings_request_timeout_seconds())
         return _sha256_file(target)
-    if spec.importer == "anime365":
-        download_anime365(spec.url, target, timeout=mappings_request_timeout_seconds())
-        return _sha256_file(target)
-    if spec.importer == "aniliberty":
-        download_aniliberty(
-            spec.url, target, timeout=mappings_request_timeout_seconds()
-        )
-        return _sha256_file(target)
+    if spec.collection_mode != "single":
+        raise ValueError(f"No paginated collector for {spec.name}")
     timeout = httpx.Timeout(
         connect=30.0,
         read=mappings_request_timeout_seconds(),
@@ -536,6 +541,9 @@ def update_mapping_database(
                         "docchi",
                         "animelib",
                         "adkami",
+                        "aniyan",
+                        "anidream",
+                        "aninexus",
                     }:
                         builder.finalize(built_at=checked_at)
                     supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
@@ -576,6 +584,9 @@ def update_mapping_database(
                         "docchi",
                         "animelib",
                         "adkami",
+                        "aniyan",
+                        "anidream",
+                        "aninexus",
                     }
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the

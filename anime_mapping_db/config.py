@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 from urllib.parse import quote, urlsplit
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -19,6 +20,7 @@ class MappingSourceSpec:
     check_interval: str = "default"
     supplemental: bool = False
     fallback_urls: tuple[str, ...] = ()
+    collection_mode: Literal["single", "paginated"] = "single"
 
 
 @dataclass(frozen=True, slots=True)
@@ -270,6 +272,7 @@ ANILIBERTY_SOURCE = MappingSourceSpec(
     name="AniLiberty catalog",
     url="https://api.anilibria.app/api/v1/anime/catalog/releases",
     importer="aniliberty",
+    collection_mode="paginated",
     required=False,
     license_note="Public AniLiberty API v1; only explicit title ID cross-references; upstream data terms apply.",
     supplemental=True,
@@ -315,6 +318,7 @@ ANIME365_SOURCE = MappingSourceSpec(
     name="Anime365 catalog",
     url="https://smotret-anime.app/api/series",
     importer="anime365",
+    collection_mode="paginated",
     required=False,
     license_note="Public metadata API; explicit numeric series and MyAnimeList IDs only; upstream redistribution terms apply.",
     supplemental=True,
@@ -334,6 +338,7 @@ ANIMELIB_SOURCE = MappingSourceSpec(
     name="AnimeLib catalog",
     url="https://api.cdnlibs.org/api/anime",
     importer="animelib",
+    collection_mode="paginated",
     required=False,
     license_note="Public LibSocial catalogue; explicit AnimeLib, AniList and Shikimori IDs only; upstream data terms apply.",
     supplemental=True,
@@ -366,6 +371,37 @@ if _adkami_url and _env_bool("MAPPINGS_ENABLE_ADKAMI", True):
             importer="adkami",
             required=False,
             license_note="Operator-supplied authorized ADKami snapshot; explicit native season IDs only.",
+            supplemental=True,
+        ),
+    )
+
+# No accessible public bulk endpoint was confirmed for these adapters.
+for _provider, _display in (
+    ("aniyan", "Aniyan"),
+    ("anidream", "AniDream"),
+    ("aninexus", "Aninexus"),
+):
+    _prefix = f"MAPPINGS_{_provider.upper()}"
+    _url = os.environ.get(f"{_prefix}_SNAPSHOT_URL", "").strip()
+    if not _url or not _env_bool(f"MAPPINGS_ENABLE_{_provider.upper()}", True):
+        continue
+    _parts = urlsplit(_url)
+    if (
+        _parts.scheme != "https"
+        or not _parts.hostname
+        or _parts.username
+        or _parts.password
+        or _parts.query
+        or _parts.fragment
+    ):
+        raise ValueError(f"{_display} requires a public HTTPS snapshot URL")
+    SOURCE_SPECS += (
+        MappingSourceSpec(
+            name=f"{_display} authorized syncData snapshot",
+            url=_url,
+            importer=_provider,
+            required=False,
+            license_note="Authorized operator-supplied snapshot; explicit native title references only.",
             supplemental=True,
         ),
     )
