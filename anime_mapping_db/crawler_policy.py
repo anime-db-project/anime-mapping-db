@@ -100,9 +100,15 @@ class PacedClient:
         self.requests += 1
 
     def get(self, url: str, **kwargs) -> httpx.Response:
+        return self._request("GET", url, **kwargs)
+
+    def post(self, url: str, **kwargs) -> httpx.Response:
+        return self._request("POST", url, **kwargs)
+
+    def _request(self, method: str, url: str, **kwargs) -> httpx.Response:
         for attempt in range(2):
             self._pace()
-            response = self.client.get(url, **kwargs)
+            response = self.client.request(method, url, **kwargs)
             if response.status_code != 429:
                 response.raise_for_status()
                 return response

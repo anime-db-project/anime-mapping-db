@@ -41,6 +41,8 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 
 | Annict API | Supplemental, credential-gated | [Works API](https://wikino.app/s/annict/pages/364); [API terms, Article 6](https://annict.com/en/terms/api). Only work ID and explicit MAL ID. Configured by default; requires provider-issued read-only `MAPPINGS_ANNICT_ACCESS_TOKEN` and individual permission confirmed via `MAPPINGS_ANNICT_PERMISSION_CONFIRMED=1`. No user data. |
 
+| Kodik | Audit only | Authorized API catalogue sample. Material IDs and translation IDs are not title identities. Only aggregate diagnostic counts are exported; no player links, raw responses, credentials or media data. Collection requires a provider-issued `MAPPINGS_KODIK_API_TOKEN` secret and `MAPPINGS_KODIK_PERMISSION_CONFIRMED=1`. Not a release input. |
+
 ## Supplemental lineage policy
 
 AnimeAPI, media-index and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
