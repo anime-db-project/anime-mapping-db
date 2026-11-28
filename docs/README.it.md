@@ -74,7 +74,7 @@ Le ricompilazioni mantengono gli anchor delle entità riconosciute. Le fusioni v
 
 ## Fonti dei dati
 
-Il builder combina 26 input fra dataset di mapping diretti e cataloghi supplementari verificati. Gli input aggiuntivi non possono creare nuove identità senza conferme indipendenti. Fonti e licenze sono riportate nel manifest.
+Il builder combina 28 input fra dataset di mapping diretti e cataloghi supplementari verificati. Gli input aggiuntivi non possono creare nuove identità senza conferme indipendenti. Fonti e licenze sono riportate nel manifest.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -98,7 +98,8 @@ Il builder combina 26 input fra dataset di mapping diretti e cataloghi supplemen
 - [MALSync](https://github.com/MALSync/MALSync) — riferimenti MAL espliciti per stagioni Crunchyroll e Netflix, senza offset degli episodi. La raccolta giornaliera verifica tutti gli adattatori anime in `malsync-inventory`, senza usare le aspettative dei test come evidenza.
 - [Anime365](https://github.com/ragedrugg/anime365) — ID numerici delle serie con riferimenti MAL espliciti.
 - [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — ID Docchi e AnimeLib; ADKami opzionale tramite `MAPPINGS_ADKAMI_SNAPSHOT_URL`.
-- [YummyAnime / Yani](https://api.yani.tv/swagger) — raccolta opzionale, disattivata fino a ottenere autorizzazione e token dell'applicazione (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). Raccolta e release pianificate sospese durante l'espansione MALSync; avvio manuale disponibile.
+- [YummyAnime / Yani](https://api.yani.tv/swagger) — raccolta opzionale, configurato per impostazione predefinita; richiede autorizzazione e token (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). Raccolta e release pianificate sospese durante l'espansione MALSync; avvio manuale disponibile. `MAPPINGS_YUMMYANI_PERMISSION_CONFIRMED=1`.
+- [Annict](https://annict.com/en/terms/api) — Catalogo Annict — riferimenti MAL espliciti, intervallo di 168 ore. Richiede il secret `MAPPINGS_ANNICT_ACCESS_TOKEN` e autorizzazione `MAPPINGS_ANNICT_PERMISSION_CONFIRMED=1`.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` è l'ID stabile del titolo. Gli ID esterni sono alias documentati; `entity_id` è valido solo nella singola build. Le corrispondenze ambigue non sono selezionate automaticamente. [Identity contract](../docs/IDENTITY.md).

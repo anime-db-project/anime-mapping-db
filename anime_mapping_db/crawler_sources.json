@@ -63,5 +63,18 @@
     ],
     "retry_429_wait_seconds": 20,
     "max_429_wait_seconds": 45
+  },
+  "annict_api": {
+    "enabled": true,
+    "max_requests": 500,
+    "per_second": 1,
+    "per_minute": 15,
+    "per_hour": 600,
+    "delay_seconds": [
+      4,
+      5
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
   }
 }

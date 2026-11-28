@@ -15,6 +15,7 @@ import httpx
 
 from anime_mapping_db.anchors import materialize_anchor_index
 from anime_mapping_db.aniliberty import download_aniliberty
+from anime_mapping_db.annict_api import download_annict
 from anime_mapping_db.anime365 import download_anime365
 from anime_mapping_db.malsync_native import download_animelib, download_docchi
 from anime_mapping_db.yummyani import download_yummyani
@@ -28,6 +29,7 @@ from anime_mapping_db.config import (
     mappings_request_timeout_seconds,
     mappings_update_max_age_hours,
     mappings_wikidata_check_interval_hours,
+    source_preflight,
 )
 from anime_mapping_db.database import (
     MappingBuildStats,
@@ -65,12 +67,16 @@ _NATIVE_DOWNLOADERS = {
     "docchi": ("single", download_docchi),
     "animelib": ("paginated", download_animelib),
     "yummyani": ("paginated", download_yummyani),
+    "annict_api": ("paginated", download_annict),
     "anime365": ("paginated", download_anime365),
     "aniliberty": ("paginated", download_aniliberty),
 }
 
 
 def _download(spec: MappingSourceSpec, target: Path) -> str:
+    reason = source_preflight(spec)
+    if reason:
+        raise ValueError(f"Source preflight: {reason}")
     registration = _NATIVE_DOWNLOADERS.get(spec.importer)
     if registration:
         mode, downloader = registration
@@ -547,6 +553,7 @@ def update_mapping_database(
                         "anidream",
                         "aninexus",
                         "yummyani",
+                        "annict_api",
                     }:
                         builder.finalize(built_at=checked_at)
                     supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
@@ -591,6 +598,7 @@ def update_mapping_database(
                         "anidream",
                         "aninexus",
                         "yummyani",
+                        "annict_api",
                     }
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the

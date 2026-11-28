@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from anime_mapping_db.aniliberty import import_aniliberty_enrichment
 from anime_mapping_db.anime365 import import_anime365_enrichment
+from anime_mapping_db.annict_api import import_annict_api
 from anime_mapping_db.importers.direct import (
     import_anibridge,
     import_anime_and_manga_lists,
@@ -76,6 +77,7 @@ SUPPLEMENTAL_IMPORTERS = {
     "anidream": import_anidream,
     "aninexus": import_aninexus,
     "yummyani": import_yummyani,
+    "annict_api": import_annict_api,
     "sovetromantica": import_sovetromantica_enrichment,
     "malsync_crunchyroll": import_malsync_crunchyroll,
     "malsync_netflix": import_malsync_netflix,
@@ -92,6 +94,7 @@ __all__ = [
     "import_anidream",
     "import_aninexus",
     "import_yummyani",
+    "import_annict_api",
     "import_animelib",
     "import_docchi",
     "import_anime_and_manga_lists",

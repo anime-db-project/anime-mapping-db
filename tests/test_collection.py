@@ -15,6 +15,46 @@ from anime_mapping_db.snapshots import _normalize_wikidata, load_snapshot
 
 
 class CollectionTests(unittest.TestCase):
+    def test_credential_preflight_does_not_contact_source(self) -> None:
+        spec = MappingSourceSpec(
+            "fixture",
+            "https://example.invalid/catalog",
+            "docchi",
+            False,
+            "test",
+            supplemental=True,
+            credential_env="TEST_SOURCE_KEY",
+            permission_env="TEST_SOURCE_PERMISSION",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            parts = root / "parts"
+            part = parts / f"mapping-source-{source_key(spec)}"
+            snapshots = root / "snapshots"
+            with (
+                patch.dict("os.environ", {"TEST_SOURCE_KEY": ""}),
+                patch("anime_mapping_db.snapshots._download") as download,
+            ):
+                collect_one(part, spec)
+                download.assert_not_called()
+            assemble(snapshots, parts, (spec,))
+            report = json.loads((snapshots / "collection-report.json").read_text())
+            self.assertEqual(report["sources"][0]["status"], "missing_api_key")
+            self.assertIsNone(report["sources"][0]["last_attempted_at"])
+            with (
+                patch.dict(
+                    "os.environ",
+                    {"TEST_SOURCE_KEY": "fixture", "TEST_SOURCE_PERMISSION": "0"},
+                ),
+                patch("anime_mapping_db.snapshots._download") as download,
+            ):
+                collect_one(part, spec)
+                download.assert_not_called()
+            assemble(snapshots, parts, (spec,))
+            report = json.loads((snapshots / "collection-report.json").read_text())
+            self.assertEqual(report["sources"][0]["status"], "permission_not_confirmed")
+            self.assertTrue(matrix((spec,), snapshots)["include"][0]["due"])
+
     def test_interval_preserves_last_attempt_and_snapshot(self) -> None:
         spec = MappingSourceSpec(
             "fixture",
@@ -164,7 +204,8 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(
             {key for key, mode in modes.items() if mode == "paginated"},
             {"aniliberty", "anime365", "animelib"}
-            | ({"yummyani"} if "yummyani" in modes else set()),
+            | ({"yummyani"} if "yummyani" in modes else set())
+            | ({"annict_api"} if "annict_api" in modes else set()),
         )
         entries = matrix(SOURCE_SPECS)["include"]
         self.assertEqual(
