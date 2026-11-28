@@ -74,7 +74,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 
 ## Источники данных
 
-Сборщик объединяет 20 входных наборов: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
+Сборщик объединяет 21 входной набор: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -94,6 +94,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
 - [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — только отсутствующие Bangumi, Kitsu и Simkl ID; требуются два непротиворечивых якоря и проверка неоднозначности всего снимка. TVDB/TMDB исключены. Условия исходных данных сохраняются; см. [уведомления](../THIRD_PARTY_NOTICES.md).
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — числовые ID релизов по явно указанным MAL/Shikimori; неоднозначные связи исключаются.
+- [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — исторический дамп ID SovetRomantica с явными ссылками на Shikimori.
 
 Дополнительный источник [media-index](https://github.com/anilifecommunity/media-index) по умолчанию отключён до проверки прав на данные. После подтверждения прав можно использовать `MAPPINGS_ENABLE_MEDIA_INDEX=1` с отдельной новой директорией сборки. Импортируются только отсутствующие Bangumi, Kitsu и Simkl ID при двух подтверждённых якорях и отсутствии конфликтов между записями; TVDB/TMDB исключены.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)

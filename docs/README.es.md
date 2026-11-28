@@ -74,7 +74,7 @@ Las recompilaciones conservan anchors existentes cuando identifican las mismas e
 
 ## Fuentes de datos
 
-El generador combina 20 entradas entre datasets directos y catálogos complementarios validados. Los datos complementarios no establecen identidades nuevas sin confirmación independiente. Las fuentes y licencias se documentan en el manifiesto.
+El generador combina 21 entradas entre datasets directos y catálogos complementarios validados. Los datos complementarios no establecen identidades nuevas sin confirmación independiente. Las fuentes y licencias se documentan en el manifiesto.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -94,6 +94,7 @@ El generador combina 20 entradas entre datasets directos y catálogos complement
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
 - [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — solo IDs faltantes de Bangumi, Kitsu y Simkl con dos anchors sin conflictos; se excluyen TVDB/TMDB. Se mantienen las condiciones de los datos de origen.
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — IDs numéricos de lanzamientos con referencias explícitas a MAL/Shikimori; se excluyen correspondencias ambiguas.
+- [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — IDs históricos de SovetRomantica con referencias explícitas a Shikimori.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` identifica un título de forma estable. Los IDs externos son alias respaldados por evidencia; el `entity_id` interno solo vale para la compilación. No se eligen automáticamente relaciones ambiguas. [Identity contract](../docs/IDENTITY.md).

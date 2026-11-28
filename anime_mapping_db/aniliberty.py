@@ -43,7 +43,7 @@ def _fetch_catalog(client: httpx.Client, url: str) -> list[dict]:
                 "page": page,
                 "limit": _PAGE_SIZE,
                 "include": "id,mal.id,shikimori.id",
-                "f[sorting]": "FRESH_AT_ASC",
+                "f[sorting]": "YEAR_ASC",
             },
         )
         # Never publish a partial snapshot after rate limiting or other errors.

@@ -74,7 +74,7 @@ Le ricompilazioni mantengono gli anchor delle entità riconosciute. Le fusioni v
 
 ## Fonti dei dati
 
-Il builder combina 20 input fra dataset di mapping diretti e cataloghi supplementari verificati. Gli input aggiuntivi non possono creare nuove identità senza conferme indipendenti. Fonti e licenze sono riportate nel manifest.
+Il builder combina 21 input fra dataset di mapping diretti e cataloghi supplementari verificati. Gli input aggiuntivi non possono creare nuove identità senza conferme indipendenti. Fonti e licenze sono riportate nel manifest.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -94,6 +94,7 @@ Il builder combina 20 input fra dataset di mapping diretti e cataloghi supplemen
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
 - [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — solo ID Bangumi, Kitsu e Simkl mancanti, con due anchor senza conflitti; TVDB/TMDB sono esclusi. Restano valide le condizioni dei dati originali.
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — ID numerici delle release con riferimenti espliciti a MAL/Shikimori; collegamenti ambigui esclusi.
+- [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — ID storici SovetRomantica con riferimenti espliciti a Shikimori.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` è l'ID stabile del titolo. Gli ID esterni sono alias documentati; `entity_id` è valido solo nella singola build. Le corrispondenze ambigue non sono selezionate automaticamente. [Identity contract](../docs/IDENTITY.md).

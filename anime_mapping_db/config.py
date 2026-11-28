@@ -277,6 +277,17 @@ ANILIBERTY_SOURCE = MappingSourceSpec(
 if _env_bool("MAPPINGS_ENABLE_ANILIBERTY", True):
     SOURCE_SPECS += (ANILIBERTY_SOURCE,)
 
+SOVETROMANTICA_SOURCE = MappingSourceSpec(
+    name="notwindstone/MALToAnything SovetRomantica",
+    url="https://raw.githubusercontent.com/notwindstone/MALToAnything/main/sovetromantica/sovetromantica-mapped.json",
+    importer="sovetromantica",
+    required=False,
+    license_note="GPL-3.0 repository; historical API-derived Shikimori cross-references, upstream data terms apply.",
+    supplemental=True,
+)
+if _env_bool("MAPPINGS_ENABLE_SOVETROMANTICA", True):
+    SOURCE_SPECS += (SOVETROMANTICA_SOURCE,)
+
 
 def mappings_db_path() -> Path:
     return get_settings().db_path
