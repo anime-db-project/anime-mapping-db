@@ -472,6 +472,13 @@ for _provider, _display in (
     ("hinatasoul", "HinataSoul"),
     ("witanime", "WitAnime"),
     ("tioanime", "tioanime"),
+    ("fireanime", "FireAnime"),
+    ("miruro", "Miruro"),
+    ("gojo", "Gojo"),
+    ("anikoto_season", "AniKoto"),
+    ("animestream_season", "AnimeStream"),
+    ("crunchyroll_season", "Crunchyroll"),
+    ("netflix_season", "Netflix"),
 ):
     _prefix = f"MAPPINGS_{_provider.upper()}"
     _url = os.environ.get(f"{_prefix}_SNAPSHOT_URL", "").strip()
@@ -495,7 +502,7 @@ for _provider, _display in (
         raise ValueError(f"{_display} requires a public HTTPS snapshot URL")
     SOURCE_SPECS += (
         MappingSourceSpec(
-            name=f"{_display} authorized title ID export",
+            name=f"{_display} authorized {'season' if _provider.endswith('_season') else 'title'} ID export",
             url=_url,
             importer=_provider,
             permission_env=f"{_prefix}_PERMISSION_CONFIRMED",

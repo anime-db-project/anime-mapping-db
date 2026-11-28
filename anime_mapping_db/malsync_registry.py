@@ -31,6 +31,11 @@ _OPTIONAL = {
     "Animeworld",
     "HinataSoul",
     "WitAnime",
+    "FireAnime",
+    "Miruro",
+    "Gojo",
+    "AniKoto",
+    "AnimeStream",
 }
 # Dated audit observations, not automatic availability or permission checks.
 _AUDIT = {
