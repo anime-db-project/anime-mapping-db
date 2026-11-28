@@ -145,6 +145,9 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db status
 ```
 
+Сбор источников (`collect-sources.yml`, 00:17 UTC) и сборка релиза (`release.yml`, 04:17 UTC) независимы. Релиз использует последний успешный снимок и пропускает сборку при неизменном SHA-256. Локальная сборка без запросов к источникам: `python -m anime_mapping_db build --snapshot-dir snapshots` после `python -m anime_mapping_db.snapshots collect --directory snapshots`.
+
+
 ## Использование resolver
 
 Поиск принимает namespace источника и внешний ID и возвращает только однозначные, принятые прямые соответствия. Одинаковое число в MAL и AniList ничего не доказывает без подтверждённой связи.

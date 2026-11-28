@@ -250,7 +250,11 @@ def _download_path(work_dir: Path, index: int, spec: MappingSourceSpec) -> Path:
     return work_dir / f"{index:02d}-{spec.importer}{suffix}"
 
 
-def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
+def update_mapping_database(
+    *, force: bool = False, snapshot_dir: Path | None = None
+) -> MappingBuildStats | None:
+    if snapshot_dir is not None:
+        force = True
     db_path = mappings_db_path()
     evidence_path = mappings_evidence_db_path()
     state = _dataset_state(evidence_path)
@@ -285,47 +289,34 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
     staged: dict[str, tuple[Path, str]] = {}
     failed_optional: dict[str, str] = {}
     changed_sources: set[str] = set()
+    snapshot_dates: dict[str, str] = {}
 
     try:
-        for spec in due_specs:
-            index = SOURCE_SPECS.index(spec)
-            download_path = _download_path(work_dir, index, spec)
-            download_path.unlink(missing_ok=True)
-            logging.info("Mapping source check: %s", spec.name)
-            try:
-                sha256 = _download(spec, download_path)
-                staged[spec.name] = (download_path, sha256)
-                previous = state.get(spec.name)
-                if previous is None or previous[0].casefold() != sha256.casefold():
-                    changed_sources.add(spec.name)
-            except Exception as exc:
-                download_path.unlink(missing_ok=True)
-                if spec.required:
-                    raise RuntimeError(
-                        f"Required mapping source failed: {spec.name}: {exc}"
-                    ) from exc
-                failed_optional[spec.name] = f"{type(exc).__name__}: {exc}"
-                logging.warning(
-                    "Optional mapping source unavailable during check: %s: %s",
-                    spec.name,
-                    exc,
-                )
+        if snapshot_dir is not None:
+            from anime_mapping_db.snapshots import load_snapshot
 
-        # Supplemental aggregates depend on the accepted base graph. If any direct
-        # source changed, refresh/reprocess them even when their normal check interval
-        # has not expired so anchor validation always uses the current graph.
-        base_changed = any(
-            spec.name in changed_sources and not spec.supplemental
-            for spec in SOURCE_SPECS
-        )
-        if base_changed:
+            manifest = load_snapshot(snapshot_dir, SOURCE_SPECS)
             for spec in SOURCE_SPECS:
-                if not spec.supplemental or spec.name in staged:
+                item = manifest.get(spec.name)
+                if item is None:
+                    failed_optional[spec.name] = "No collected snapshot"
                     continue
+                path = _download_path(work_dir, SOURCE_SPECS.index(spec), spec)
+                shutil.copyfile(snapshot_dir / item["file"], path)
+                staged[spec.name] = (path, item["sha256"])
+                snapshot_dates[spec.name] = item["downloaded_at"]
+                if state.get(spec.name, ("", ""))[0] != item["sha256"]:
+                    changed_sources.add(spec.name)
+            base_changed = any(
+                spec.name in changed_sources and not spec.supplemental
+                for spec in SOURCE_SPECS
+            )
+        else:
+            for spec in due_specs:
                 index = SOURCE_SPECS.index(spec)
                 download_path = _download_path(work_dir, index, spec)
                 download_path.unlink(missing_ok=True)
-                logging.info("Supplemental mapping source refresh: %s", spec.name)
+                logging.info("Mapping source check: %s", spec.name)
                 try:
                     sha256 = _download(spec, download_path)
                     staged[spec.name] = (download_path, sha256)
@@ -334,12 +325,49 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                         changed_sources.add(spec.name)
                 except Exception as exc:
                     download_path.unlink(missing_ok=True)
+                    if spec.required:
+                        raise RuntimeError(
+                            f"Required mapping source failed: {spec.name}: {exc}"
+                        ) from exc
                     failed_optional[spec.name] = f"{type(exc).__name__}: {exc}"
                     logging.warning(
-                        "Supplemental mapping source unavailable during base refresh: %s: %s",
+                        "Optional mapping source unavailable during check: %s: %s",
                         spec.name,
                         exc,
                     )
+
+            # Supplemental aggregates depend on the accepted base graph. If any direct
+            # source changed, refresh/reprocess them even when their normal check interval
+            # has not expired so anchor validation always uses the current graph.
+            base_changed = any(
+                spec.name in changed_sources and not spec.supplemental
+                for spec in SOURCE_SPECS
+            )
+            if base_changed:
+                for spec in SOURCE_SPECS:
+                    if not spec.supplemental or spec.name in staged:
+                        continue
+                    index = SOURCE_SPECS.index(spec)
+                    download_path = _download_path(work_dir, index, spec)
+                    download_path.unlink(missing_ok=True)
+                    logging.info("Supplemental mapping source refresh: %s", spec.name)
+                    try:
+                        sha256 = _download(spec, download_path)
+                        staged[spec.name] = (download_path, sha256)
+                        previous = state.get(spec.name)
+                        if (
+                            previous is None
+                            or previous[0].casefold() != sha256.casefold()
+                        ):
+                            changed_sources.add(spec.name)
+                    except Exception as exc:
+                        download_path.unlink(missing_ok=True)
+                        failed_optional[spec.name] = f"{type(exc).__name__}: {exc}"
+                        logging.warning(
+                            "Supplemental mapping source unavailable during base refresh: %s: %s",
+                            spec.name,
+                            exc,
+                        )
 
         successful_checks = set(staged)
         if (
@@ -381,9 +409,13 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                         spec,
                         importer(download_path),
                         sha256=sha256,
-                        downloaded_at=checked_at,
+                        downloaded_at=snapshot_dates.get(spec.name, checked_at),
                     )
                     if record_count <= 0:
+                        if snapshot_dir is not None and spec.name in state:
+                            raise RuntimeError(
+                                f"Previously published source is empty: {spec.name}"
+                            )
                         if spec.required:
                             raise RuntimeError(
                                 f"Required mapping source produced zero usable records: {spec.name}"
@@ -394,6 +426,8 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                     elif mappings_keep_downloads():
                         downloads_dir.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(download_path, downloads_dir / download_path.name)
+                elif snapshot_dir is not None:
+                    return 0
                 elif evidence_path.is_file() and spec.name in state:
                     record_count = builder.copy_dataset_from(evidence_path, spec.name)
                     if record_count:
@@ -492,9 +526,13 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                         spec,
                         supplemental_importer(download_path, builder.conn),
                         sha256=sha256,
-                        downloaded_at=checked_at,
+                        downloaded_at=snapshot_dates.get(spec.name, checked_at),
                     )
                     if record_count <= 0:
+                        if snapshot_dir is not None and spec.name in state:
+                            raise RuntimeError(
+                                f"Previously published source is empty: {spec.name}"
+                            )
                         failed_optional[spec.name] = (
                             "supplemental source produced zero anchor-validated records"
                         )
@@ -502,7 +540,8 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                         downloads_dir.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(download_path, downloads_dir / download_path.name)
                 elif (
-                    evidence_path.is_file()
+                    snapshot_dir is None
+                    and evidence_path.is_file()
                     and spec.name in state
                     and not base_changed
                     and spec.importer not in {"media_index", "aniliberty"}

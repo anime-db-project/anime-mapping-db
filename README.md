@@ -146,6 +146,13 @@ python -m anime_mapping_db build --force
 python -m anime_mapping_db status
 ```
 
+The scheduled collector and release builder are independent: `collect-sources.yml` saves validated source snapshots at 00:17 UTC, and `release.yml` checks the latest successful collection at 04:17 UTC. Unchanged fingerprints skip the build and publication. For a local offline build:
+
+```bash
+python -m anime_mapping_db.snapshots collect --directory snapshots
+python -m anime_mapping_db build --snapshot-dir snapshots
+```
+
 ## Using the resolver
 
 A lookup starts with a source namespace and an external ID. It returns only independently accepted, unambiguous direct targets. For example, the same number used by MAL and AniList has no relationship unless an evidence-backed mapping explicitly connects them.

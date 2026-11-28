@@ -9,20 +9,11 @@ on:
         default: false
         type: boolean
   schedule:
-    - cron: "17 3 * * *"
-  push:
-    branches:
-      - main
-    paths:
-      - "anime_mapping_db/**"
-      - "pyproject.toml"
-      - "scripts/**"
-      - ".github/workflows/release.yml"
-    tags:
-      - "v*"
+    - cron: "17 4 * * *"
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: anime-mapping-db-release
@@ -62,17 +53,57 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e .
 
-      - name: Unit tests
+      - name: Restore latest successful collection
+        id: snapshots
         if: steps.existing_release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id=""
+          for candidate in $(gh run list --workflow collect-sources.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId'); do
+            artifact=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$candidate/artifacts" --jq '.artifacts[] | select(.name == "mapping-source-snapshots" and .expired == false) | .id')
+            if [[ -n "$artifact" ]]; then
+              run_id="$candidate"
+              break
+            fi
+          done
+          if [[ -z "$run_id" ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "No successful collection yet; release skipped."
+            exit 0
+          fi
+          gh run download "$run_id" --name mapping-source-snapshots --dir snapshots
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - name: Compare collected snapshot fingerprint before building
+        id: preflight
+        if: steps.snapshots.outputs.available == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_RELEASE: ${{ inputs.force_release }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Fail closed on release lookup errors rather than treating them as changes.
+          gh release download --pattern manifest.json --output previous-manifest.json
+          python -m anime_mapping_db.snapshots compare \
+            --directory snapshots --previous previous-manifest.json \
+            >> "$GITHUB_OUTPUT"
+
+      - name: Unit tests
+        if: steps.preflight.outputs.build == 'true'
         run: python -m unittest discover -s tests -v
 
       - name: Seed previous validated dataset when available
-        if: steps.existing_release.outputs.exists != 'true'
+        if: steps.preflight.outputs.build == 'true'
         shell: bash
         run: |
           mkdir -p data/mappings
-          base=https://github.com/anime-db-project/anime-mapping-db/releases/latest/download
-          if curl -fsSL "$base/manifest.json" -o previous-manifest.json; then
+          if [[ -f previous-manifest.json ]]; then
+            tag=$(python -c 'import json; print(json.load(open("previous-manifest.json"))["release_tag"])')
+            base="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag"
             curl -fsSL "$base/mappings.db.zst" -o previous-runtime.zst
             curl -fsSL "$base/mappings-evidence.db.zst" -o previous-evidence.zst
             python - <<'PYSEED'
@@ -98,18 +129,16 @@ jobs:
                   zstd.ZstdDecompressor().copy_stream(src, dst)
           PYSEED
           else
-            echo "No previous mapping release; building the initial release from upstream sources."
+            echo "No previous mapping release; building the initial release from collected snapshots."
           fi
 
-      - name: Build fresh databases
-        if: steps.existing_release.outputs.exists != 'true'
-        shell: bash
-        run: |
-          python -m anime_mapping_db build --force
+      - name: Build databases offline
+        if: steps.preflight.outputs.build == 'true'
+        run: python -m anime_mapping_db build --snapshot-dir snapshots
 
       - name: Choose release tag
         id: meta
-        if: steps.existing_release.outputs.exists != 'true'
+        if: steps.preflight.outputs.build == 'true'
         shell: bash
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
@@ -120,47 +149,20 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Package database assets
-        if: steps.existing_release.outputs.exists != 'true'
+        if: steps.preflight.outputs.build == 'true'
         run: >-
           python -m anime_mapping_db package-release
           --tag "${{ steps.meta.outputs.tag }}"
           --output release
 
-      - name: Compare with latest published source fingerprint
-        id: compare
-        if: steps.existing_release.outputs.exists != 'true'
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          REF_TYPE: ${{ github.ref_type }}
-          FORCE_RELEASE: ${{ inputs.force_release }}
+      - name: Verify packaged source fingerprint
+        if: steps.preflight.outputs.build == 'true'
         run: |
-          curl -fsSL \
-            https://github.com/anime-db-project/anime-mapping-db/releases/latest/download/manifest.json \
-            -o previous-manifest.json || true
-          python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          import os
-          from pathlib import Path
-
-          current = json.loads(Path("release/manifest.json").read_text())
-          previous_path = Path("previous-manifest.json")
-          previous = json.loads(previous_path.read_text()) if previous_path.is_file() else {}
-          explicit_tag = os.environ.get("REF_TYPE") == "tag"
-          engine_push = (
-              os.environ.get("EVENT_NAME") == "push"
-              and os.environ.get("REF_TYPE") == "branch"
-          )
-          force = os.environ.get("FORCE_RELEASE", "").casefold() == "true"
-          changed = current.get("source_fingerprint") != previous.get("source_fingerprint")
-          publish = explicit_tag or engine_push or force or changed or not previous
-          print(f"publish={'true' if publish else 'false'}")
-          print(f"changed={'true' if changed else 'false'}")
-          print(f"engine_push={'true' if engine_push else 'false'}")
-          PY
+          python -m anime_mapping_db.snapshots verify-release \
+            --directory snapshots --release release/manifest.json
 
       - name: Benchmark released SQLite
-        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
+        if: steps.preflight.outputs.build == 'true'
         shell: bash
         run: |
           python scripts/benchmark_lookup.py \
@@ -170,11 +172,11 @@ jobs:
           (cd release && sha256sum performance.json >> SHA256SUMS)
 
       - name: Verify release checksums
-        if: steps.existing_release.outputs.exists != 'true'
+        if: steps.preflight.outputs.build == 'true'
         run: cd release && sha256sum --check SHA256SUMS
 
       - name: Publish GitHub Release
-        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
+        if: steps.preflight.outputs.build == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -188,7 +190,7 @@ jobs:
             --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. GitHub provides the repository Source code (zip) and Source code (tar.gz) archives automatically; this project does not upload duplicate source bundles. See manifest.json for source hashes, schemas and counts."
 
       - name: Refresh seven README translations from published release
-        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish == 'true'
+        if: steps.preflight.outputs.build == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -218,8 +220,8 @@ jobs:
           done
 
       - name: No source changes
-        if: steps.existing_release.outputs.exists != 'true' && steps.compare.outputs.publish != 'true'
-        run: echo "Upstream source fingerprint is unchanged; release skipped."
+        if: steps.preflight.outputs.build == 'false'
+        run: echo "Collected source fingerprint is unchanged; build and release skipped."
 
       - name: Existing tagged release
         if: steps.existing_release.outputs.exists == 'true'
