@@ -2,6 +2,12 @@ name: Collect mapping sources
 
 on:
   workflow_dispatch:
+    inputs:
+      allow_catalogue_shrink:
+        description: "Comma-separated importer keys to accept an audited catalogue reduction"
+        required: false
+        type: string
+        default: ""
   schedule:
     - cron: "17 0 * * *"
 
@@ -132,6 +138,8 @@ jobs:
           path: parts
           merge-multiple: false
       - name: Merge fresh sources and retain last known good snapshots
+        env:
+          MAPPINGS_ALLOW_CATALOGUE_SHRINK: ${{ inputs.allow_catalogue_shrink }}
         run: python -m anime_mapping_db.collection assemble --parts parts --directory snapshots
       - uses: actions/upload-artifact@v4
         with:

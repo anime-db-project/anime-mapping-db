@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from anime_mapping_db.catalogue_report import catalogue_stats
+from anime_mapping_db.catalogue_report import catalogue_stats, shrink_reason
 from anime_mapping_db.collection import assemble, collect_one, matrix, source_key
 from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec
 from anime_mapping_db.database import MappingRecord
@@ -14,6 +14,68 @@ from anime_mapping_db.snapshots import _normalize_wikidata, load_snapshot
 
 
 class CollectionTests(unittest.TestCase):
+    def test_catalogue_shrink_guard_retains_old_until_explicit_override(self) -> None:
+        spec = MappingSourceSpec(
+            "fixture native",
+            "https://example.invalid/series",
+            "docchi",
+            False,
+            "test",
+            supplemental=True,
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            snapshots = root / "snapshots"
+            parts = root / "parts"
+            part = parts / f"mapping-source-{source_key(spec)}"
+
+            def collect_rows(count, anchored):
+                def download(_spec, target):
+                    target.write_text(
+                        json.dumps(
+                            [
+                                {"id": str(i), "mal": str(i) if i <= anchored else None}
+                                for i in range(1, count + 1)
+                            ]
+                        ),
+                        encoding="utf-8",
+                    )
+                    return "unused"
+
+                if part.exists():
+                    import shutil
+
+                    shutil.rmtree(part)
+                with patch("anime_mapping_db.snapshots._download", side_effect=download):
+                    collect_one(part, spec)
+
+            collect_rows(100, 100)
+            before = assemble(snapshots, parts, (spec,))
+            collect_rows(100, 80)
+            retained = assemble(snapshots, parts, (spec,))
+            self.assertEqual(retained, before)
+            report = json.loads((snapshots / "collection-report.json").read_text())
+            outcome = report["sources"][0]
+            self.assertEqual(outcome["status"], "retained")
+            self.assertEqual(outcome["catalogue"]["with_external_id"], 100)
+            self.assertEqual(outcome["attempted_catalogue"]["with_external_id"], 80)
+            self.assertIn("with_external_id", outcome["retention_reason"])
+            changed = assemble(
+                snapshots, parts, (spec,), allow_shrink=frozenset({"docchi"})
+            )
+            self.assertNotEqual(
+                changed["source_fingerprint"], before["source_fingerprint"]
+            )
+            collect_rows(70, 70)
+            self.assertEqual(assemble(snapshots, parts, (spec,)), changed)
+        self.assertIsNone(
+            shrink_reason(
+                {"native_ids": 100, "with_external_id": 100},
+                {"native_ids": 95, "with_external_id": 95},
+            )
+        )
+        self.assertIsNone(shrink_reason(None, {}))
+
     def test_native_catalogue_counts_distinct_ids(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "source.json"

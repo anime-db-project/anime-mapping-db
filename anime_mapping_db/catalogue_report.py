@@ -46,3 +46,16 @@ def catalogue_stats(importer: str, path: Path | None) -> dict | None:
             for provider in ANCHORS
         },
     }
+
+
+def shrink_reason(previous: dict | None, fresh: dict | None) -> str | None:
+    """Flag a loss exceeding 5% in native or externally anchored ID counts."""
+    if previous is None or fresh is None:
+        return None
+    losses = []
+    for key in ("native_ids", "with_external_id"):
+        before = previous[key]
+        after = fresh[key]
+        if before and after * 100 < before * 95:
+            losses.append(f"{key}: {before} -> {after}")
+    return "Catalogue shrink over 5%: " + "; ".join(losses) if losses else None
