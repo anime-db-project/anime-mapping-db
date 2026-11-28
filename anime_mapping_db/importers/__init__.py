@@ -41,7 +41,6 @@ from anime_mapping_db.importers.wikidata import (
     import_wikidata_bahamut,
     import_wikidata_enrichment,
 )
-
 from anime_mapping_db.yummyani import import_yummyani
 
 IMPORTERS = {

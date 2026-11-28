@@ -98,6 +98,7 @@ Il builder combina 26 input fra dataset di mapping diretti e cataloghi supplemen
 - [MALSync](https://github.com/MALSync/MALSync) — riferimenti MAL espliciti per stagioni Crunchyroll e Netflix, senza offset degli episodi. La raccolta giornaliera verifica tutti gli adattatori anime in `malsync-inventory`, senza usare le aspettative dei test come evidenza.
 - [Anime365](https://github.com/ragedrugg/anime365) — ID numerici delle serie con riferimenti MAL espliciti.
 - [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — ID Docchi e AnimeLib; ADKami opzionale tramite `MAPPINGS_ADKAMI_SNAPSHOT_URL`.
+- [YummyAnime / Yani](https://api.yani.tv/swagger) — raccolta opzionale, disattivata fino a ottenere autorizzazione e token dell'applicazione (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). Raccolta e release pianificate sospese durante l'espansione MALSync; avvio manuale disponibile.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` è l'ID stabile del titolo. Gli ID esterni sono alias documentati; `entity_id` è valido solo nella singola build. Le corrispondenze ambigue non sono selezionate automaticamente. [Identity contract](../docs/IDENTITY.md).
