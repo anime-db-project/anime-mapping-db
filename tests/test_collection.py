@@ -46,7 +46,9 @@ class CollectionTests(unittest.TestCase):
                     import shutil
 
                     shutil.rmtree(part)
-                with patch("anime_mapping_db.snapshots._download", side_effect=download):
+                with patch(
+                    "anime_mapping_db.snapshots._download", side_effect=download
+                ):
                     collect_one(part, spec)
 
             collect_rows(100, 100)
