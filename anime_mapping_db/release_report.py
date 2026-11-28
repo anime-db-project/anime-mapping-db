@@ -43,6 +43,22 @@ def build_report(
                 """
             )
         )
+        by_source: dict[str, dict[str, int]] = {}
+        for name, provider, count in conn.execute(
+            """
+            WITH membership AS (
+                SELECT record_id, a_node AS node_id FROM edge_evidence
+                UNION SELECT record_id, b_node FROM edge_evidence
+            )
+            SELECT d.name, n.provider, COUNT(DISTINCT m.node_id)
+            FROM datasets d JOIN records r ON r.dataset_id=d.id
+            JOIN membership m ON m.record_id=r.id
+            JOIN nodes n ON n.id=m.node_id
+            GROUP BY d.name, n.provider
+            ORDER BY d.name, n.provider
+            """
+        ):
+            by_source.setdefault(name, {})[provider] = count
     old_providers = previous.get("providers", {})
     old_counts = previous.get("counts", {})
     old_sources = {item["name"]: item for item in previous.get("sources", [])}
@@ -54,6 +70,7 @@ def build_report(
             {
                 "name": item["name"],
                 "distinct_ids": counts.get(item["name"], 0),
+                "ids_by_namespace": by_source.get(item["name"], {}),
                 "records": item["record_count"],
                 "record_delta": item["record_count"] - old["record_count"]
                 if old
@@ -67,6 +84,9 @@ def build_report(
         "previous_release": previous.get("release_tag"),
         "amdb_groups": groups,
         "total_external_ids": sum(providers.values()),
+        "external_ids_delta": sum(providers.values()) - sum(old_providers.values())
+        if previous
+        else None,
         "namespaces": len(providers),
         "group_size_distribution": histogram,
         "counts": manifest["counts"],
@@ -76,6 +96,10 @@ def build_report(
             if key in old_counts
         },
         "safe_directed_routes": manifest["text_export"]["rows"],
+        "safe_directed_routes_delta": manifest["text_export"]["rows"]
+        - previous["text_export"]["rows"]
+        if "text_export" in previous
+        else None,
         "providers": [
             {
                 "namespace": key,
@@ -142,7 +166,21 @@ def render(report: dict) -> str:
         )
     lines.extend(
         [
-            f"| Safe directed routes | {report['safe_directed_routes']:,} | — |",
+            f"| Safe directed routes | {report['safe_directed_routes']:,} | "
+            f"{_delta(report['safe_directed_routes_delta'])} |",
+            f"| Total external IDs | {report['total_external_ids']:,} | "
+            f"{_delta(report['external_ids_delta'])} |",
+            "",
+            "## AMDB group size distribution",
+            "",
+            "| IDs in a group | Groups |",
+            "| ---: | ---: |",
+        ]
+    )
+    for size, count in report["group_size_distribution"].items():
+        lines.append(f"| {size} | {count:,} |")
+    lines.extend(
+        [
             "",
             "## Coverage by namespace",
             "",
