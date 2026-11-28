@@ -71,6 +71,7 @@ def build_report(
                 "downloaded_at": item["downloaded_at"],
                 "collection_status": health.get(item["name"], {}).get("status"),
                 "collection_mode": health.get(item["name"], {}).get("collection_mode"),
+                "catalogue": health.get(item["name"], {}).get("catalogue"),
             }
         )
     return {
@@ -109,6 +110,7 @@ def build_report(
             )
         ],
         "sources": source_rows,
+        "collection_sources": list(health.values()),
         "assets": {
             key: {"name": item["name"], "bytes": item["size"]}
             for key, item in manifest["assets"].items()
@@ -206,6 +208,26 @@ def render(report: dict) -> str:
             f"{item['collection_status'] or '—'} | "
             f"{item.get('collection_mode') or '—'} |"
         )
+    if report.get("collection_sources"):
+        lines.extend(
+            [
+                "",
+                "## Collection health and native catalogue coverage",
+                "",
+                "Collected IDs are not necessarily accepted mappings.",
+                "",
+                "| Source | Status | Native IDs | With external ID | Without external ID |",
+                "| --- | --- | ---: | ---: | ---: |",
+            ]
+        )
+        for item in report["collection_sources"]:
+            metrics = item.get("catalogue") or {}
+            lines.append(
+                f"| {item['source']} | {item['status']} | "
+                f"{metrics.get('native_ids', '—')} | "
+                f"{metrics.get('with_external_id', '—')} | "
+                f"{metrics.get('without_external_id', '—')} |"
+            )
     lines.extend(["", "## Assets", "", "| File | Size (MiB) |", "| --- | ---: |"])
     for item in report["assets"].values():
         lines.append(f"| {item['name']} | {item['bytes'] / 1048576:.2f} |")

@@ -104,7 +104,16 @@ class ReleaseReportTests(unittest.TestCase):
                 "lookups_per_second": 1000,
             }
             report = build_report(
-                manifest, runtime, evidence, {"providers": {"mal": 1}}, performance
+                manifest,
+                runtime,
+                evidence,
+                {"providers": {"mal": 1}},
+                performance,
+                {
+                    "sources": [
+                        {"source": "unavailable fixture", "status": "unavailable"}
+                    ]
+                },
             )
             self.assertEqual(report["sources"][0]["distinct_ids"], 2)
             self.assertEqual(
@@ -113,3 +122,4 @@ class ReleaseReportTests(unittest.TestCase):
             self.assertEqual(report["group_size_distribution"], {2: 1})
             self.assertEqual(report["external_ids_delta"], 1)
             self.assertIn("| fixture | 2 | 2 |", render(report))
+            self.assertIn("| unavailable fixture | unavailable |", render(report))

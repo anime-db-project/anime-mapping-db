@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from anime_mapping_db.catalogue_report import catalogue_stats
 from anime_mapping_db.collection import assemble, collect_one, matrix, source_key
 from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec
 from anime_mapping_db.database import MappingRecord
@@ -13,6 +14,38 @@ from anime_mapping_db.snapshots import _normalize_wikidata, load_snapshot
 
 
 class CollectionTests(unittest.TestCase):
+    def test_native_catalogue_counts_distinct_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "source.json"
+            path.write_text(
+                json.dumps(
+                    [
+                        {"id": "1", "mal": "10"},
+                        {"id": "1", "anilist": "20"},
+                        {"id": "2", "mal": None},
+                        {"id": "3", "shikimori": "30"},
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            result = catalogue_stats("animelib", path)
+            self.assertEqual(
+                result,
+                {
+                    "rows": 4,
+                    "native_ids": 3,
+                    "with_external_id": 2,
+                    "without_external_id": 1,
+                    "with_anchor_by_namespace": {
+                        "mal": 1,
+                        "anilist": 1,
+                        "shikimori": 1,
+                    },
+                },
+            )
+            self.assertIsNone(catalogue_stats("base", path))
+            self.assertIsNone(catalogue_stats("animelib", None))
+
     def test_collection_modes(self) -> None:
         modes = {spec.importer: spec.collection_mode for spec in SOURCE_SPECS}
         self.assertEqual(modes["docchi"], "single")
