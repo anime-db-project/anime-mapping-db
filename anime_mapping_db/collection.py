@@ -10,6 +10,7 @@ import shutil
 from dataclasses import replace
 from pathlib import Path
 
+from anime_mapping_db.catalogue_report import catalogue_stats
 from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec
 from anime_mapping_db.release import source_fingerprint
 from anime_mapping_db.snapshots import _filename, collect, load_snapshot
@@ -79,11 +80,18 @@ def assemble(
             raise RuntimeError(f"Required source has no valid snapshot: {spec.name}")
         if selected is not None:
             entries.append(selected)
+        selected_path = (
+            (directory if selected is old else part) / selected["file"]
+            if selected is not None
+            else None
+        )
+        metrics = catalogue_stats(spec.importer, selected_path)
         outcomes.append(
             {
                 **result[0],
                 "status": status,
                 "collection_mode": spec.collection_mode,
+                "catalogue": metrics,
                 "bytes": (
                     (directory / selected["file"]).stat().st_size
                     if selected is old and old is not None
@@ -119,13 +127,17 @@ def assemble(
     if summary:
         with Path(summary).open("a", encoding="utf-8") as handle:
             handle.write(
-                "## Combined source collection\n\n| Source | Mode | Status | Bytes |\n"
+                "## Combined source collection\n\n"
+                "| Source | Mode | Status | Bytes | Native IDs | With external ID |\n"
             )
-            handle.write("| --- | --- | --- | ---: |\n")
+            handle.write("| --- | --- | --- | ---: | ---: | ---: |\n")
             for item in outcomes:
+                metrics = item["catalogue"] or {}
                 handle.write(
                     f"| {item['source']} | {item['collection_mode']} | "
-                    f"{item['status']} | {item['bytes']:,} |\n"
+                    f"{item['status']} | {item['bytes']:,} | "
+                    f"{metrics.get('native_ids', '—')} | "
+                    f"{metrics.get('with_external_id', '—')} |\n"
                 )
     return manifest
 

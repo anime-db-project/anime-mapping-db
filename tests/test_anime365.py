@@ -26,6 +26,7 @@ class Anime365Tests(unittest.TestCase):
             params = request.url.params
             self.assertEqual(params["fields"], "id,myAnimeListId")
             self.assertEqual(params["order"], "id")
+            self.assertEqual(params["limit"], "1000")
             return httpx.Response(200, json={"data": pages[int(params["afterId"])]})
 
         with (

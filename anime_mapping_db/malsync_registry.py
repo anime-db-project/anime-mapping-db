@@ -19,6 +19,25 @@ _NON_CATALOGUES = {"emby", "jellyfin", "plex", "myanimelist"}
 _ACTIVE = {"Crunchyroll", "Netflix"}
 _NATIVE = {"Anime365", "Docchi", "AnimeLib"}
 _OPTIONAL = {"ADKami", "Aniyan", "AniDream", "Aninexus"}
+# Dated audit observations, not automatic availability or permission checks.
+_AUDIT = {
+    "AnimeUnity": (
+        "access_unavailable",
+        "HTTP 403 on robots.txt; no authorized bulk catalogue verified.",
+    ),
+    "AnimeKO": (
+        "catalogue_discovery_only",
+        "126 catalogue pages observed; no explicit external IDs in checked catalogue/overview.",
+    ),
+    "FireAnime": (
+        "permission_required",
+        "Public API reference limits use to private non-commercial integrations.",
+    ),
+    "Kaguya": (
+        "existing_namespace_alias",
+        "Adapter identifier is AniList aniId; no separate native title ID established.",
+    ),
+}
 _IMPORT = re.compile(r"from\s+['\"](\./[^'\"]+/main)['\"]")
 _NAME = re.compile(r"\bname:\s*['\"]([^'\"]+)['\"]")
 _ID = re.compile(r"\bgetIdentifier\s*(?:\(|:)")
@@ -179,6 +198,8 @@ def inventory(root: Path, revision: str) -> dict:
             status = "native_catalog_collector"
         elif name in _OPTIONAL:
             status = "authorized_snapshot_only"
+        elif name in _AUDIT:
+            status = _AUDIT[name][0]
         elif any(entry["external_id_hook"] for entry in entries):
             status = "explicit_hook_requires_verification"
         elif entries:
@@ -192,6 +213,11 @@ def inventory(root: Path, revision: str) -> dict:
                 "languages": row[1],
                 "upstream_database_support": "heavy_check_mark" in row[4],
                 "status": status,
+                "audit": (
+                    {"checked_on": "2026-11-28", "reason": _AUDIT[name][1]}
+                    if name in _AUDIT
+                    else None
+                ),
                 "implementations": entries,
             }
         )

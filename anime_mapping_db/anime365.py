@@ -14,7 +14,7 @@ from anime_mapping_db.crawler_policy import PacedClient, load_policy, user_agent
 from anime_mapping_db.database import MappingRecord
 from anime_mapping_db.native_ids import enrich_native_ids, positive_id
 
-_PAGE_SIZE = 500
+_PAGE_SIZE = 1000
 
 
 def fetch_catalog(client: httpx.Client, url: str) -> list[dict]:
