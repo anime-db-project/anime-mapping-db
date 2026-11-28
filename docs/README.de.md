@@ -74,7 +74,7 @@ Bei Neubauten bleiben Anker für unveränderte oder erweiterte Einheiten erhalte
 
 ## Datenquellen
 
-Der Builder kombiniert 28 Eingaben aus direkten Mapping-Datensätzen und streng geprüften ergänzenden Katalogen. Ergänzungen dürfen ohne unabhängige Bestätigung keine neue Titelidentität begründen. Quellen und Lizenzen stehen im Release-Manifest.
+Der Builder kombiniert 30 Eingaben aus direkten Mapping-Datensätzen und streng geprüften ergänzenden Katalogen. Ergänzungen dürfen ohne unabhängige Bestätigung keine neue Titelidentität begründen. Quellen und Lizenzen stehen im Release-Manifest.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -100,6 +100,8 @@ Der Builder kombiniert 28 Eingaben aus direkten Mapping-Datensätzen und streng 
 - [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — Docchi- und AnimeLib-Katalog-IDs; ADKami optional über `MAPPINGS_ADKAMI_SNAPSHOT_URL`.
 - [YummyAnime / Yani](https://api.yani.tv/swagger) — optionaler Metadaten-Sammler, standardmäßig konfiguriert; Anbieterfreigabe und Anwendungstoken erforderlich (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). Geplante Sammlung und Releases sind während der MALSync-Erweiterung pausiert; manuelle Starts bleiben verfügbar. `MAPPINGS_YUMMYANI_PERMISSION_CONFIRMED=1`.
 - [Annict](https://annict.com/en/terms/api) — Annict-Werkkatalog — explizite MAL-IDs, Intervall 168 Stunden. Nur mit Secret `MAPPINGS_ANNICT_ACCESS_TOKEN` und Anbieterfreigabe `MAPPINGS_ANNICT_PERMISSION_CONFIRMED=1`.
+- [animap.id](https://animap.id/docs/map) — Mapping-Export per Einzelanfrage alle 48 Stunden; nur fehlende IDs mit zwei bestätigten Ankern.
+- [athanasso/anime-offline-database](https://github.com/athanasso/anime-offline-database) — wöchentlicher ODbL-1.0-Export; abgeleitete Zuordnungen, keine unabhängige Bestätigung.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` ist die stabile Titelkennung. Externe IDs sind belegte Aliasse; die interne `entity_id` gilt nur für den jeweiligen Build. Mehrdeutige Zuordnungen werden nicht willkürlich ausgewählt. [Identity contract](../docs/IDENTITY.md).

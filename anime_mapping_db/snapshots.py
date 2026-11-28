@@ -168,7 +168,11 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
         status = "unavailable"
         try:
             _download(spec, temp)
-            if spec.importer == "media_index":
+            if spec.importer in {"animap_id", "athanasso"}:
+                from anime_mapping_db.importers.aggregate_urls import normalize_snapshot
+
+                normalize_snapshot(temp)
+            elif spec.importer == "media_index":
                 _normalize_media_index(temp)
             elif spec.importer.startswith("wikidata_"):
                 _normalize_wikidata(temp, spec.importer)
