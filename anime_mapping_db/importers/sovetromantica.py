@@ -30,9 +30,7 @@ def _pairs(path: Path) -> set[tuple[str, str]]:
     for row in payload:
         if not isinstance(row, dict):
             raise ValueError("Invalid SovetRomantica row")
-        pairs.add(
-            (_positive_id(row.get("idSR")), _positive_id(row.get("idShikimori")))
-        )
+        pairs.add((_positive_id(row.get("idSR")), _positive_id(row.get("idShikimori"))))
     return pairs
 
 

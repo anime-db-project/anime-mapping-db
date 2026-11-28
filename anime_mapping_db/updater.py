@@ -546,7 +546,8 @@ def update_mapping_database(
                     and evidence_path.is_file()
                     and spec.name in state
                     and not base_changed
-                    and spec.importer not in {"media_index", "aniliberty", "sovetromantica"}
+                    and spec.importer
+                    not in {"media_index", "aniliberty", "sovetromantica"}
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the
                     # supplemental source is unavailable, omit old enrichment rather than
