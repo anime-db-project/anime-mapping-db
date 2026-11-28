@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 from pathlib import Path
 
 from anime_mapping_db.anchors import materialize_anchor_index
@@ -60,6 +61,7 @@ def main() -> None:
         )
         return
     if command == "build":
+        logging.basicConfig(level=logging.INFO)
         if args.snapshot_dir is not None:
             stats = update_mapping_database(force=True, snapshot_dir=args.snapshot_dir)
         else:

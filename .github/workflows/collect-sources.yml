@@ -14,17 +14,62 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  collect:
+  plan:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install
-        run: python -m pip install -e .
+      - run: python -m pip install -e .
+      - name: Generate matrix from configured sources
+        id: matrix
+        run: python -m anime_mapping_db.collection matrix >> "$GITHUB_OUTPUT"
+
+  collect:
+    needs: plan
+    name: Collect ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e .
+      - name: Collect and validate source
+        env:
+          SOURCE_KEY: ${{ matrix.key }}
+          MAPPING_CRAWLER_USER_AGENT: ${{ vars.MAPPING_CRAWLER_USER_AGENT }}
+        run: python -m anime_mapping_db.collection collect --source "$SOURCE_KEY" --directory part
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mapping-source-${{ matrix.key }}
+          path: part/
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 6
+
+  assemble:
+    name: Validate and assemble source snapshots
+    needs: [plan, collect]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e .
       - name: Restore previous complete snapshot if available
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,10 +87,13 @@ jobs:
           if [[ -n "$run_id" ]]; then
             gh run download "$run_id" --name mapping-source-snapshots --dir snapshots
           fi
-      - name: Collect external datasets and API crawlers
-        env:
-          MAPPING_CRAWLER_USER_AGENT: ${{ vars.MAPPING_CRAWLER_USER_AGENT }}
-        run: python -m anime_mapping_db.snapshots collect --directory snapshots
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mapping-source-*
+          path: parts
+          merge-multiple: false
+      - name: Merge fresh sources and retain last known good snapshots
+        run: python -m anime_mapping_db.collection assemble --parts parts --directory snapshots
       - uses: actions/upload-artifact@v4
         with:
           name: mapping-source-snapshots
