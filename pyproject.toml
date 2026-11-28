@@ -23,4 +23,4 @@ anime-mapping-db = "anime_mapping_db.__main__:main"
 include = ["anime_mapping_db*"]
 
 [tool.setuptools.package-data]
-anime_mapping_db = ["bootstrap/*.json"]
+anime_mapping_db = ["bootstrap/*.json", "crawler_sources.json"]

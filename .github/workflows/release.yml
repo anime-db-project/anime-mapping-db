@@ -171,6 +171,20 @@ jobs:
             --output release/performance.json
           (cd release && sha256sum performance.json >> SHA256SUMS)
 
+      - name: Generate release statistics and notes
+        if: steps.preflight.outputs.build == 'true'
+        run: |
+          python -m anime_mapping_db.release_report \
+            --manifest release/manifest.json \
+            --runtime release/mappings.db \
+            --evidence data/mappings/mappings-evidence.db \
+            --previous previous-manifest.json \
+            --performance release/performance.json \
+            --output release/statistics.json \
+            --notes release-notes.md
+          (cd release && sha256sum statistics.json >> SHA256SUMS)
+          cat release-notes.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Verify release checksums
         if: steps.preflight.outputs.build == 'true'
         run: cd release && sha256sum --check SHA256SUMS
@@ -187,7 +201,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$tag" \
-            --notes "Automated Anime Mapping DB build with SQLite runtime/provenance assets and portable TSV/JSONL exports. Stable public mapping identities use the amdb:<anchor_id> namespace. GitHub provides the repository Source code (zip) and Source code (tar.gz) archives automatically; this project does not upload duplicate source bundles. See manifest.json for source hashes, schemas and counts."
+            --notes-file release-notes.md
 
       - name: Refresh seven README translations from published release
         if: steps.preflight.outputs.build == 'true'

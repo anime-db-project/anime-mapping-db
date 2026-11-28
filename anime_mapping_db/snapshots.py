@@ -119,10 +119,12 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
             allow_spec_changes=True,
         )
     entries = []
+    outcomes = []
     for spec in specs:
         filename = _filename(spec)
         target = directory / filename
         temp = directory / (filename + ".tmp")
+        status = "unavailable"
         try:
             _download(spec, temp)
             if spec.importer == "media_index":
@@ -134,8 +136,10 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
             old = previous.get(spec.name)
             if old and old["sha256"] == sha:
                 entries.append(old)
+                status = "unchanged"
             else:
                 os.replace(temp, target)
+                status = "updated"
                 entries.append(
                     {
                         "name": spec.name,
@@ -149,12 +153,14 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
             logging.warning("Collection failed for %s: %s", spec.name, exc)
             if spec.name in previous:
                 entries.append(previous[spec.name])
+                status = "retained"
             elif spec.required:
                 raise
             else:
                 bootstrap = _bootstrap_path(spec)
                 if bootstrap is not None:
                     target.write_bytes(bootstrap.read_bytes())
+                    status = "bootstrap"
                     entries.append(
                         {
                             "name": spec.name,
@@ -166,6 +172,13 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
                     )
         finally:
             temp.unlink(missing_ok=True)
+            outcomes.append(
+                {
+                    "source": spec.name,
+                    "status": status,
+                    "bytes": target.stat().st_size if target.exists() else 0,
+                }
+            )
     manifest = {
         "version": 1,
         "sources": sorted(entries, key=lambda item: item["name"]),
@@ -181,6 +194,17 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
         if path.name not in active:
             path.unlink()
     load_snapshot(directory, specs)
+    report = {"checked_at": _utc_now(), "sources": outcomes}
+    (directory / "collection-report.json").write_text(
+        json.dumps(report, indent=2) + "\n", encoding="utf-8"\n    )
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with Path(summary).open("a", encoding="utf-8") as handle:
+            handle.write("## Source collection\n\n| Source | Status | Bytes |\n")
+            handle.write("| --- | --- | ---: |\n")
+            for item in outcomes:
+                handle.write(
+                    f"| {item['source']} | {item['status']} | {item['bytes']:,} |\n"\n                )
     return manifest
 
 

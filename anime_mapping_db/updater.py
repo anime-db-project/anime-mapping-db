@@ -34,7 +34,9 @@ from anime_mapping_db.database import (
 from anime_mapping_db.importers import IMPORTERS, SUPPLEMENTAL_IMPORTERS
 from anime_mapping_db.resolver import copy_mapping_overrides
 
-USER_AGENT = "anime-db-project/anime-mapping-db"
+from anime_mapping_db.crawler_policy import user_agent
+
+USER_AGENT = user_agent()
 
 
 def _utc_now() -> str:
@@ -108,6 +110,8 @@ def _download(spec: MappingSourceSpec, target: Path) -> str:
                         delay = float(retry_after)
                     except ValueError:
                         delay = 65.0 if status == 429 else 5.0 * (attempt + 1)
+                    if status == 429 and (attempt > 0 or delay > 65.0):
+                        break
                     delay = max(1.0, min(delay, 65.0))
                     logging.warning(
                         "Mapping source returned HTTP %d; retrying %s endpoint %d/%d in %.1fs",
