@@ -61,9 +61,7 @@ class NativeCatalogueTests(unittest.TestCase):
                 200, json=[{"slug": "title-1", "mal_id": 101, "title": "discard"}]
             )
 
-        with httpx.Client(
-            transport=httpx.MockTransport(respond)
-        ) as client:
+        with httpx.Client(transport=httpx.MockTransport(respond)) as client:
             rows = fetch_docchi(client, "https://example.invalid/catalogue")
         self.assertEqual(rows, [{"id": "title-1", "mal": "101"}])
         self.assertEqual(len(requests), 1)
