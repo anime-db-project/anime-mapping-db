@@ -108,6 +108,10 @@ Optional [media-index](https://github.com/anilifecommunity/media-index) enrichme
 
 An `amdb:<anchor_id>` is a durable title identifier; provider IDs are aliases backed by evidence, while internal `entity_id` values are build-local. Conflicting source-to-target matches are not silently selected. [Identity contract](docs/IDENTITY.md).
 
+### Authorized MALSync catalogue exports
+
+Nine optional title-only export importers are available: animepahe, AnimeUnity, AnimeKO, AnimeOnsen, AnimeWho, Animeworld, HinataSoul, WitAnime and tioanime. They do not scrape the services or assume an undocumented API exists. Set `MAPPINGS_<PROVIDER>_SNAPSHOT_URL` to a provider-authorized HTTPS JSON export and `MAPPINGS_<PROVIDER>_PERMISSION_CONFIRMED=1` only if public data redistribution is allowed. Each source is enabled by default when a URL is supplied, has a seven-day collection interval and can be disabled using `MAPPINGS_ENABLE_<PROVIDER>=0`. An export must be a JSON array of objects with explicit title scope, native ID and known catalogue references, e.g. `[{"scope":"title","id":"123","mal":101,"anilist":201}]` (illustrative IDs only). No title-based or episode-based matching. Private/non-commercial use alone does not authorize publication of upstream data.
+
 ## Input pipeline and provenance
 
 The builder imports public bulk datasets and creates evidence records before materializing a runtime mapping graph. Input records carry source identity and evidence-group lineage. Correlated mirrors do not automatically count as independent sources.

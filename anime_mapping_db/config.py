@@ -476,7 +476,9 @@ for _provider, _display in (
     _prefix = f"MAPPINGS_{_provider.upper()}"
     _url = os.environ.get(f"{_prefix}_SNAPSHOT_URL", "").strip()
     _enabled = os.environ.get(f"MAPPINGS_ENABLE_{_provider.upper()}", "").strip()
-    if not _url or (_enabled and not _env_bool(f"MAPPINGS_ENABLE_{_provider.upper()}", True)):
+    if not _url or (
+        _enabled and not _env_bool(f"MAPPINGS_ENABLE_{_provider.upper()}", True)
+    ):
         continue
     _parts = urlsplit(_url)
     if (

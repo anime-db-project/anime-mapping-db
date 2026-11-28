@@ -28,12 +28,15 @@ PROVIDERS = (
     "tioanime",
 )
 
+
 def _native(provider: str, value: object) -> str | None:
     if provider == "animepahe":
         # Numeric catalogue IDs only, not rotating playback session UUIDs.
         return positive_id(value)
     if provider == "animewho":
-        if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_]+-[1-9][0-9]*", value):
+        if isinstance(value, str) and re.fullmatch(
+            r"[A-Za-z0-9_]+-[1-9][0-9]*", value
+        ):
             return value
         return None
     return slug_id(value) or positive_id(value)
@@ -61,7 +64,9 @@ def _rows(path: Path, provider: str) -> list[dict]:
             values = set()
             for alias in aliases:
                 value = item.get(alias)
-                if value is None or (type(value) in (str, int) and value in (0, "0", "")):
+                if value is None or (
+                    type(value) in (str, int) and value in (0, "0", "")
+                ):
                     continue
                 normalized = positive_id(value)
                 if normalized is None:

@@ -20,18 +20,35 @@ class AuthorizedCatalogueTests(unittest.TestCase):
             for provider in PROVIDERS:
                 native = "123" if provider != "animewho" else "anime-123"
                 path.write_text(
-                    json.dumps([{"id": native, "scope": "title", "mal_id": 101,
-                                 "anilist_id": 201, "name": "discard"}]),
+                    json.dumps(
+                        [
+                            {
+                                "id": native,
+                                "scope": "title",
+                                "mal_id": 101,
+                                "anilist_id": 201,
+                                "name": "discard",
+                            }
+                        ]
+                    ),
                     encoding="utf-8",
                 )
                 normalize_authorized(path, provider)
                 before = path.read_bytes()
                 normalize_authorized(path, provider)
                 self.assertEqual(before, path.read_bytes())
-                self.assertEqual(json.loads(before), [
-                    {"id": native, "scope": "title", "mal": "101",
-                     "anilist": "201", "shikimori": None}
-                ])
+                self.assertEqual(
+                    json.loads(before),
+                    [
+                        {
+                            "id": native,
+                            "scope": "title",
+                            "mal": "101",
+                            "anilist": "201",
+                            "shikimori": None,
+                        }
+                    ],
+                )
 
     def test_bad_scope_conflicts_and_session_ids(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
