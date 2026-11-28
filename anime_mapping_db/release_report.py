@@ -228,6 +228,11 @@ def render(report: dict) -> str:
                 f"{metrics.get('with_external_id', '—')} | "
                 f"{metrics.get('without_external_id', '—')} |"
             )
+        for item in report["collection_sources"]:
+            if item.get("shrink_warning"):
+                lines.append(
+                    f"\n- {item['source']}: {item['shrink_warning']} ({item['status']})."
+                )
     lines.extend(["", "## Assets", "", "| File | Size (MiB) |", "| --- | ---: |"])
     for item in report["assets"].values():
         lines.append(f"| {item['name']} | {item['bytes'] / 1048576:.2f} |")

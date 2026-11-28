@@ -10,7 +10,7 @@ import shutil
 from dataclasses import replace
 from pathlib import Path
 
-from anime_mapping_db.catalogue_report import catalogue_stats
+from anime_mapping_db.catalogue_report import catalogue_stats, shrink_reason
 from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec
 from anime_mapping_db.release import source_fingerprint
 from anime_mapping_db.snapshots import _filename, collect, load_snapshot
@@ -37,7 +37,11 @@ def collect_one(directory: Path, spec: MappingSourceSpec) -> dict:
 
 
 def assemble(
-    directory: Path, parts: Path, specs: tuple[MappingSourceSpec, ...]
+    directory: Path,
+    parts: Path,
+    specs: tuple[MappingSourceSpec, ...],
+    *,
+    allow_shrink: frozenset[str] = frozenset(),
 ) -> dict:
     directory.mkdir(parents=True, exist_ok=True)
     previous = {}
@@ -65,9 +69,23 @@ def assemble(
         if (fresh is None) != (status == "unavailable"):
             raise ValueError(f"Collection report disagrees with data: {spec.name}")
         old = previous.get(spec.name)
+        fresh_metrics = catalogue_stats(
+            spec.importer, part / fresh["file"] if fresh is not None else None
+        )
+        old_metrics = catalogue_stats(
+            spec.importer, directory / old["file"] if old is not None else None
+        )
+        warning = shrink_reason(old_metrics, fresh_metrics)
+        reason = None
         if old is not None and (fresh is None or status == "bootstrap"):
+            reason = "source_unavailable" if fresh is None else "bootstrap_fallback"
             selected = old
             status = "retained"
+        elif warning and spec.importer not in allow_shrink:
+            selected = old
+            status = "retained"
+            reason = warning
+            logging.warning("Retaining %s: %s", spec.name, warning)
         elif old is not None and fresh is not None and old["sha256"] == fresh["sha256"]:
             selected = old
             status = "unchanged"
@@ -80,18 +98,16 @@ def assemble(
             raise RuntimeError(f"Required source has no valid snapshot: {spec.name}")
         if selected is not None:
             entries.append(selected)
-        selected_path = (
-            (directory if selected is old else part) / selected["file"]
-            if selected is not None
-            else None
-        )
-        metrics = catalogue_stats(spec.importer, selected_path)
+        metrics = old_metrics if selected is old else fresh_metrics
         outcomes.append(
             {
                 **result[0],
                 "status": status,
                 "collection_mode": spec.collection_mode,
                 "catalogue": metrics,
+                "attempted_catalogue": fresh_metrics,
+                "retention_reason": reason,
+                "shrink_warning": warning,
                 "bytes": (
                     (directory / selected["file"]).stat().st_size
                     if selected is old and old is not None
@@ -139,6 +155,10 @@ def assemble(
                     f"{metrics.get('native_ids', '—')} | "
                     f"{metrics.get('with_external_id', '—')} |\n"
                 )
+            for item in outcomes:
+                if item["shrink_warning"]:
+                    handle.write(f"\n- {item['source']}: {item['shrink_warning']}")
+                    handle.write(f" ({item['status']})\n")
     return manifest
 
 
@@ -162,7 +182,17 @@ def main() -> None:
     else:
         if args.directory is None or args.parts is None:
             parser.error("assemble requires --parts and --directory")
-        manifest = assemble(args.directory, args.parts, SOURCE_SPECS)
+        allow_shrink = frozenset(
+            item.strip()
+            for item in os.environ.get("MAPPINGS_ALLOW_CATALOGUE_SHRINK", "").split(",")
+            if item.strip()
+        )
+        known = {spec.importer for spec in SOURCE_SPECS}
+        if allow_shrink - known:
+            parser.error("Unknown importer in MAPPINGS_ALLOW_CATALOGUE_SHRINK")
+        manifest = assemble(
+            args.directory, args.parts, SOURCE_SPECS, allow_shrink=allow_shrink
+        )
         print(manifest["source_fingerprint"])
 
 

@@ -33,6 +33,22 @@ _AUDIT = {
         "permission_required",
         "Public API reference limits use to private non-commercial integrations.",
     ),
+    "AnimeOnsen": (
+        "access_unavailable",
+        "HTTP 403 on robots.txt; no authorized bulk export confirmed.",
+    ),
+    "AnimeWho": (
+        "access_unavailable",
+        "Domain lookup failed during audit; explicit page references in adapter only.",
+    ),
+    "Animeworld": (
+        "permission_required",
+        "Explicit MAL/AniList page links verified; site asks users not to scrape.",
+    ),
+    "AniKoto": (
+        "episode_scoped_reference",
+        "MAL reference is selected per episode; no full-title equivalence established.",
+    ),
     "Kaguya": (
         "existing_namespace_alias",
         "Adapter identifier is AniList aniId; no separate native title ID established.",
