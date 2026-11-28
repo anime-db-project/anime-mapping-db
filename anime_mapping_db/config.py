@@ -310,6 +310,18 @@ if _env_bool("MAPPINGS_ENABLE_MALSYNC_CRUNCHYROLL", True):
 if _env_bool("MAPPINGS_ENABLE_MALSYNC_NETFLIX", True):
     SOURCE_SPECS += (MALSYNC_NETFLIX_SOURCE,)
 
+# Native catalogue discovered while auditing MALSync's Anime365 adapter.
+ANIME365_SOURCE = MappingSourceSpec(
+    name="Anime365 catalog",
+    url="https://smotret-anime.app/api/series",
+    importer="anime365",
+    required=False,
+    license_note="Public metadata API; explicit numeric series and MyAnimeList IDs only; upstream redistribution terms apply.",
+    supplemental=True,
+)
+if _env_bool("MAPPINGS_ENABLE_ANIME365", True):
+    SOURCE_SPECS += (ANIME365_SOURCE,)
+
 
 def mappings_db_path() -> Path:
     return get_settings().db_path

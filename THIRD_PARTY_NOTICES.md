@@ -29,6 +29,8 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 
 | MALSync / Crunchyroll and Netflix | Supplemental | [GPL-3.0-only repository](https://github.com/MALSync/MALSync). Only explicitly authored `malId` season overrides without episode offsets or season overrides are considered. Native season identifiers remain separate from series IDs. No blocked backup, live service API, streaming URLs, source code or catalogue metadata are imported. Upstream data terms remain applicable; disable with `MAPPINGS_ENABLE_MALSYNC_CRUNCHYROLL=0` or `MAPPINGS_ENABLE_MALSYNC_NETFLIX=0` and rebuild. |
 
+| Anime365 | Supplemental | [MALSync adapter](https://github.com/MALSync/MALSync/blob/master/src/pages/Anime365/main.ts); [catalogue API schema](https://github.com/ragedrugg/anime365/blob/main/openapi.yaml). Native `id` and `myAnimeListId` only. Public metadata endpoint, no playback or user data. Upstream data redistribution terms not independently verified. Disable via `MAPPINGS_ENABLE_ANIME365=0` and rebuild. |
+
 ## Supplemental lineage policy
 
 AnimeAPI, media-index and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
@@ -42,6 +44,8 @@ AniLiberty is a provider-native catalog rather than a third-party aggregate. Its
 The SovetRomantica snapshot is a historical copy of explicit provider cross-references, not a second independent catalogue lineage. It may attach one missing SovetRomantica ID to an existing, non-singleton group via an exact known Shikimori ID. Conflicting or ambiguous claims are excluded, and equal numerical MAL IDs are not inferred. Live catalogue validity and upstream redistribution rights have not been independently confirmed.
 
 MALSync's open-source season overrides are a deliberately narrow exception to the two-anchor aggregate rule. A declared MAL ID may attach a missing, separately scoped season identifier to a non-singleton existing component only when the source claims are one-to-one and no directional conflict exists. These are explicit tracking overrides, not independent verification of full episode equivalence. Offset and season-renumbering overrides are not imported. Upstream data redistribution rights have not been independently verified.
+
+Anime365 uses the provider's own explicit `myAnimeListId` assertion, not title matching or MALSync API responses. A missing numeric series ID may attach only to a non-singleton existing group with an exact known MAL anchor. Duplicate, contradictory, or conflicting claims are excluded. No new AMDB identities are created.
 
 The exact URLs and notes embedded into every evidence database are defined in `anime_mapping_db/config.py`.
 

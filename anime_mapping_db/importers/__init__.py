@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from anime_mapping_db.aniliberty import import_aniliberty_enrichment
+from anime_mapping_db.anime365 import import_anime365_enrichment
 from anime_mapping_db.importers.direct import (
     import_anibridge,
     import_anime_and_manga_lists,
@@ -58,6 +59,7 @@ SUPPLEMENTAL_IMPORTERS = {
     "wikidata_multi": import_wikidata_enrichment,
     "media_index": import_media_index_enrichment,
     "aniliberty": import_aniliberty_enrichment,
+    "anime365": import_anime365_enrichment,
     "sovetromantica": import_sovetromantica_enrichment,
     "malsync_crunchyroll": import_malsync_crunchyroll,
     "malsync_netflix": import_malsync_netflix,
@@ -68,6 +70,7 @@ __all__ = [
     "SUPPLEMENTAL_IMPORTERS",
     "import_anibridge",
     "import_aniliberty_enrichment",
+    "import_anime365_enrichment",
     "import_anime_and_manga_lists",
     "import_anime_lists",
     "import_animeaggregations_enrichment",
