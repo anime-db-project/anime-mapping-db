@@ -18,25 +18,19 @@ _UPSTREAM = "https://github.com/MALSync/MALSync"
 _NON_CATALOGUES = {"emby", "jellyfin", "plex", "myanimelist"}
 _ACTIVE = {"Crunchyroll", "Netflix"}
 _NATIVE = {"Anime365", "Docchi", "AnimeLib", "tioanime"}
-_OPTIONAL = {
-    "ADKami",
+_WEB = {
     "Aniyan",
     "AniDream",
     "Aninexus",
     "animepahe",
     "AnimeUnity",
-    "AnimeKO",
     "AnimeOnsen",
     "AnimeWho",
-    "Animeworld",
     "HinataSoul",
     "WitAnime",
-    "FireAnime",
     "Miruro",
-    "Gojo",
-    "AniKoto",
-    "AnimeStream",
 }
+_OPTIONAL = set()
 # Dated audit observations, not automatic availability or permission checks.
 _AUDIT = {
     "AnimeUnity": (
@@ -44,8 +38,12 @@ _AUDIT = {
         "HTTP 403 on robots.txt; no authorized bulk catalogue verified.",
     ),
     "AnimeKO": (
-        "catalogue_discovery_only",
-        "126 catalogue pages observed; no explicit external IDs in checked catalogue/overview.",
+        "access_unavailable",
+        "Original domain parked on 2026-11-28; no verified successor or free API.",
+    ),
+    "ADKami": (
+        "access_unavailable",
+        "Original site returned HTTP 403; adapter exposes episode-page season IDs only.",
     ),
     "FireAnime": (
         "permission_required",
@@ -262,6 +260,8 @@ def inventory(root: Path, revision: str) -> dict:
             status = "partial_release_import"
         elif name in _NATIVE:
             status = "native_catalog_collector"
+        elif name in _WEB:
+            status = "native_web_collector_unverified"
         elif name in _OPTIONAL:
             status = "authorized_snapshot_only"
         elif name in _AUDIT:

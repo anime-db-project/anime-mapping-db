@@ -11,6 +11,7 @@ from anime_mapping_db.catalogue_report import catalogue_stats, shrink_reason
 from anime_mapping_db.collection import assemble, collect_one, matrix, source_key
 from anime_mapping_db.config import SOURCE_SPECS, MappingSourceSpec
 from anime_mapping_db.database import MappingRecord
+from anime_mapping_db.malsync_web import WEB_SOURCES
 from anime_mapping_db.snapshots import _normalize_wikidata, load_snapshot
 
 
@@ -207,7 +208,7 @@ class CollectionTests(unittest.TestCase):
             | ({"yummyani"} if "yummyani" in modes else set())
             | ({"annict_api"} if "annict_api" in modes else set())
             | ({"tioanime"} if modes.get("tioanime") == "paginated" else set())
-            | {spec.importer for spec in SOURCE_SPECS if spec.export_api},
+            | (set(WEB_SOURCES) & modes.keys()),
         )
         entries = matrix(SOURCE_SPECS)["include"]
         self.assertEqual(
