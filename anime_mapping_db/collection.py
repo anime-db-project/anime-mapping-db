@@ -93,9 +93,7 @@ def collect_one(
             json.dumps(
                 {
                     "checked_at": _utc_now(),
-                    "sources": [
-                        {"source": spec.name, "status": reason, "bytes": 0}
-                    ],
+                    "sources": [{"source": spec.name, "status": reason, "bytes": 0}],
                 }
             ),
             encoding="utf-8",
@@ -148,7 +146,12 @@ def assemble(
         fresh = load_snapshot(part, (replace(spec, required=False),)).get(spec.name)
         if (fresh is None) != (
             status
-            in {"unavailable", "deferred", "missing_api_key", "permission_not_confirmed"}
+            in {
+                "unavailable",
+                "deferred",
+                "missing_api_key",
+                "permission_not_confirmed",
+            }
         ):
             raise ValueError(f"Collection report disagrees with data: {spec.name}")
         old = previous.get(spec.name)
