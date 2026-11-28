@@ -109,7 +109,11 @@ class ReleaseReportTests(unittest.TestCase):
                 evidence,
                 {"providers": {"mal": 1}},
                 performance,
-                {"sources": [{"source": "unavailable fixture", "status": "unavailable"}]},
+                {
+                    "sources": [
+                        {"source": "unavailable fixture", "status": "unavailable"}
+                    ]
+                },
             )
             self.assertEqual(report["sources"][0]["distinct_ids"], 2)
             self.assertEqual(
