@@ -40,7 +40,9 @@ def next_cursor(value: object) -> str | None:
         ):
             raise ValueError("Unexpected Kodik continuation endpoint")
         cursors = fields.get("next", [])
-        if len(cursors) != 1 or not re.fullmatch(r"[A-Za-z0-9_+/=-]{1,4096}", cursors[0]):
+        if len(cursors) != 1 or not re.fullmatch(
+            r"[A-Za-z0-9_+/=-]{1,4096}", cursors[0]
+        ):
             raise ValueError("Invalid Kodik continuation cursor")
         return cursors[0]
     except ValueError:
