@@ -24,11 +24,11 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 | Wikidata multi-ID | Supplemental | Same CC0 Wikidata lineage as above. Adds only anchor-validated missing IDs/QIDs; QLever and WDQS are query backends, not separate evidence sources. |
 | nattadasu/animeApi | Supplemental | Compiled database is ODbL 1.0 + DbCL 1.0; software code is MIT. Builder consumes only the GitHub-hosted `v3/database/animeapi.tsv`, never AnimeAPI's REST service. |
 
-| anilifecommunity/media-index | Supplemental (opt-in; not in default releases) | MIT-0 covers code and original contributions, not the aggregated data. [Source policy](https://github.com/anilifecommunity/media-index/blob/main/docs/SOURCE-POLICY.md) explicitly distinguishes owner attestation from provider permission. Enable only after confirming applicable collection and redistribution rights. |
+| anilifecommunity/media-index | Supplemental | MIT-0 covers code and original contributions, not the aggregated data. [Source policy](https://github.com/anilifecommunity/media-index/blob/main/docs/SOURCE-POLICY.md) explicitly distinguishes owner attestation from provider permission. Only missing factual identifiers are imported after strict validation; no descriptions, artwork or episode metadata. Upstream redistribution rights have not been independently confirmed. Set `MAPPINGS_ENABLE_MEDIA_INDEX=0` and force a rebuild to exclude this source. |
 
 ## Supplemental lineage policy
 
-AnimeAPI and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
+AnimeAPI, media-index and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
 
 A supplemental item must contain at least two exact base IDs that are already connected by an accepted direct edge with no directional conflict. Only then may missing targets be attached. Ambiguous multiple IDs for the same target provider are skipped. AnimeAPI also excludes season-only fields and rows marked potentially invalid for Trakt; AnimeAggregations excludes VNDB and generic website/social/adaptation relationships.
 

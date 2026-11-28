@@ -74,7 +74,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 
 ## Источники данных
 
-Сборщик объединяет 18 входных наборов: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
+Сборщик объединяет 19 входных наборов: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -92,6 +92,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 - [notseteve/AnimeAggregations](https://github.com/notseteve/AnimeAggregations)
 - [Wikidata multi-ID](https://www.wikidata.org/)
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
+- [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — только отсутствующие Bangumi, Kitsu и Simkl ID; требуются два непротиворечивых якоря и проверка неоднозначности всего снимка. TVDB/TMDB исключены. Условия исходных данных сохраняются; см. [уведомления](../THIRD_PARTY_NOTICES.md).
 
 Дополнительный источник [media-index](https://github.com/anilifecommunity/media-index) по умолчанию отключён до проверки прав на данные. После подтверждения прав можно использовать `MAPPINGS_ENABLE_MEDIA_INDEX=1` с отдельной новой директорией сборки. Импортируются только отсутствующие Bangumi, Kitsu и Simkl ID при двух подтверждённых якорях и отсутствии конфликтов между записями; TVDB/TMDB исключены.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)

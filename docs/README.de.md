@@ -74,7 +74,7 @@ Bei Neubauten bleiben Anker für unveränderte oder erweiterte Einheiten erhalte
 
 ## Datenquellen
 
-Der Builder kombiniert 18 Eingaben aus direkten Mapping-Datensätzen und streng geprüften ergänzenden Katalogen. Ergänzungen dürfen ohne unabhängige Bestätigung keine neue Titelidentität begründen. Quellen und Lizenzen stehen im Release-Manifest.
+Der Builder kombiniert 19 Eingaben aus direkten Mapping-Datensätzen und streng geprüften ergänzenden Katalogen. Ergänzungen dürfen ohne unabhängige Bestätigung keine neue Titelidentität begründen. Quellen und Lizenzen stehen im Release-Manifest.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -92,6 +92,7 @@ Der Builder kombiniert 18 Eingaben aus direkten Mapping-Datensätzen und streng 
 - [notseteve/AnimeAggregations](https://github.com/notseteve/AnimeAggregations)
 - [Wikidata multi-ID](https://www.wikidata.org/)
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
+- [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — nur fehlende Bangumi-, Kitsu- und Simkl-IDs mit zwei konfliktfreien Ankern; TVDB/TMDB sind ausgeschlossen. Es gelten die Bedingungen der Quelldaten.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` ist die stabile Titelkennung. Externe IDs sind belegte Aliasse; die interne `entity_id` gilt nur für den jeweiligen Build. Mehrdeutige Zuordnungen werden nicht willkürlich ausgewählt. [Identity contract](../docs/IDENTITY.md).
