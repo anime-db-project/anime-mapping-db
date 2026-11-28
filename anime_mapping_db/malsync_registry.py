@@ -17,8 +17,26 @@ from urllib.parse import urlsplit
 _UPSTREAM = "https://github.com/MALSync/MALSync"
 _NON_CATALOGUES = {"emby", "jellyfin", "plex", "myanimelist"}
 _ACTIVE = {"Crunchyroll", "Netflix"}
-_NATIVE = {"Anime365", "Docchi", "AnimeLib"}
-_OPTIONAL = {"ADKami", "Aniyan", "AniDream", "Aninexus"}
+_NATIVE = {"Anime365", "Docchi", "AnimeLib", "tioanime"}
+_OPTIONAL = {
+    "ADKami",
+    "Aniyan",
+    "AniDream",
+    "Aninexus",
+    "animepahe",
+    "AnimeUnity",
+    "AnimeKO",
+    "AnimeOnsen",
+    "AnimeWho",
+    "Animeworld",
+    "HinataSoul",
+    "WitAnime",
+    "FireAnime",
+    "Miruro",
+    "Gojo",
+    "AniKoto",
+    "AnimeStream",
+}
 # Dated audit observations, not automatic availability or permission checks.
 _AUDIT = {
     "AnimeUnity": (

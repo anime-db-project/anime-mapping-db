@@ -89,5 +89,31 @@
     ],
     "retry_429_wait_seconds": 30,
     "max_429_wait_seconds": 60
+  },
+  "tioanime": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 25,
+    "per_hour": 1200,
+    "delay_seconds": [
+      2.5,
+      3.5
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "authorized_export_api": {
+    "enabled": true,
+    "max_requests": 500,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
   }
 }

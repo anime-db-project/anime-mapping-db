@@ -6,9 +6,11 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+from anime_mapping_db.malsync_authorized import PROVIDERS
 from anime_mapping_db.native_ids import ANCHORS, positive_id
 
 _NATIVE = {
+    *PROVIDERS,
     "aniliberty",
     "anime365",
     "docchi",
@@ -29,13 +31,14 @@ def catalogue_stats(importer: str, path: Path | None) -> dict | None:
     # Snapshots are already projected and validated by their collectors.
     if not isinstance(rows, list):
         raise ValueError("Expected native ID snapshot")
+    anchor_providers = (*ANCHORS, "kitsu") if importer in PROVIDERS else ANCHORS
     anchors: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         native = row["id"]
         if not isinstance(native, str) or not native:
             raise ValueError("Invalid native snapshot ID")
         anchors[native].update(
-            provider for provider in ANCHORS if positive_id(row.get(provider))
+            provider for provider in anchor_providers if positive_id(row.get(provider))
         )
     with_id = sum(bool(values) for values in anchors.values())
     return {
@@ -45,7 +48,7 @@ def catalogue_stats(importer: str, path: Path | None) -> dict | None:
         "without_external_id": len(anchors) - with_id,
         "with_anchor_by_namespace": {
             provider: sum(provider in values for values in anchors.values())
-            for provider in ANCHORS
+            for provider in anchor_providers
         },
     }
 
