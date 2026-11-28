@@ -17,9 +17,7 @@ from anime_mapping_db.malsync_native import slug_id
 
 ORIGIN = "https://tioanime.com"
 DIRECTORY = ORIGIN + "/directorio"
-_JIKAN = re.compile(
-    r"https?://api\.jikan\.moe/v[0-9]+/anime/([1-9][0-9]*)\b", re.I
-)
+_JIKAN = re.compile(r"https?://api\.jikan\.moe/v[0-9]+/anime/([1-9][0-9]*)\b", re.I)
 
 
 class _Links(HTMLParser):
