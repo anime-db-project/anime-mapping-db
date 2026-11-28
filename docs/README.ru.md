@@ -95,7 +95,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 - [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — только отсутствующие Bangumi, Kitsu и Simkl ID; требуются два непротиворечивых якоря и проверка неоднозначности всего снимка. TVDB/TMDB исключены. Условия исходных данных сохраняются; см. [уведомления](../THIRD_PARTY_NOTICES.md).
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — числовые ID релизов по явно указанным MAL/Shikimori; неоднозначные связи исключаются.
 - [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — исторический дамп ID SovetRomantica с явными ссылками на Shikimori.
-- [MALSync](https://github.com/MALSync/MALSync) — явные MAL-сопоставления сезонов Crunchyroll и Netflix; отдельные пространства ID, без смещений эпизодов.
+- [MALSync](https://github.com/MALSync/MALSync) — явные MAL-сопоставления сезонов Crunchyroll и Netflix; отдельные пространства ID, без смещений эпизодов. Ежедневный сбор также проверяет все аниме-адаптеры MALSync и сохраняет отдельный `malsync-inventory`; тестовые ожидания не являются доказательством сопоставления.
 
 Дополнительный источник [media-index](https://github.com/anilifecommunity/media-index) по умолчанию отключён до проверки прав на данные. После подтверждения прав можно использовать `MAPPINGS_ENABLE_MEDIA_INDEX=1` с отдельной новой директорией сборки. Импортируются только отсутствующие Bangumi, Kitsu и Simkl ID при двух подтверждённых якорях и отсутствии конфликтов между записями; TVDB/TMDB исключены.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
