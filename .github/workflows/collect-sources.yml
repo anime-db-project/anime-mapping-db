@@ -55,6 +55,7 @@ jobs:
           name: mapping-source-${{ matrix.key }}
           path: part/
           if-no-files-found: error
+          overwrite: true
           retention-days: 1
           compression-level: 6
 
@@ -99,5 +100,6 @@ jobs:
           name: mapping-source-snapshots
           path: snapshots/
           if-no-files-found: error
+          overwrite: true
           retention-days: 14
           compression-level: 6

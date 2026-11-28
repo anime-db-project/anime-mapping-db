@@ -88,7 +88,9 @@ class CollectionTests(unittest.TestCase):
             _normalize_wikidata(path, "wikidata_bahamut")
             first = path.read_bytes()
             path.write_text(
-                json.dumps({"head": {"link": ["b"]}, "results": {"bindings": [b, a, a]}})
+                json.dumps(
+                    {"head": {"link": ["b"]}, "results": {"bindings": [b, a, a]}}
+                )
             )
             _normalize_wikidata(path, "wikidata_bahamut")
             self.assertEqual(path.read_bytes(), first)

@@ -94,8 +94,7 @@ def _normalize_wikidata(path: Path, importer: str) -> None:
         if not isinstance(binding, dict):
             raise ValueError("Invalid Wikidata binding")
         values = tuple(
-            str(binding.get(field, {}).get("value", "")).strip()
-            for field in fields
+            str(binding.get(field, {}).get("value", "")).strip() for field in fields
         )
         if not values[0]:
             raise ValueError("Missing Wikidata item")
