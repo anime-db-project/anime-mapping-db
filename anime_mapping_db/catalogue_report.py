@@ -18,6 +18,7 @@ _NATIVE = {
     "anidream",
     "aninexus",
     "yummyani",
+    "annict_api",
 }
 
 

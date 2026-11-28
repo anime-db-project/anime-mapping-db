@@ -438,6 +438,28 @@ if not os.environ.get("MAPPINGS_ENABLE_YUMMYANI", "").strip() or _env_bool(
     )
 
 
+# Annict permits dataset redistribution only with individual permission.
+if not os.environ.get("MAPPINGS_ENABLE_ANNICT", "").strip() or _env_bool(
+    "MAPPINGS_ENABLE_ANNICT", True
+):
+    SOURCE_SPECS += (
+        MappingSourceSpec(
+            name="Annict authorized works catalogue",
+            url="https://api.annict.com/v1/works",
+            importer="annict_api",
+            credential_env="MAPPINGS_ANNICT_ACCESS_TOKEN",
+            permission_env="MAPPINGS_ANNICT_PERMISSION_CONFIRMED",
+            collection_interval_hours=_env_float(
+                "MAPPINGS_ANNICT_INTERVAL_HOURS", 168.0, 24.0
+            ),
+            required=False,
+            license_note="Annict API Terms, Article 6: individual permission required for public dataset redistribution.",
+            collection_mode="paginated",
+            supplemental=True,
+        ),
+    )
+
+
 def source_preflight(spec: MappingSourceSpec) -> str | None:
     """Return a non-sensitive skip reason, never a credential value."""
     if spec.credential_env and not os.environ.get(spec.credential_env, "").strip():

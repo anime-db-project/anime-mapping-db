@@ -204,7 +204,8 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(
             {key for key, mode in modes.items() if mode == "paginated"},
             {"aniliberty", "anime365", "animelib"}
-            | ({"yummyani"} if "yummyani" in modes else set()),
+            | ({"yummyani"} if "yummyani" in modes else set())
+            | ({"annict_api"} if "annict_api" in modes else set()),
         )
         entries = matrix(SOURCE_SPECS)["include"]
         self.assertEqual(

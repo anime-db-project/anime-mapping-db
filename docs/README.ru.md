@@ -74,7 +74,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 
 ## Источники данных
 
-Сборщик объединяет 26 входных наборов: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
+Сборщик объединяет 28 входных наборов: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -98,7 +98,8 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 - [MALSync](https://github.com/MALSync/MALSync) — явные MAL-сопоставления сезонов Crunchyroll и Netflix; отдельные пространства ID, без смещений эпизодов. Ежедневный сбор также проверяет все аниме-адаптеры MALSync и сохраняет отдельный `malsync-inventory`; тестовые ожидания не являются доказательством сопоставления.
 - [Anime365](https://github.com/ragedrugg/anime365) — собственные числовые ID каталога с явными MAL-ссылками; источник найден через MALSync.
 - [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — ID каталогов Docchi и AnimeLib; ADKami — опциональный разрешённый снимок (`MAPPINGS_ADKAMI_SNAPSHOT_URL`).
-- [YummyAnime / Yani](https://api.yani.tv/swagger) — опциональный краулер метаданных, отключён до получения разрешения и токена приложения (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). Автоматические запуски сбора и релизов временно приостановлены на период расширения MALSync; ручные запуски доступны. Постраничные источники обновляются не чаще чем каждые 48 часов (Anime365/AnimeLib) или 72 часа (YummyAnime); интервалы задаются через `MAPPINGS_ANIME365_INTERVAL_HOURS`, `MAPPINGS_ANIMELIB_INTERVAL_HOURS`, `MAPPINGS_YUMMYANI_INTERVAL_HOURS`. При пропуске сохраняется прежний снимок. Ручной `force_all_sources` игнорирует интервалы, но не лимиты и авторизацию.
+- [YummyAnime / Yani](https://api.yani.tv/swagger) — опциональный краулер метаданных, включён по умолчанию, требует разрешения и токена приложения (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). Автоматические запуски сбора и релизов временно приостановлены на период расширения MALSync; ручные запуски доступны. Постраничные источники обновляются не чаще чем каждые 48 часов (Anime365/AnimeLib) или 72 часа (YummyAnime); интервалы задаются через `MAPPINGS_ANIME365_INTERVAL_HOURS`, `MAPPINGS_ANIMELIB_INTERVAL_HOURS`, `MAPPINGS_YUMMYANI_INTERVAL_HOURS`. При пропуске сохраняется прежний снимок. Ручной `force_all_sources` игнорирует интервалы, но не лимиты и авторизацию. `MAPPINGS_YUMMYANI_PERMISSION_CONFIRMED=1`.
+- [Annict](https://annict.com/en/terms/api) — API каталога Annict — явные ссылки на MAL, интервал 168 часов. Включён в конфигурацию по умолчанию; сетевой сбор только при наличии read-only секрета `MAPPINGS_ANNICT_ACCESS_TOKEN` и разрешения (`MAPPINGS_ANNICT_PERMISSION_CONFIRMED=1`).
 
 Дополнительный источник [media-index](https://github.com/anilifecommunity/media-index) по умолчанию отключён до проверки прав на данные. После подтверждения прав можно использовать `MAPPINGS_ENABLE_MEDIA_INDEX=1` с отдельной новой директорией сборки. Импортируются только отсутствующие Bangumi, Kitsu и Simkl ID при двух подтверждённых якорях и отсутствии конфликтов между записями; TVDB/TMDB исключены.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)

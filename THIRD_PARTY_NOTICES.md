@@ -39,6 +39,8 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 
 | YummyAnime / Yani | Optional supplemental | [Official API documentation](https://api.yani.tv/swagger). Personal use only by default; public redistribution requires provider permission. Configured by default; network collection requires `MAPPINGS_YUMMYANI_PERMISSION_CONFIRMED=1` and a provider-issued `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`. Disable with `MAPPINGS_ENABLE_YUMMYANI=0`. Only native numeric ID, slug and explicit MAL/Shikimori IDs are retained. |
 
+| Annict API | Supplemental, credential-gated | [Works API](https://wikino.app/s/annict/pages/364); [API terms, Article 6](https://annict.com/en/terms/api). Only work ID and explicit MAL ID. Configured by default; requires provider-issued read-only `MAPPINGS_ANNICT_ACCESS_TOKEN` and individual permission confirmed via `MAPPINGS_ANNICT_PERMISSION_CONFIRMED=1`. No user data. |
+
 ## Supplemental lineage policy
 
 AnimeAPI, media-index and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
