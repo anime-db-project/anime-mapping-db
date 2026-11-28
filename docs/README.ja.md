@@ -74,7 +74,7 @@ Anime Mapping DB は外部サービスに依存しない安定した作品 ID `a
 
 ## データソース
 
-ビルダーは直接対応表と検証済み補助カタログを含む 21 種類の入力を統合します。補助データだけで新しい作品同一性を作ることはありません。入力と利用条件はリリースのマニフェストに記録されます。
+ビルダーは直接対応表と検証済み補助カタログを含む 23 種類の入力を統合します。補助データだけで新しい作品同一性を作ることはありません。入力と利用条件はリリースのマニフェストに記録されます。
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -95,6 +95,7 @@ Anime Mapping DB は外部サービスに依存しない安定した作品 ID `a
 - [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — 矛盾のない二つの既存 anchor で検証した未登録の Bangumi、Kitsu、Simkl ID のみを補完します。TVDB/TMDB は対象外です。元データの利用条件が適用されます。
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — 明示された MAL/Shikimori ID による数値リリース ID の補完。曖昧な対応は除外します。
 - [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — 明示的な Shikimori ID による SovetRomantica の過去の対応データ。
+- [MALSync](https://github.com/MALSync/MALSync) — Crunchyroll と Netflix の明示的な MAL シーズン対応。エピソードのオフセットは除外。
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` は安定した作品 ID です。外部 ID は根拠のある別名として扱い、内部 `entity_id` はビルドごとの値です。競合する対応先は自動選択しません。 [Identity contract](../docs/IDENTITY.md).

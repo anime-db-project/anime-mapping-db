@@ -22,6 +22,10 @@ from anime_mapping_db.importers.enrichment import (
     import_animeapi_enrichment,
     import_animethemes_enrichment,
 )
+from anime_mapping_db.importers.malsync import (
+    import_malsync_crunchyroll,
+    import_malsync_netflix,
+)
 from anime_mapping_db.importers.media_index import import_media_index_enrichment
 from anime_mapping_db.importers.sovetromantica import import_sovetromantica_enrichment
 from anime_mapping_db.importers.wikidata import (
@@ -55,6 +59,8 @@ SUPPLEMENTAL_IMPORTERS = {
     "media_index": import_media_index_enrichment,
     "aniliberty": import_aniliberty_enrichment,
     "sovetromantica": import_sovetromantica_enrichment,
+    "malsync_crunchyroll": import_malsync_crunchyroll,
+    "malsync_netflix": import_malsync_netflix,
 }
 
 __all__ = [
@@ -67,6 +73,8 @@ __all__ = [
     "import_animeaggregations_enrichment",
     "import_animeapi_enrichment",
     "import_media_index_enrichment",
+    "import_malsync_crunchyroll",
+    "import_malsync_netflix",
     "import_animap",
     "import_animethemes",
     "import_animethemes_enrichment",

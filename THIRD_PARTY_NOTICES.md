@@ -27,6 +27,8 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 | AniLiberty catalog | Supplemental | [Public API v1](https://api.anilibria.app/api/docs/v1/). Only explicit release ID, MAL and Shikimori references are read; no video, descriptions or artwork. Upstream data terms apply; redistribution permission has not been independently confirmed. |
 | notwindstone/MALToAnything / SovetRomantica | Supplemental | GPL-3.0 repository; [historical JSON snapshot](https://github.com/notwindstone/MALToAnything/blob/main/sovetromantica/sovetromantica-mapped.json) derived from explicit `anime_shikimori` API references according to the upstream README. Only numeric title IDs are imported; no name matching, no AniLibria portion, no API calls to SovetRomantica. Upstream redistribution terms remain applicable. Disable via `MAPPINGS_ENABLE_SOVETROMANTICA=0` and rebuild. |
 
+| MALSync / Crunchyroll and Netflix | Supplemental | [GPL-3.0-only repository](https://github.com/MALSync/MALSync). Only explicitly authored `malId` season overrides without episode offsets or season overrides are considered. Native season identifiers remain separate from series IDs. No blocked backup, live service API, streaming URLs, source code or catalogue metadata are imported. Upstream data terms remain applicable; disable with `MAPPINGS_ENABLE_MALSYNC_CRUNCHYROLL=0` or `MAPPINGS_ENABLE_MALSYNC_NETFLIX=0` and rebuild. |
+
 ## Supplemental lineage policy
 
 AnimeAPI, media-index and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
@@ -38,6 +40,8 @@ AnimeAPI's generator can also use live scrapers and an external Geckyzz API. Ani
 AniLiberty is a provider-native catalog rather than a third-party aggregate. Its own numeric release ID may attach to an existing exact MAL or Shikimori ID explicitly asserted by the catalog. Both references, when known, must agree on a single existing component; duplicate release claims for a component and conflicting references are excluded. No new AMDB identities or inferred title matches are introduced. MAL and Shikimori are not counted as independent evidence lineages.
 
 The SovetRomantica snapshot is a historical copy of explicit provider cross-references, not a second independent catalogue lineage. It may attach one missing SovetRomantica ID to an existing, non-singleton group via an exact known Shikimori ID. Conflicting or ambiguous claims are excluded, and equal numerical MAL IDs are not inferred. Live catalogue validity and upstream redistribution rights have not been independently confirmed.
+
+MALSync's open-source season overrides are a deliberately narrow exception to the two-anchor aggregate rule. A declared MAL ID may attach a missing, separately scoped season identifier to a non-singleton existing component only when the source claims are one-to-one and no directional conflict exists. These are explicit tracking overrides, not independent verification of full episode equivalence. Offset and season-renumbering overrides are not imported. Upstream data redistribution rights have not been independently verified.
 
 The exact URLs and notes embedded into every evidence database are defined in `anime_mapping_db/config.py`.
 

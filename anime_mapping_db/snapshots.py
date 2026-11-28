@@ -176,6 +176,10 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
                 from anime_mapping_db.importers.sovetromantica import normalize_snapshot
 
                 normalize_snapshot(temp)
+            elif spec.importer.startswith("malsync_"):
+                from anime_mapping_db.importers.malsync import normalize_snapshot
+
+                normalize_snapshot(temp, spec.importer)
             if not temp.stat().st_size:
                 raise ValueError("Empty source download")
             _validate_payload(spec, temp)
