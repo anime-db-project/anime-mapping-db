@@ -103,9 +103,126 @@
     "retry_429_wait_seconds": 30,
     "max_429_wait_seconds": 60
   },
-  "authorized_export_api": {
+  "aniyan": {
     "enabled": true,
-    "max_requests": 500,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "anidream": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "aninexus": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "animepahe": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "animeunity": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "animeonsen": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "animewho": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "hinatasoul": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "witanime": {
+    "enabled": true,
+    "max_requests": 5000,
+    "per_second": 1,
+    "per_minute": 20,
+    "per_hour": 900,
+    "delay_seconds": [
+      3,
+      4
+    ],
+    "retry_429_wait_seconds": 30,
+    "max_429_wait_seconds": 60
+  },
+  "miruro": {
+    "enabled": true,
+    "max_requests": 5000,
     "per_second": 1,
     "per_minute": 20,
     "per_hour": 900,

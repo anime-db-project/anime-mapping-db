@@ -1,6 +1,6 @@
-"""Explicit title-ID exports from MALSync-discovered catalogues.
+"""Explicit title IDs from MALSync-discovered metadata catalogues.
 
-Only provider-authorized, title-scoped exports are supported here. No playback
+Only title-scoped catalogue records are supported here. No playback
 URLs, test fixtures, episode-derived IDs or guessed title matches are imported.
 """
 
@@ -19,38 +19,29 @@ from anime_mapping_db.native_ids import ANCHORS, enrich_native_ids, positive_id
 PROVIDERS = (
     "animepahe",
     "animeunity",
-    "animeko",
     "animeonsen",
     "animewho",
-    "animeworld",
     "hinatasoul",
     "witanime",
     "tioanime",
-    "fireanime",
     "miruro",
-    "gojo",
-    "anikoto_season",
-    "animestream_season",
-    "crunchyroll_season",
-    "netflix_season",
 )
 
-SEASON_PROVIDERS = frozenset(p for p in PROVIDERS if p.endswith("_season"))
-INDEPENDENT_ID_REQUIRED = frozenset({"fireanime", "miruro", "gojo"})
+INDEPENDENT_ID_REQUIRED = frozenset({"miruro"})
 
 
 def _native(provider: str, value: object) -> str | None:
-    if provider == "netflix_season":
-        return positive_id(value)
-    if provider == "crunchyroll_season":
-        if isinstance(value, str) and re.fullmatch(r"[A-Z0-9]{8,32}", value):
-            return value
-        return None
     if provider == "animepahe":
         # Numeric catalogue IDs only, not rotating playback session UUIDs.
         return positive_id(value)
     if provider == "animewho":
-        if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_]+-[1-9][0-9]*", value):
+        if isinstance(value, str) and re.fullmatch(
+            r"anime-[A-Za-z0-9][A-Za-z0-9_-]*", value
+        ):
+            return value
+        return None
+    if provider == "miruro":
+        if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_-]{20,64}", value):
             return value
         return None
     return slug_id(value) or positive_id(value)
@@ -63,16 +54,10 @@ def _rows(path: Path, provider: str) -> list[dict]:
     if not isinstance(payload, list) or not payload:
         raise ValueError("Expected a nonempty title-ID export")
     rows = []
-    scope = "season" if provider in SEASON_PROVIDERS else "title"
+    scope = "title"
     for item in payload:
         if not isinstance(item, dict) or item.get("scope") != scope:
             raise ValueError("Explicit matching identity scope required")
-        if scope == "season" and (
-            item.get("full_season") is not True
-            or type(item.get("offset")) is not int
-            or item["offset"] != 0
-        ):
-            raise ValueError("Full season equivalence and zero offset required")
         if (
             provider in INDEPENDENT_ID_REQUIRED
             and item.get("native_id_verified") is not True
@@ -82,8 +67,6 @@ def _rows(path: Path, provider: str) -> list[dict]:
         if native is None:
             raise ValueError("Invalid native title ID")
         row = {"id": native, "scope": scope}
-        if scope == "season":
-            row.update(full_season=True, offset=0)
         if provider in INDEPENDENT_ID_REQUIRED:
             row["native_id_verified"] = True
         for anchor, aliases in (
@@ -134,7 +117,7 @@ def _importer(provider: str):
             _rows(path, provider),
             conn,
             namespace=provider,
-            lineage=f"{provider}-authorized-catalogue-export",
+            lineage=f"{provider}-native-metadata",
             native_id=lambda value: _native(provider, value),
             weight=85,
             anchor_providers=(*ANCHORS, "kitsu"),

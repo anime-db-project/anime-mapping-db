@@ -18,7 +18,7 @@ from anime_mapping_db.aniliberty import download_aniliberty
 from anime_mapping_db.annict_api import download_annict
 from anime_mapping_db.anime365 import download_anime365
 from anime_mapping_db.malsync_native import download_animelib, download_docchi
-from anime_mapping_db.authorized_export_api import download_export_api
+from anime_mapping_db.malsync_web import WEB_SOURCES, download_web_catalogue
 from anime_mapping_db.tioanime import download_tioanime
 from anime_mapping_db.yummyani import download_yummyani
 from anime_mapping_db.config import (
@@ -79,8 +79,10 @@ def _download(spec: MappingSourceSpec, target: Path) -> str:
     reason = source_preflight(spec)
     if reason:
         raise ValueError(f"Source preflight: {reason}")
-    if spec.export_api:
-        download_export_api(spec, target, timeout=mappings_request_timeout_seconds())
+    if spec.importer in WEB_SOURCES:
+        download_web_catalogue(
+            spec.importer, spec.url, target, timeout=mappings_request_timeout_seconds()
+        )
         return _sha256_file(target)
     if spec.importer == "tioanime" and spec.collection_mode == "paginated":
         download_tioanime(spec.url, target, timeout=mappings_request_timeout_seconds())

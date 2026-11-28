@@ -24,7 +24,6 @@ class MappingSourceSpec:
     collection_interval_hours: float = 0.0
     credential_env: str | None = None
     permission_env: str | None = None
-    export_api: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -358,69 +357,6 @@ if _env_bool("MAPPINGS_ENABLE_DOCCHI", True):
 if _env_bool("MAPPINGS_ENABLE_ANIMELIB", True):
     SOURCE_SPECS += (ANIMELIB_SOURCE,)
 
-# Authorized syncData exports; do not guess undocumented catalogue endpoints.
-
-
-def _export_options(provider: str, *, direct_url: str = "") -> dict:
-    prefix = f"MAPPINGS_{provider.upper()}"
-    api = os.environ.get(f"{prefix}_EXPORT_API_URL", "").strip()
-    snapshot = os.environ.get(f"{prefix}_SNAPSHOT_URL", "").strip()
-    if api and snapshot:
-        raise ValueError(f"{provider}: choose one export endpoint")
-    url = api or snapshot or direct_url
-    parts = urlsplit(url)
-    if url and (
-        parts.scheme != "https"
-        or not parts.hostname
-        or parts.username
-        or parts.password
-        or parts.query
-        or parts.fragment
-    ):
-        raise ValueError(f"{provider}: HTTPS export URL without credentials required")
-    token_option = f"{prefix}_API_REQUIRES_TOKEN"
-    requires_token = not os.environ.get(token_option, "").strip() or _env_bool(
-        token_option, True
-    )
-    return {
-        "url": url,
-        "collection_mode": (
-            "paginated" if api or (direct_url and not snapshot) else "single"
-        ),
-        "export_api": bool(api),
-        "credential_env": (f"{prefix}_API_TOKEN" if api and requires_token else None),
-        "permission_env": f"{prefix}_PERMISSION_CONFIRMED",
-        "collection_interval_hours": _env_float(
-            f"{prefix}_INTERVAL_HOURS", 168.0, 24.0
-        ),
-    }
-
-
-def _export_enabled(provider: str) -> bool:
-    name = f"MAPPINGS_ENABLE_{provider.upper()}"
-    return not os.environ.get(name, "").strip() or _env_bool(name, True)
-
-
-for _provider, _display in (
-    ("adkami", "ADKami"),
-    ("aniyan", "Aniyan"),
-    ("anidream", "AniDream"),
-    ("aninexus", "Aninexus"),
-):
-    if not _export_enabled(_provider):
-        continue
-    SOURCE_SPECS += (
-        MappingSourceSpec(
-            name=f"{_display} authorized syncData snapshot",
-            importer=_provider,
-            required=False,
-            license_note="Authorized syncData export; explicit native ID references only.",
-            supplemental=True,
-            **_export_options(_provider),
-        ),
-    )
-
-
 # YummyAnime's API is documented for personal use. Public redistribution
 # requires provider permission. Configured by default; preflight gates requests.
 if not os.environ.get("MAPPINGS_ENABLE_YUMMYANI", "").strip() or _env_bool(
@@ -466,42 +402,36 @@ if not os.environ.get("MAPPINGS_ENABLE_ANNICT", "").strip() or _env_bool(
     )
 
 
-# Authorized title-only exports discovered through MALSync. An empty URL
-# means that no export has been supplied; do not contact a guessed endpoint.
-for _provider, _display in (
-    ("animepahe", "animepahe"),
-    ("animeunity", "AnimeUnity"),
-    ("animeko", "AnimeKO"),
-    ("animeonsen", "AnimeOnsen"),
-    ("animewho", "AnimeWho"),
-    ("animeworld", "Animeworld"),
-    ("hinatasoul", "HinataSoul"),
-    ("witanime", "WitAnime"),
-    ("tioanime", "tioanime"),
-    ("fireanime", "FireAnime"),
-    ("miruro", "Miruro"),
-    ("gojo", "Gojo"),
-    ("anikoto_season", "AniKoto"),
-    ("animestream_season", "AnimeStream"),
-    ("crunchyroll_season", "Crunchyroll"),
-    ("netflix_season", "Netflix"),
+# Direct public metadata collectors. A source chooses its own transport;
+# operators never supply an invented export API or toggle API authentication.
+for _provider, _display, _url in (
+    ("aniyan", "Aniyan", "https://aniyan.net"),
+    ("anidream", "AniDream", "https://anidream.cc"),
+    ("aninexus", "Aninexus", "https://aninexus.to"),
+    ("animepahe", "animepahe", "https://animepahe.com"),
+    ("animeunity", "AnimeUnity", "https://animeunity.cx"),
+    ("animeonsen", "AnimeOnsen", "https://www.animeonsen.xyz"),
+    ("animewho", "AnimeWho", "https://animewho.com"),
+    ("hinatasoul", "HinataSoul", "https://hinatasoul.com"),
+    ("witanime", "WitAnime", "https://witanime.pics"),
+    ("miruro", "Miruro", "https://miruro.to"),
+    ("tioanime", "TioAnime", "https://tioanime.com/directorio"),
 ):
-    if not _export_enabled(_provider):
+    _switch = f"MAPPINGS_ENABLE_{_provider.upper()}"
+    if os.environ.get(_switch, "").strip() and not _env_bool(_switch, True):
         continue
-    _scope = "season" if _provider.endswith("_season") else "title"
     SOURCE_SPECS += (
         MappingSourceSpec(
-            name=f"{_display} authorized {_scope} ID export",
+            name=f"{_display} metadata catalogue",
+            url=_url,
             importer=_provider,
             required=False,
-            license_note="Authorized ID export; public redistribution permission required.",
-            supplemental=True,
-            **_export_options(
-                _provider,
-                direct_url=(
-                    "https://tioanime.com/directorio" if _provider == "tioanime" else ""
-                ),
+            license_note="Public metadata only; upstream data and access terms apply.",
+            collection_mode="paginated",
+            collection_interval_hours=_env_float(
+                f"MAPPINGS_{_provider.upper()}_INTERVAL_HOURS", 168.0, 24.0
             ),
+            supplemental=True,
         ),
     )
 
