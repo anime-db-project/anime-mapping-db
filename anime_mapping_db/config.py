@@ -476,9 +476,12 @@ for _provider, _display in (
     _prefix = f"MAPPINGS_{_provider.upper()}"
     _url = os.environ.get(f"{_prefix}_SNAPSHOT_URL", "").strip()
     _enabled = os.environ.get(f"MAPPINGS_ENABLE_{_provider.upper()}", "").strip()
-    if not _url or (
-        _enabled and not _env_bool(f"MAPPINGS_ENABLE_{_provider.upper()}", True)
-    ):
+    if _enabled and not _env_bool(f"MAPPINGS_ENABLE_{_provider.upper()}", True):
+        continue
+    _direct = _provider == "tioanime" and not _url
+    if _direct:
+        _url = "https://tioanime.com/directorio"
+    if not _url:
         continue
     _parts = urlsplit(_url)
     if (
@@ -496,6 +499,7 @@ for _provider, _display in (
             url=_url,
             importer=_provider,
             permission_env=f"{_prefix}_PERMISSION_CONFIRMED",
+            collection_mode="paginated" if _direct else "single",
             collection_interval_hours=168.0,
             required=False,
             license_note="Provider-authorized title-ID export; public redistribution permission required.",

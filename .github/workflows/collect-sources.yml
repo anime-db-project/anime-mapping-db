@@ -188,7 +188,7 @@ jobs:
     needs: plan
     name: Collect ${{ matrix.name }} (${{ matrix.mode }})
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: ${{ matrix.name == 'tioanime authorized title ID export' && 300 || 120 }}
     strategy:
       fail-fast: false
       max-parallel: 20
