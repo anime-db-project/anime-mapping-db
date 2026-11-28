@@ -196,7 +196,8 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
     load_snapshot(directory, specs)
     report = {"checked_at": _utc_now(), "sources": outcomes}
     (directory / "collection-report.json").write_text(
-        json.dumps(report, indent=2) + "\n", encoding="utf-8"\n    )
+        json.dumps(report, indent=2) + "\n", encoding="utf-8"
+    )
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with Path(summary).open("a", encoding="utf-8") as handle:
@@ -204,7 +205,8 @@ def collect(directory: Path, specs: tuple[MappingSourceSpec, ...]) -> dict:
             handle.write("| --- | --- | ---: |\n")
             for item in outcomes:
                 handle.write(
-                    f"| {item['source']} | {item['status']} | {item['bytes']:,} |\n"\n                )
+                    f"| {item['source']} | {item['status']} | {item['bytes']:,} |\n"
+                )
     return manifest
 
 
