@@ -130,6 +130,10 @@ def import_aniliberty_enrichment(
     conflicts = set(
         runtime_conn.execute("SELECT source_node, target_provider FROM conflicts")
     )
+    group_ids = {
+        (membership[node], provider): external
+        for (provider, external), node in lookup.items()
+    }
     occupied = {
         membership[node]
         for (provider, _external), node in lookup.items()
@@ -155,6 +159,13 @@ def import_aniliberty_enrichment(
         if len(groups) != 1:
             continue
         group = next(iter(groups))
+        if any(
+            _id(row.get(provider)) is not None
+            and (group, provider) in group_ids
+            and _id(row.get(provider)) != group_ids[(group, provider)]
+            for provider in ("mal", "shikimori")
+        ):
+            continue
         if group in occupied or ("aniliberty", release) in lookup:
             continue
         if any((node, "aniliberty") in conflicts for node in components[group]):

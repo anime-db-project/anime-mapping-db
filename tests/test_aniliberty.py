@@ -86,6 +86,7 @@ class AniLibertyTests(unittest.TestCase):
                         {"id": "5", "mal": "999"},
                         {"id": "6", "shikimori": "205"},
                         {"id": "7", "mal": "106"},
+                        {"id": "8", "mal": "107", "shikimori": "999"},
                     ]
                 ),
                 encoding="utf-8",
@@ -104,7 +105,7 @@ class AniLibertyTests(unittest.TestCase):
                         "trusted",
                         95,
                     )
-                    for index in range(1, 7)
+                    for index in range(1, 8)
                 ]
                 builder.ingest_dataset(
                     spec, records, sha256="base", downloaded_at="2026-11-28"
