@@ -98,6 +98,7 @@ El generador combina 26 entradas entre datasets directos y catálogos complement
 - [MALSync](https://github.com/MALSync/MALSync) — referencias MAL explícitas a temporadas de Crunchyroll y Netflix, sin desplazamientos de episodios. La recopilación diaria audita todos los adaptadores de anime en `malsync-inventory`, sin usar resultados esperados de pruebas como evidencia.
 - [Anime365](https://github.com/ragedrugg/anime365) — IDs numéricos de series con referencias MAL explícitas.
 - [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — IDs de Docchi y AnimeLib; ADKami opcional mediante `MAPPINGS_ADKAMI_SNAPSHOT_URL`.
+- [YummyAnime / Yani](https://api.yani.tv/swagger) — recopilador opcional, desactivado hasta obtener permiso y token de aplicación (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). La recopilación y publicación programadas están pausadas durante la ampliación de MALSync; los flujos manuales siguen disponibles.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` identifica un título de forma estable. Los IDs externos son alias respaldados por evidencia; el `entity_id` interno solo vale para la compilación. No se eligen automáticamente relaciones ambiguas. [Identity contract](../docs/IDENTITY.md).

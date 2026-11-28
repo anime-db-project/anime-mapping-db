@@ -98,6 +98,7 @@ Anime Mapping DB は外部サービスに依存しない安定した作品 ID `a
 - [MALSync](https://github.com/MALSync/MALSync) — Crunchyroll と Netflix の明示的な MAL シーズン対応。エピソードのオフセットは除外。 毎日の収集は全アニメアダプターを `malsync-inventory` に記録します。テストの期待値は対応の根拠にしません。
 - [Anime365](https://github.com/ragedrugg/anime365) — 明示的な MAL 参照を持つ数値のシリーズ ID。
 - [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — Docchi と AnimeLib の ID。ADKami は `MAPPINGS_ADKAMI_SNAPSHOT_URL` で任意に追加。
+- [YummyAnime / Yani](https://api.yani.tv/swagger) — 任意のメタデータ取得元。提供元の許可とアプリケーショントークンが必要 (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`)。MALSync 拡張中は定期収集・リリースを一時停止し、手動実行のみ可能です。
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` は安定した作品 ID です。外部 ID は根拠のある別名として扱い、内部 `entity_id` はビルドごとの値です。競合する対応先は自動選択しません。 [Identity contract](../docs/IDENTITY.md).

@@ -41,6 +41,7 @@ from anime_mapping_db.importers.wikidata import (
     import_wikidata_bahamut,
     import_wikidata_enrichment,
 )
+from anime_mapping_db.yummyani import import_yummyani
 
 IMPORTERS = {
     "fribb": import_fribb,
@@ -74,6 +75,7 @@ SUPPLEMENTAL_IMPORTERS = {
     "aniyan": import_aniyan,
     "anidream": import_anidream,
     "aninexus": import_aninexus,
+    "yummyani": import_yummyani,
     "sovetromantica": import_sovetromantica_enrichment,
     "malsync_crunchyroll": import_malsync_crunchyroll,
     "malsync_netflix": import_malsync_netflix,
@@ -89,6 +91,7 @@ __all__ = [
     "import_aniyan",
     "import_anidream",
     "import_aninexus",
+    "import_yummyani",
     "import_animelib",
     "import_docchi",
     "import_anime_and_manga_lists",

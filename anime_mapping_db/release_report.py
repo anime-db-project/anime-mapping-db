@@ -71,6 +71,9 @@ def build_report(
                 "downloaded_at": item["downloaded_at"],
                 "collection_status": health.get(item["name"], {}).get("status"),
                 "collection_mode": health.get(item["name"], {}).get("collection_mode"),
+                "collection_interval_hours": health.get(item["name"], {}).get(
+                    "collection_interval_hours"
+                ),
                 "catalogue": health.get(item["name"], {}).get("catalogue"),
             }
         )

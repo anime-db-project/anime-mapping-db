@@ -8,6 +8,7 @@ import logging
 import os
 import shutil
 from dataclasses import replace
+from datetime import datetime, timezone
 from pathlib import Path
 
 from anime_mapping_db.catalogue_report import catalogue_stats, shrink_reason
@@ -21,16 +22,81 @@ def source_key(spec: MappingSourceSpec) -> str:
     return _filename(spec).removesuffix(".data")
 
 
-def matrix(specs: tuple[MappingSourceSpec, ...]) -> dict:
+def _previous_outcomes(directory: Path | None) -> dict:
+    if directory is None or not (directory / "collection-report.json").exists():
+        return {}
+    report = json.loads((directory / "collection-report.json").read_text("utf-8"))
+    return {
+        item["source"]: {
+            **item,
+            "last_attempted_at": item.get("last_attempted_at", report["checked_at"]),
+        }
+        for item in report["sources"]
+    }
+
+
+def _due(spec: MappingSourceSpec, old: dict, now: datetime) -> bool:
+    if not old or not spec.collection_interval_hours:
+        return True
+    if old.get("source_url", spec.url) != spec.url:
+        return True
+    last = old.get("last_attempted_at")
+    if not last:
+        return True
+    try:
+        checked = datetime.fromisoformat(last.replace("Z", "+00:00"))
+        age = (now - checked).total_seconds()
+    except (ValueError, TypeError, AttributeError):
+        return True
+    return age < 0 or age >= spec.collection_interval_hours * 3600
+
+
+def matrix(
+    specs: tuple[MappingSourceSpec, ...],
+    previous: Path | None = None,
+    *,
+    force: bool = False,
+    now: datetime | None = None,
+) -> dict:
+    old = _previous_outcomes(previous)
+    now = now or datetime.now(timezone.utc)
     return {
         "include": [
-            {"name": spec.name, "key": source_key(spec), "mode": spec.collection_mode}
+            {
+                "name": spec.name,
+                "key": source_key(spec),
+                "mode": spec.collection_mode,
+                "due": force or _due(spec, old.get(spec.name, {}), now),
+                "interval_hours": spec.collection_interval_hours,
+            }
             for spec in specs
         ]
     }
 
 
-def collect_one(directory: Path, spec: MappingSourceSpec) -> dict:
+def collect_one(
+    directory: Path, spec: MappingSourceSpec, *, deferred: bool = False
+) -> dict:
+    if deferred:
+        directory.mkdir(parents=True, exist_ok=True)
+        manifest = {
+            "version": 1,
+            "sources": [],
+            "source_fingerprint": source_fingerprint([]),
+        }
+        (directory / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (directory / "collection-report.json").write_text(
+            json.dumps(
+                {
+                    "checked_at": _utc_now(),
+                    "sources": [
+                        {"source": spec.name, "status": "deferred", "bytes": 0}
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return manifest
     # A network failure is an outcome, not a failed matrix job. The assembler
     # enforces required sources after it has access to the previous snapshot.
     return collect(directory, (replace(spec, required=False),))
@@ -52,6 +118,8 @@ def assemble(
             allow_spec_changes=True,
         )
 
+    previous_outcomes = _previous_outcomes(directory)
+
     # Validate every part before making any changes to the combined snapshot.
     entries = []
     outcomes = []
@@ -63,10 +131,16 @@ def assemble(
         if len(result) != 1 or result[0]["source"] != spec.name:
             raise ValueError(f"Unexpected source report for {spec.name}")
         status = result[0]["status"]
-        if status not in {"updated", "unchanged", "bootstrap", "unavailable"}:
+        if status not in {
+            "updated",
+            "unchanged",
+            "bootstrap",
+            "unavailable",
+            "deferred",
+        }:
             raise ValueError(f"Invalid collection status for {spec.name}")
         fresh = load_snapshot(part, (replace(spec, required=False),)).get(spec.name)
-        if (fresh is None) != (status == "unavailable"):
+        if (fresh is None) != (status in {"unavailable", "deferred"}):
             raise ValueError(f"Collection report disagrees with data: {spec.name}")
         old = previous.get(spec.name)
         fresh_metrics = catalogue_stats(
@@ -77,7 +151,14 @@ def assemble(
         )
         warning = shrink_reason(old_metrics, fresh_metrics)
         reason = None
-        if old is not None and (fresh is None or status == "bootstrap"):
+        if status == "deferred":
+            if not previous_outcomes.get(spec.name, {}).get("last_attempted_at"):
+                raise ValueError(
+                    f"No previous attempt for deferred source: {spec.name}"
+                )
+            selected = old
+            reason = "collection_interval"
+        elif old is not None and (fresh is None or status == "bootstrap"):
             reason = "source_unavailable" if fresh is None else "bootstrap_fallback"
             selected = old
             status = "retained"
@@ -104,6 +185,13 @@ def assemble(
                 **result[0],
                 "status": status,
                 "collection_mode": spec.collection_mode,
+                "collection_interval_hours": spec.collection_interval_hours,
+                "source_url": spec.url,
+                "last_attempted_at": (
+                    previous_outcomes[spec.name]["last_attempted_at"]
+                    if status == "deferred"
+                    else report["checked_at"]
+                ),
                 "catalogue": metrics,
                 "attempted_catalogue": fresh_metrics,
                 "retention_reason": reason,
@@ -168,17 +256,21 @@ def main() -> None:
     parser.add_argument("--source")
     parser.add_argument("--directory", type=Path)
     parser.add_argument("--parts", type=Path)
+    parser.add_argument("--previous", type=Path)
+    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--defer", action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     if args.command == "matrix":
-        print("matrix=" + json.dumps(matrix(SOURCE_SPECS), separators=(",", ":")))
+        planned = matrix(SOURCE_SPECS, args.previous, force=args.force)
+        print("matrix=" + json.dumps(planned, separators=(",", ":")))
     elif args.command == "collect":
         spec = next(
             (spec for spec in SOURCE_SPECS if source_key(spec) == args.source), None
         )
         if spec is None or args.directory is None:
             parser.error("collect requires a known --source and --directory")
-        collect_one(args.directory, spec)
+        collect_one(args.directory, spec, deferred=args.defer)
     else:
         if args.directory is None or args.parts is None:
             parser.error("assemble requires --parts and --directory")

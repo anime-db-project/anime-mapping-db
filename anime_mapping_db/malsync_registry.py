@@ -49,6 +49,38 @@ _AUDIT = {
         "episode_scoped_reference",
         "MAL reference is selected per episode; no full-title equivalence established.",
     ),
+    "HinataSoul": (
+        "page_reference_only",
+        "MAL reference in overview adapter; no bulk ID export verified.",
+    ),
+    "WitAnime": (
+        "access_unavailable",
+        "TLS connection failed; overview MAL link exists in adapter.",
+    ),
+    "tioanime": (
+        "page_reference_only",
+        "Jikan link in page markup; no verified bulk ID export.",
+    ),
+    "YummyAni": (
+        "permission_required",
+        "Prepared paginated native collector; personal-use terms and application token required.",
+    ),
+    "AnimeStream": (
+        "permission_required",
+        "Public catalogue crawl allowed but backend API excluded in robots.txt; season reference is derived.",
+    ),
+    "Gojo": (
+        "access_unavailable",
+        "Adapter domain failed DNS lookup; no verified separate ID catalogue.",
+    ),
+    "Miruro": (
+        "page_reference_only",
+        "Overview adapter exposes MAL/AniList links; internal API excluded in robots.txt.",
+    ),
+    "animepahe": (
+        "page_reference_only",
+        "Adapter exposes numeric MAL, AniList and Kitsu metadata; bulk ID export not verified.",
+    ),
     "Kaguya": (
         "existing_namespace_alias",
         "Adapter identifier is AniList aniId; no separate native title ID established.",
