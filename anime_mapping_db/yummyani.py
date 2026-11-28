@@ -78,7 +78,9 @@ def fetch_catalog(client: httpx.Client, url: str) -> list[dict]:
             slugs.add(slug)
     if not rows or not any(row["mal"] or row["shikimori"] for row in rows):
         raise ValueError("YummyAnime returned no usable external IDs")
-    logging.info("YummyAnime catalogue: %d titles, %d requests", len(rows), paced.requests)
+    logging.info(
+        "YummyAnime catalogue: %d titles, %d requests", len(rows), paced.requests
+    )
     return rows
 
 

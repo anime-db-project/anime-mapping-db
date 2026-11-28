@@ -21,6 +21,7 @@ class MappingSourceSpec:
     supplemental: bool = False
     fallback_urls: tuple[str, ...] = ()
     collection_mode: Literal["single", "paginated"] = "single"
+    collection_interval_hours: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -318,6 +319,7 @@ ANIME365_SOURCE = MappingSourceSpec(
     name="Anime365 catalog",
     url="https://smotret-anime.app/api/series",
     importer="anime365",
+    collection_interval_hours=_env_float("MAPPINGS_ANIME365_INTERVAL_HOURS", 48.0, 24.0),
     collection_mode="paginated",
     required=False,
     license_note="Public metadata API; explicit numeric series and MyAnimeList IDs only; upstream redistribution terms apply.",
@@ -338,6 +340,7 @@ ANIMELIB_SOURCE = MappingSourceSpec(
     name="AnimeLib catalog",
     url="https://api.cdnlibs.org/api/anime",
     importer="animelib",
+    collection_interval_hours=_env_float("MAPPINGS_ANIMELIB_INTERVAL_HOURS", 48.0, 24.0),
     collection_mode="paginated",
     required=False,
     license_note="Public LibSocial catalogue; explicit AnimeLib, AniList and Shikimori IDs only; upstream data terms apply.",
@@ -414,6 +417,7 @@ if _env_bool("MAPPINGS_ENABLE_YUMMYANI", False):
             name="YummyAnime authorized catalogue",
             url="https://api.yani.tv/anime",
             importer="yummyani",
+            collection_interval_hours=_env_float("MAPPINGS_YUMMYANI_INTERVAL_HOURS", 72.0, 24.0),
             required=False,
             license_note="Provider permission required for public database use; own X-Application token required for collection.",
             collection_mode="paginated",

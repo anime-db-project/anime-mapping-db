@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -14,6 +15,50 @@ from anime_mapping_db.snapshots import _normalize_wikidata, load_snapshot
 
 
 class CollectionTests(unittest.TestCase):
+    def test_interval_preserves_last_attempt_and_snapshot(self) -> None:
+        spec = MappingSourceSpec(
+            "fixture",
+            "https://example.invalid/series",
+            "docchi",
+            False,
+            "test",
+            supplemental=True,
+            collection_interval_hours=48,
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            snapshots = root / "snapshots"
+            parts = root / "parts"
+            part = parts / f"mapping-source-{source_key(spec)}"
+
+            def download(_spec, target):
+                target.write_text('[{"id":"one","mal":"101"}]', encoding="utf-8")
+
+            with patch("anime_mapping_db.snapshots._download", side_effect=download):
+                collect_one(part, spec)
+            before = assemble(snapshots, parts, (spec,))
+            report_path = snapshots / "collection-report.json"
+            report = json.loads(report_path.read_text())
+            report["sources"][0]["last_attempted_at"] = "2026-11-28T00:00:00+00:00"
+            report_path.write_text(json.dumps(report))
+            now = datetime(2026, 11, 29, tzinfo=timezone.utc)
+            self.assertFalse(matrix((spec,), snapshots, now=now)["include"][0]["due"])
+            self.assertTrue(
+                matrix((spec,), snapshots, now=now, force=True)["include"][0]["due"]
+            )
+            import shutil
+
+            shutil.rmtree(part)
+            with patch("anime_mapping_db.snapshots._download") as download_mock:
+                collect_one(part, spec, deferred=True)
+                download_mock.assert_not_called()
+            self.assertEqual(before, assemble(snapshots, parts, (spec,)))
+            result = json.loads(report_path.read_text())["sources"][0]
+            self.assertEqual(result["status"], "deferred")
+            self.assertEqual(result["last_attempted_at"], "2026-11-28T00:00:00+00:00")
+            now = datetime(2026, 11, 30, tzinfo=timezone.utc)
+            self.assertTrue(matrix((spec,), snapshots, now=now)["include"][0]["due"])
+
     def test_catalogue_shrink_guard_retains_old_until_explicit_override(self) -> None:
         spec = MappingSourceSpec(
             "fixture native",
