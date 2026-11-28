@@ -26,13 +26,17 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 
 | anilifecommunity/media-index | Supplemental | MIT-0 covers code and original contributions, not the aggregated data. [Source policy](https://github.com/anilifecommunity/media-index/blob/main/docs/SOURCE-POLICY.md) explicitly distinguishes owner attestation from provider permission. Only missing factual identifiers are imported after strict validation; no descriptions, artwork or episode metadata. Upstream redistribution rights have not been independently confirmed. Set `MAPPINGS_ENABLE_MEDIA_INDEX=0` and force a rebuild to exclude this source. |
 
+| AniLiberty catalog | Supplemental | [Public API v1](https://api.anilibria.app/api/docs/v1/). Only explicit release ID, MAL and Shikimori references are read; no video, descriptions or artwork. Upstream data terms apply; redistribution permission has not been independently confirmed. |
+
 ## Supplemental lineage policy
 
 AnimeAPI, media-index and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
 
-A supplemental item must contain at least two exact base IDs that are already connected by an accepted direct edge with no directional conflict. Only then may missing targets be attached. Ambiguous multiple IDs for the same target provider are skipped. AnimeAPI also excludes season-only fields and rows marked potentially invalid for Trakt; AnimeAggregations excludes VNDB and generic website/social/adaptation relationships.
+For third-party aggregates, a supplemental item must contain at least two exact base IDs that are already connected by an accepted direct edge with no directional conflict. Only then may missing targets be attached. Ambiguous multiple IDs for the same target provider are skipped. AnimeAPI also excludes season-only fields and rows marked potentially invalid for Trakt; AnimeAggregations excludes VNDB and generic website/social/adaptation relationships.
 
 AnimeAPI's generator can also use live scrapers and an external Geckyzz API. Anime Mapping DB does **not** call those services. Hikka, Kaize, Nautiljon and Otak-Otaku identifiers may enter through AnimeAPI's already-published GitHub TSV, but this project does not scrape those sites itself.
+
+AniLiberty is a provider-native catalog rather than a third-party aggregate. Its own numeric release ID may attach to an existing exact MAL or Shikimori ID explicitly asserted by the catalog. Both references, when known, must agree on a single existing component; duplicate release claims for a component and conflicting references are excluded. No new AMDB identities or inferred title matches are introduced. MAL and Shikimori are not counted as independent evidence lineages.
 
 The exact URLs and notes embedded into every evidence database are defined in `anime_mapping_db/config.py`.
 

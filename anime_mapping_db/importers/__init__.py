@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from anime_mapping_db.aniliberty import import_aniliberty_enrichment
 from anime_mapping_db.importers.direct import (
     import_anibridge,
     import_anime_and_manga_lists,
@@ -51,12 +52,14 @@ SUPPLEMENTAL_IMPORTERS = {
     "animeaggregations": import_animeaggregations_enrichment,
     "wikidata_multi": import_wikidata_enrichment,
     "media_index": import_media_index_enrichment,
+    "aniliberty": import_aniliberty_enrichment,
 }
 
 __all__ = [
     "IMPORTERS",
     "SUPPLEMENTAL_IMPORTERS",
     "import_anibridge",
+    "import_aniliberty_enrichment",
     "import_anime_and_manga_lists",
     "import_anime_lists",
     "import_animeaggregations_enrichment",

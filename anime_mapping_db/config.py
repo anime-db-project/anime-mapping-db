@@ -266,6 +266,17 @@ MEDIA_INDEX_SOURCE = MappingSourceSpec(
 if _env_bool("MAPPINGS_ENABLE_MEDIA_INDEX", True):
     SOURCE_SPECS += (MEDIA_INDEX_SOURCE,)
 
+ANILIBERTY_SOURCE = MappingSourceSpec(
+    name="AniLiberty catalog",
+    url="https://api.anilibria.app/api/v1/anime/catalog/releases",
+    importer="aniliberty",
+    required=False,
+    license_note="Public AniLiberty API v1; only explicit title ID cross-references; upstream data terms apply.",
+    supplemental=True,
+)
+if _env_bool("MAPPINGS_ENABLE_ANILIBERTY", True):
+    SOURCE_SPECS += (ANILIBERTY_SOURCE,)
+
 
 def mappings_db_path() -> Path:
     return get_settings().db_path
