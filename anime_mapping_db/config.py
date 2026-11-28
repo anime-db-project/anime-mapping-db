@@ -406,6 +406,21 @@ for _provider, _display in (
         ),
     )
 
+# YummyAnime's API is documented for personal use. Public redistribution
+# requires provider permission; only enable when that permission is obtained.
+if _env_bool("MAPPINGS_ENABLE_YUMMYANI", False):
+    SOURCE_SPECS += (
+        MappingSourceSpec(
+            name="YummyAnime authorized catalogue",
+            url="https://api.yani.tv/anime",
+            importer="yummyani",
+            required=False,
+            license_note="Provider permission required for public database use; own X-Application token required for collection.",
+            collection_mode="paginated",
+            supplemental=True,
+        ),
+    )
+
 
 def mappings_db_path() -> Path:
     return get_settings().db_path

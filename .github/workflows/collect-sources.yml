@@ -8,8 +8,6 @@ on:
         required: false
         type: string
         default: ""
-  schedule:
-    - cron: "17 0 * * *"
 
 permissions:
   contents: read
@@ -20,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  MAPPINGS_ENABLE_YUMMYANI: ${{ vars.MAPPINGS_ENABLE_YUMMYANI }}
   MAPPINGS_ADKAMI_SNAPSHOT_URL: ${{ vars.MAPPINGS_ADKAMI_SNAPSHOT_URL }}
   MAPPINGS_ANIYAN_SNAPSHOT_URL: ${{ vars.MAPPINGS_ANIYAN_SNAPSHOT_URL }}
   MAPPINGS_ANIDREAM_SNAPSHOT_URL: ${{ vars.MAPPINGS_ANIDREAM_SNAPSHOT_URL }}
@@ -93,6 +92,7 @@ jobs:
         env:
           SOURCE_KEY: ${{ matrix.key }}
           MAPPING_CRAWLER_USER_AGENT: ${{ vars.MAPPING_CRAWLER_USER_AGENT }}
+          MAPPINGS_YUMMYANI_APPLICATION_TOKEN: ${{ secrets.MAPPINGS_YUMMYANI_APPLICATION_TOKEN }}
         run: python -m anime_mapping_db.collection collect --source "$SOURCE_KEY" --directory part
       - uses: actions/upload-artifact@v4
         with:

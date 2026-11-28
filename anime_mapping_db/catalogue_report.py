@@ -17,6 +17,7 @@ _NATIVE = {
     "aniyan",
     "anidream",
     "aninexus",
+    "yummyani",
 }
 
 

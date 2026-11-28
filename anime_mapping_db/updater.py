@@ -17,6 +17,7 @@ from anime_mapping_db.anchors import materialize_anchor_index
 from anime_mapping_db.aniliberty import download_aniliberty
 from anime_mapping_db.anime365 import download_anime365
 from anime_mapping_db.malsync_native import download_animelib, download_docchi
+from anime_mapping_db.yummyani import download_yummyani
 from anime_mapping_db.config import (
     SOURCE_SPECS,
     MappingSourceSpec,
@@ -63,6 +64,7 @@ def _bootstrap_path(spec: MappingSourceSpec) -> Path | None:
 _NATIVE_DOWNLOADERS = {
     "docchi": ("single", download_docchi),
     "animelib": ("paginated", download_animelib),
+    "yummyani": ("paginated", download_yummyani),
     "anime365": ("paginated", download_anime365),
     "aniliberty": ("paginated", download_aniliberty),
 }
@@ -544,6 +546,7 @@ def update_mapping_database(
                         "aniyan",
                         "anidream",
                         "aninexus",
+                        "yummyani",
                     }:
                         builder.finalize(built_at=checked_at)
                     supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
@@ -587,6 +590,7 @@ def update_mapping_database(
                         "aniyan",
                         "anidream",
                         "aninexus",
+                        "yummyani",
                     }
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the
