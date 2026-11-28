@@ -473,6 +473,10 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                 staged_item = staged.get(spec.name)
                 if staged_item is not None:
                     download_path, sha256 = staged_item
+                    # Validate media-index against prior supplemental inputs as
+                    # well, so an already attached target cannot be reassigned.
+                    if spec.importer == "media_index":
+                        builder.finalize(built_at=checked_at)
                     supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
                     if supplemental_importer is None:
                         raise RuntimeError(
@@ -492,7 +496,10 @@ def update_mapping_database(*, force: bool = False) -> MappingBuildStats | None:
                         downloads_dir.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(download_path, downloads_dir / download_path.name)
                 elif (
-                    evidence_path.is_file() and spec.name in state and not base_changed
+                    evidence_path.is_file()
+                    and spec.name in state
+                    and not base_changed
+                    and spec.importer != "media_index"
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the
                     # supplemental source is unavailable, omit old enrichment rather than

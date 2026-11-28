@@ -253,6 +253,19 @@ SOURCE_SPECS: tuple[MappingSourceSpec, ...] = (
     ),
 )
 
+# Only factual identifiers are imported, not upstream metadata or artwork.
+# MIT-0 covers upstream code; aggregated data retains its original terms.
+MEDIA_INDEX_SOURCE = MappingSourceSpec(
+    name="anilifecommunity/media-index",
+    url="https://raw.githubusercontent.com/anilifecommunity/media-index/main/data/id-map.json",
+    importer="media_index",
+    required=False,
+    license_note="MIT-0 code only; aggregated identifiers retain upstream data terms; redistribution rights not independently confirmed.",
+    supplemental=True,
+)
+if _env_bool("MAPPINGS_ENABLE_MEDIA_INDEX", True):
+    SOURCE_SPECS += (MEDIA_INDEX_SOURCE,)
+
 
 def mappings_db_path() -> Path:
     return get_settings().db_path

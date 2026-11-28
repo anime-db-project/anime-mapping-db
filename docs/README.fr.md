@@ -74,7 +74,7 @@ Une reconstruction préserve les anchors des œuvres conservées ou enrichies. L
 
 ## Sources de données
 
-Le constructeur regroupe 18 entrées, entre jeux de données directs et catalogues complémentaires vérifiés. Ces compléments ne peuvent pas créer une identité sans confirmation indépendante. Entrées et licences figurent dans le manifeste.
+Le constructeur regroupe 19 entrées, entre jeux de données directs et catalogues complémentaires vérifiés. Ces compléments ne peuvent pas créer une identité sans confirmation indépendante. Entrées et licences figurent dans le manifeste.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -92,6 +92,7 @@ Le constructeur regroupe 18 entrées, entre jeux de données directs et catalogu
 - [notseteve/AnimeAggregations](https://github.com/notseteve/AnimeAggregations)
 - [Wikidata multi-ID](https://www.wikidata.org/)
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
+- [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — uniquement les ID Bangumi, Kitsu et Simkl manquants, avec deux anchors sans conflit ; TVDB/TMDB sont exclus. Les conditions des données sources restent applicables.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` est l'identifiant stable d'un titre. Les IDs externes sont des alias justifiés; `entity_id` est propre à une compilation. Les relations ambiguës ne sont pas choisies automatiquement. [Identity contract](../docs/IDENTITY.md).
