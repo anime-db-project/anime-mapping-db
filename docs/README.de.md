@@ -95,7 +95,7 @@ Der Builder kombiniert 23 Eingaben aus direkten Mapping-Datensätzen und streng 
 - [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — nur fehlende Bangumi-, Kitsu- und Simkl-IDs mit zwei konfliktfreien Ankern; TVDB/TMDB sind ausgeschlossen. Es gelten die Bedingungen der Quelldaten.
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — numerische Release-IDs mit expliziten MAL-/Shikimori-Verweisen; mehrdeutige Zuordnungen werden ausgeschlossen.
 - [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — historische SovetRomantica-IDs mit expliziten Shikimori-Referenzen.
-- [MALSync](https://github.com/MALSync/MALSync) — explizite MAL-Staffelzuordnungen für Crunchyroll und Netflix, ohne Episodenversatz.
+- [MALSync](https://github.com/MALSync/MALSync) — explizite MAL-Staffelzuordnungen für Crunchyroll und Netflix, ohne Episodenversatz. Der tägliche Sammler prüft alle Anime-Adapter in einem separaten `malsync-inventory`; Testerwartungen sind keine Mapping-Belege.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` ist die stabile Titelkennung. Externe IDs sind belegte Aliasse; die interne `entity_id` gilt nur für den jeweiligen Build. Mehrdeutige Zuordnungen werden nicht willkürlich ausgewählt. [Identity contract](../docs/IDENTITY.md).

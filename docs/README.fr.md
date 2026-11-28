@@ -95,7 +95,7 @@ Le constructeur regroupe 23 entrées, entre jeux de données directs et catalogu
 - [anilifecommunity/media-index](https://github.com/anilifecommunity/media-index) — uniquement les ID Bangumi, Kitsu et Simkl manquants, avec deux anchors sans conflit ; TVDB/TMDB sont exclus. Les conditions des données sources restent applicables.
 - [AniLiberty API](https://api.anilibria.app/api/docs/v1/) — ID numériques des sorties avec références explicites à MAL/Shikimori ; correspondances ambiguës exclues.
 - [notwindstone/MALToAnything](https://github.com/notwindstone/MALToAnything) — ID historiques SovetRomantica avec références explicites à Shikimori.
-- [MALSync](https://github.com/MALSync/MALSync) — correspondances MAL explicites des saisons Crunchyroll et Netflix, sans décalage d’épisodes.
+- [MALSync](https://github.com/MALSync/MALSync) — correspondances MAL explicites des saisons Crunchyroll et Netflix, sans décalage d’épisodes. La collecte quotidienne audite tous les adaptateurs anime dans `malsync-inventory`, sans utiliser les attentes des tests comme preuves.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` est l'identifiant stable d'un titre. Les IDs externes sont des alias justifiés; `entity_id` est propre à une compilation. Les relations ambiguës ne sont pas choisies automatiquement. [Identity contract](../docs/IDENTITY.md).
