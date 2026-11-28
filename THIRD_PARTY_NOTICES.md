@@ -43,6 +43,9 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 
 | Kodik | Audit only | Authorized API catalogue sample. Material IDs and translation IDs are not title identities. Only aggregate diagnostic counts are exported; no player links, raw responses, credentials or media data. Collection requires a provider-issued `MAPPINGS_KODIK_API_TOKEN` secret and `MAPPINGS_KODIK_PERMISSION_CONFIRMED=1`. Not a release input. |
 
+| animap.id | Supplemental | [Mapping export](https://animap.id/docs/map), [data attribution](https://animap.id/). Public single-request AOD-style export; upstream data rights and attribution apply, including AniDB CC BY-NC-SA 4.0. Only explicit catalogue IDs, no metadata. Disable via `MAPPINGS_ENABLE_ANIMAP_ID=0`. |
+| athanasso/anime-offline-database | Supplemental | [Repository and dataset licence](https://github.com/athanasso/anime-offline-database), ODbL-1.0. Derived from Fribb and other providers; not an independent vote for existing mappings. Disable via `MAPPINGS_ENABLE_ATHANASSO=0`. |
+
 ## Supplemental lineage policy
 
 AnimeAPI, media-index and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
@@ -60,6 +63,8 @@ MALSync's open-source season overrides are a deliberately narrow exception to th
 Anime365 uses the provider's own explicit `myAnimeListId` assertion, not title matching or MALSync API responses. A missing numeric series ID may attach only to a non-singleton existing group with an exact known MAL anchor. Duplicate, contradictory, or conflicting claims are excluded. No new AMDB identities are created.
 
 Docchi, AnimeLib and optional ADKami use the shared native-ID matcher. Provider-native claims attach only to existing non-singleton groups; conflicting or ambiguous claims are excluded. No title inference, player data or episode URLs are imported. ADKami composite IDs retain their season scope; no global series ID is inferred. Upstream redistribution rights remain unverified.
+
+The two AOD-style supplemental exports use a shared conservative importer. At least two existing directly accepted, conflict-free core catalogue anchors must agree. All other known IDs must belong to the same component. Competing target claims and already occupied namespaces are rejected; no TVDB/TMDB/IMDb series-level equivalence is inferred. No new AMDB identities or extra confidence votes for existing pairs are produced.
 
 The exact URLs and notes embedded into every evidence database are defined in `anime_mapping_db/config.py`.
 

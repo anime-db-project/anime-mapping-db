@@ -74,7 +74,7 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 
 ## Источники данных
 
-Сборщик объединяет 28 входных наборов: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
+Сборщик объединяет 30 входных наборов: прямые базы сопоставлений и проверяемые дополнительные каталоги. Дополнительные записи не создают идентичность без независимого подтверждения; точные входные данные и лицензии указаны в манифесте релиза.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -100,6 +100,8 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 - [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — ID каталогов Docchi и AnimeLib; ADKami — опциональный разрешённый снимок (`MAPPINGS_ADKAMI_SNAPSHOT_URL`).
 - [YummyAnime / Yani](https://api.yani.tv/swagger) — опциональный краулер метаданных, включён по умолчанию, требует разрешения и токена приложения (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). Автоматические запуски сбора и релизов временно приостановлены на период расширения MALSync; ручные запуски доступны. Постраничные источники обновляются не чаще чем каждые 48 часов (Anime365/AnimeLib) или 72 часа (YummyAnime); интервалы задаются через `MAPPINGS_ANIME365_INTERVAL_HOURS`, `MAPPINGS_ANIMELIB_INTERVAL_HOURS`, `MAPPINGS_YUMMYANI_INTERVAL_HOURS`. При пропуске сохраняется прежний снимок. Ручной `force_all_sources` игнорирует интервалы, но не лимиты и авторизацию. `MAPPINGS_YUMMYANI_PERMISSION_CONFIRMED=1`.
 - [Annict](https://annict.com/en/terms/api) — API каталога Annict — явные ссылки на MAL, интервал 168 часов. Включён в конфигурацию по умолчанию; сетевой сбор только при наличии read-only секрета `MAPPINGS_ANNICT_ACCESS_TOKEN` и разрешения (`MAPPINGS_ANNICT_PERMISSION_CONFIRMED=1`).
+- [animap.id](https://animap.id/docs/map) — выгрузка сопоставлений одним запросом каждые 48 часов; только недостающие ID при двух подтверждённых якорях.
+- [athanasso/anime-offline-database](https://github.com/athanasso/anime-offline-database) — еженедельный дамп ODbL-1.0; производные сопоставления, не независимое подтверждение.
 - Kodik — ограниченный аудит ID материалов (отдельно от ID тайтлов). Использует `MAPPINGS_KODIK_API_TOKEN` и `MAPPINGS_KODIK_PERMISSION_CONFIRMED=1`; без них сетевых запросов нет.
 
 Дополнительный источник [media-index](https://github.com/anilifecommunity/media-index) по умолчанию отключён до проверки прав на данные. После подтверждения прав можно использовать `MAPPINGS_ENABLE_MEDIA_INDEX=1` с отдельной новой директорией сборки. Импортируются только отсутствующие Bangumi, Kitsu и Simkl ID при двух подтверждённых якорях и отсутствии конфликтов между записями; TVDB/TMDB исключены.

@@ -460,6 +460,34 @@ if not os.environ.get("MAPPINGS_ENABLE_ANNICT", "").strip() or _env_bool(
     )
 
 
+# Aggregate exports may repeat existing upstream mappings; use them only
+# to fill missing IDs after two already accepted direct anchors agree.
+if _env_bool("MAPPINGS_ENABLE_ANIMAP_ID", True):
+    SOURCE_SPECS += (
+        MappingSourceSpec(
+            name="animap.id mapping export",
+            url="https://animap.id/api/v1/map",
+            importer="animap_id",
+            required=False,
+            license_note="Public bulk export; provider allows reuse subject to upstream data terms.",
+            collection_interval_hours=48,
+            supplemental=True,
+        ),
+    )
+if _env_bool("MAPPINGS_ENABLE_ATHANASSO", True):
+    SOURCE_SPECS += (
+        MappingSourceSpec(
+            name="athanasso/anime-offline-database",
+            url="https://github.com/athanasso/anime-offline-database/releases/latest/download/anime-offline-database-minified.json",
+            importer="athanasso",
+            required=False,
+            license_note="ODbL-1.0 dataset; derived from Fribb and other upstream sources.",
+            collection_interval_hours=168,
+            supplemental=True,
+        ),
+    )
+
+
 def source_preflight(spec: MappingSourceSpec) -> str | None:
     """Return a non-sensitive skip reason, never a credential value."""
     if spec.credential_env and not os.environ.get(spec.credential_env, "").strip():

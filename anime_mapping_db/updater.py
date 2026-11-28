@@ -554,6 +554,8 @@ def update_mapping_database(
                         "aninexus",
                         "yummyani",
                         "annict_api",
+                        "animap_id",
+                        "athanasso",
                     }:
                         builder.finalize(built_at=checked_at)
                     supplemental_importer = SUPPLEMENTAL_IMPORTERS.get(spec.importer)
@@ -599,6 +601,8 @@ def update_mapping_database(
                         "aninexus",
                         "yummyani",
                         "annict_api",
+                        "animap_id",
+                        "athanasso",
                     }
                 ):
                     # Safe only when the base graph is unchanged. If it changed and the

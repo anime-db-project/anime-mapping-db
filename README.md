@@ -74,7 +74,7 @@ During rebuilds, existing anchors are retained for matching or enriched entities
 
 ## Data sources
 
-The builder combines 28 configured inputs, including direct mapping datasets and strictly validated supplemental catalogs. Supplemental records cannot establish new anime identities without independent anchor confirmation; exact inputs and their licensing are tracked in the release manifest.
+The builder combines 30 configured inputs, including direct mapping datasets and strictly validated supplemental catalogs. Supplemental records cannot establish new anime identities without independent anchor confirmation; exact inputs and their licensing are tracked in the release manifest.
 
 - [Fribb/anime-lists](https://github.com/Fribb/anime-lists)
 - [Kometa-Team/Anime-IDs](https://github.com/Kometa-Team/Anime-IDs)
@@ -101,6 +101,8 @@ The builder combines 28 configured inputs, including direct mapping datasets and
 - [Docchi](https://docchi.pl/) / [AnimeLib](https://animelib.org/) / ADKami — Docchi and AnimeLib native catalogue IDs; optional ADKami authorized snapshot (disabled unless `MAPPINGS_ADKAMI_SNAPSHOT_URL` is provided).
 - [YummyAnime / Yani](https://api.yani.tv/swagger) — optional metadata collector, configured by default, requires permission and token (`MAPPINGS_ENABLE_YUMMYANI=1`, `MAPPINGS_YUMMYANI_APPLICATION_TOKEN`). Scheduled collection and release are temporarily paused during the MALSync expansion; manual workflows remain available. Native paginated sources use minimum intervals of 48 hours (Anime365/AnimeLib) or 72 hours (YummyAnime); configure with `MAPPINGS_ANIME365_INTERVAL_HOURS`, `MAPPINGS_ANIMELIB_INTERVAL_HOURS`, `MAPPINGS_YUMMYANI_INTERVAL_HOURS`. Deferred sources retain their previous snapshots. Manual `force_all_sources` ignores intervals, not rate limits or authorization. `MAPPINGS_YUMMYANI_PERMISSION_CONFIRMED=1`.
 - [Annict](https://annict.com/en/terms/api) — Annict works API — explicit MAL cross-references, refresh every 168 hours. Configured by default; no network collection without the read-only `MAPPINGS_ANNICT_ACCESS_TOKEN` secret and provider permission (`MAPPINGS_ANNICT_PERMISSION_CONFIRMED=1`).
+- [animap.id](https://animap.id/docs/map) — single-request mapping export, checked every 48 hours; missing catalogue IDs only, with two existing direct anchors.
+- [athanasso/anime-offline-database](https://github.com/athanasso/anime-offline-database) — weekly ODbL-1.0 export; derived mappings, no independent vote.
 - Kodik — bounded authorized material-ID audit (separate from title identity mappings). Uses `MAPPINGS_KODIK_API_TOKEN` and `MAPPINGS_KODIK_PERMISSION_CONFIRMED=1`; without either the audit skips without network access.
 
 Optional [media-index](https://github.com/anilifecommunity/media-index) enrichment is disabled by default pending upstream data-rights review. After confirming the applicable rights, use `MAPPINGS_ENABLE_MEDIA_INDEX=1` with a fresh, separate build directory. It imports only missing Bangumi, Kitsu and Simkl IDs, requires two conflict-free existing anchors, and rejects cross-record ambiguities; TVDB/TMDB series IDs are excluded.
