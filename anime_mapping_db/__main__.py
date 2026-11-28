@@ -33,6 +33,9 @@ def main() -> None:
 
     build = sub.add_parser("build", help="build or refresh local mapping databases")
     build.add_argument("--force", action="store_true", help="rebuild all sources")
+    build.add_argument(
+        "--snapshot-dir", type=Path, help="build offline from validated source snapshots"
+    )
 
     sub.add_parser("status", help="print local database status")
 
@@ -55,7 +58,12 @@ def main() -> None:
         )
         return
     if command == "build":
-        stats = update_mapping_database(force=True) if args.force else update_if_stale()
+        if args.snapshot_dir is not None:
+            stats = update_mapping_database(force=True, snapshot_dir=args.snapshot_dir)
+        else:
+            stats = (
+                update_mapping_database(force=True) if args.force else update_if_stale()
+            )
         runtime = mappings_db_path()
         anchor_stats = _materialize(runtime)
         payload = mapping_status()
