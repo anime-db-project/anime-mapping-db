@@ -230,7 +230,13 @@ def render(report: dict) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     for arg in (
-        "manifest", "runtime", "evidence", "previous", "performance", "output", "notes"
+        "manifest",
+        "runtime",
+        "evidence",
+        "previous",
+        "performance",
+        "output",
+        "notes",
     ):
         parser.add_argument(f"--{arg}", required=True, type=Path)
     parser.add_argument("--collection", type=Path)
