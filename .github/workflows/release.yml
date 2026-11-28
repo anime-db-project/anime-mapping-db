@@ -180,6 +180,7 @@ jobs:
             --evidence data/mappings/mappings-evidence.db \
             --previous previous-manifest.json \
             --performance release/performance.json \
+            --collection snapshots/collection-report.json \
             --output release/statistics.json \
             --notes release-notes.md
           (cd release && sha256sum statistics.json >> SHA256SUMS)

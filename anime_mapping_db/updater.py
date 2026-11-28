@@ -34,7 +34,7 @@ from anime_mapping_db.database import (
 from anime_mapping_db.importers import IMPORTERS, SUPPLEMENTAL_IMPORTERS
 from anime_mapping_db.resolver import copy_mapping_overrides
 
-from anime_mapping_db.crawler_policy import user_agent
+from anime_mapping_db.crawler_policy import retry_after, user_agent
 
 USER_AGENT = user_agent()
 
@@ -105,11 +105,9 @@ def _download(spec: MappingSourceSpec, target: Path) -> str:
                     retryable = status == 429 or 500 <= status < 600
                     if not retryable or attempt == 2:
                         break
-                    retry_after = exc.response.headers.get("Retry-After", "").strip()
-                    try:
-                        delay = float(retry_after)
-                    except ValueError:
-                        delay = 65.0 if status == 429 else 5.0 * (attempt + 1)
+                    delay = retry_after(
+                        exc.response, 65.0 if status == 429 else 5.0 * (attempt + 1)
+                    )
                     if status == 429 and (attempt > 0 or delay > 65.0):
                         break
                     delay = max(1.0, min(delay, 65.0))

@@ -14,7 +14,12 @@ def _connect(path: Path) -> sqlite3.Connection:
 
 
 def build_report(
-    manifest: dict, runtime: Path, evidence: Path, previous: dict, performance: dict
+    manifest: dict,
+    runtime: Path,
+    evidence: Path,
+    previous: dict,
+    performance: dict,
+    collection: dict | None = None,
 ) -> dict:
     with closing(_connect(runtime)) as conn:
         groups = conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
@@ -29,20 +34,6 @@ def build_report(
         )
     with closing(_connect(evidence)) as conn:
         # Count each provider ID only once per dataset. Staging DB uses edge_evidence.
-        counts = dict(
-            conn.execute(
-                """
-                WITH membership AS (
-                    SELECT record_id, a_node AS node_id FROM edge_evidence
-                    UNION SELECT record_id, b_node FROM edge_evidence
-                )
-                SELECT d.name, COUNT(DISTINCT m.node_id)
-                FROM datasets d JOIN records r ON r.dataset_id=d.id
-                JOIN membership m ON m.record_id=r.id
-                GROUP BY d.name
-                """
-            )
-        )
         by_source: dict[str, dict[str, int]] = {}
         for name, provider, count in conn.execute(
             """
@@ -63,13 +54,14 @@ def build_report(
     old_counts = previous.get("counts", {})
     old_sources = {item["name"]: item for item in previous.get("sources", [])}
     providers = manifest["providers"]
+    health = {item["source"]: item for item in (collection or {}).get("sources", [])}
     source_rows = []
     for item in manifest["sources"]:
         old = old_sources.get(item["name"])
         source_rows.append(
             {
                 "name": item["name"],
-                "distinct_ids": counts.get(item["name"], 0),
+                "distinct_ids": sum(by_source.get(item["name"], {}).values()),
                 "ids_by_namespace": by_source.get(item["name"], {}),
                 "records": item["record_count"],
                 "record_delta": item["record_count"] - old["record_count"]
@@ -77,10 +69,12 @@ def build_report(
                 else None,
                 "snapshot_changed": old is None or item["sha256"] != old["sha256"],
                 "downloaded_at": item["downloaded_at"],
+                "collection_status": health.get(item["name"], {}).get("status"),
             }
         )
     return {
         "release_tag": manifest["release_tag"],
+        "collection_checked_at": (collection or {}).get("checked_at"),
         "previous_release": previous.get("release_tag"),
         "amdb_groups": groups,
         "total_external_ids": sum(providers.values()),
@@ -199,15 +193,16 @@ def render(report: dict) -> str:
             "",
             "Distinct IDs within each input; totals overlap and are not additive.",
             "",
-            "| Dataset | IDs | Records | Record change | Snapshot |",
-            "| --- | ---: | ---: | ---: | --- |",
+            "| Dataset | IDs | Records | Record change | Snapshot | Collection |",
+            "| --- | ---: | ---: | ---: | --- | --- |",
         ]
     )
     for item in report["sources"]:
         status = "changed" if item["snapshot_changed"] else "unchanged"
         lines.append(
             f"| {item['name']} | {item['distinct_ids']:,} | "
-            f"{item['records']:,} | {_delta(item['record_delta'])} | {status} |"
+            f"{item['records']:,} | {_delta(item['record_delta'])} | {status} | "
+            f"{item['collection_status'] or '—'} |"
         )
     lines.extend(["", "## Assets", "", "| File | Size (MiB) |", "| --- | ---: |"])
     for item in report["assets"].values():
@@ -238,11 +233,19 @@ def main() -> None:
         "manifest", "runtime", "evidence", "previous", "performance", "output", "notes"
     ):
         parser.add_argument(f"--{arg}", required=True, type=Path)
+    parser.add_argument("--collection", type=Path)
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     previous = json.loads(args.previous.read_text(encoding="utf-8"))
     performance = json.loads(args.performance.read_text(encoding="utf-8"))
-    report = build_report(manifest, args.runtime, args.evidence, previous, performance)
+    collection = (
+        json.loads(args.collection.read_text(encoding="utf-8"))
+        if args.collection and args.collection.is_file()
+        else None
+    )
+    report = build_report(
+        manifest, args.runtime, args.evidence, previous, performance, collection
+    )
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     args.notes.write_text(render(report), encoding="utf-8")
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
@@ -49,7 +50,7 @@ class ReleaseReportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             runtime = Path(directory) / "runtime.db"
             evidence = Path(directory) / "evidence.db"
-            with sqlite3.connect(runtime) as db:
+            with closing(sqlite3.connect(runtime)) as db:
                 db.executescript(
                     """
                     CREATE TABLE entities (id INTEGER);
@@ -58,7 +59,7 @@ class ReleaseReportTests(unittest.TestCase):
                     INSERT INTO entity_nodes VALUES (1,1),(1,2);
                     """
                 )
-            with sqlite3.connect(evidence) as db:
+            with closing(sqlite3.connect(evidence)) as db:
                 db.executescript(
                     """
                     CREATE TABLE datasets (id INTEGER, name TEXT);
