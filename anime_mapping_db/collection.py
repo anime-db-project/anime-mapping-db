@@ -84,9 +84,7 @@ def collect_one(
             "sources": [],
             "source_fingerprint": source_fingerprint([]),
         }
-        (directory / "manifest.json").write_text(
-            json.dumps(manifest), encoding="utf-8"
-        )
+        (directory / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
         (directory / "collection-report.json").write_text(
             json.dumps(
                 {
@@ -155,7 +153,9 @@ def assemble(
         reason = None
         if status == "deferred":
             if not previous_outcomes.get(spec.name, {}).get("last_attempted_at"):
-                raise ValueError(f"No previous attempt for deferred source: {spec.name}")
+                raise ValueError(
+                    f"No previous attempt for deferred source: {spec.name}"
+                )
             selected = old
             reason = "collection_interval"
         elif old is not None and (fresh is None or status == "bootstrap"):
