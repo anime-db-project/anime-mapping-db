@@ -92,6 +92,8 @@ Anime Mapping DB выдаёт собственный стабильный ID т�
 - [notseteve/AnimeAggregations](https://github.com/notseteve/AnimeAggregations)
 - [Wikidata multi-ID](https://www.wikidata.org/)
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
+
+Дополнительный источник [media-index](https://github.com/anilifecommunity/media-index) по умолчанию отключён до проверки прав на данные. После подтверждения прав можно использовать `MAPPINGS_ENABLE_MEDIA_INDEX=1` с отдельной новой директорией сборки. Импортируются только отсутствующие Bangumi, Kitsu и Simkl ID при двух подтверждённых якорях и отсутствии конфликтов между записями; TVDB/TMDB исключены.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 `amdb:<anchor_id>` — стабильный ID тайтла. Внешние ID связаны с ним подтверждёнными соответствиями, а внутренний `entity_id` действителен лишь в рамках сборки. Неоднозначные маршруты не выбираются автоматически. [Identity contract](../docs/IDENTITY.md).

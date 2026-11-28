@@ -93,6 +93,8 @@ The builder combines 18 configured inputs, including direct mapping datasets and
 - [Wikidata multi-ID](https://www.wikidata.org/)
   - Extended streaming IDs: Netflix, Disney+, Hulu, and the two distinct Prime Video schemes. Only already-confirmed identities are enriched.
 - [nattadasu/animeApi](https://github.com/nattadasu/animeApi)
+
+Optional [media-index](https://github.com/anilifecommunity/media-index) enrichment is disabled by default pending upstream data-rights review. After confirming the applicable rights, use `MAPPINGS_ENABLE_MEDIA_INDEX=1` with a fresh, separate build directory. It imports only missing Bangumi, Kitsu and Simkl IDs, requires two conflict-free existing anchors, and rejects cross-record ambiguities; TVDB/TMDB series IDs are excluded.
 - [rensetsu/db.rensetsu.public-dump (SilverYasha)](https://github.com/rensetsu/db.rensetsu.public-dump)
 
 An `amdb:<anchor_id>` is a durable title identifier; provider IDs are aliases backed by evidence, while internal `entity_id` values are build-local. Conflicting source-to-target matches are not silently selected. [Identity contract](docs/IDENTITY.md).

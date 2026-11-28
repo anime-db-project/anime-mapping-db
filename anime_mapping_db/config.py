@@ -253,6 +253,19 @@ SOURCE_SPECS: tuple[MappingSourceSpec, ...] = (
     ),
 )
 
+# The upstream repository's MIT-0 code license does not cover its aggregated
+# data. Keep this source out of the default/public build pending rights review.
+MEDIA_INDEX_SOURCE = MappingSourceSpec(
+    name="anilifecommunity/media-index",
+    url="https://raw.githubusercontent.com/anilifecommunity/media-index/main/data/id-map.json",
+    importer="media_index",
+    required=False,
+    license_note="MIT-0 code only; aggregated data retains upstream terms. Explicit opt-in after rights review.",
+    supplemental=True,
+)
+if _env_bool("MAPPINGS_ENABLE_MEDIA_INDEX", False):
+    SOURCE_SPECS += (MEDIA_INDEX_SOURCE,)
+
 
 def mappings_db_path() -> Path:
     return get_settings().db_path

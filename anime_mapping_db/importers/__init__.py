@@ -21,6 +21,7 @@ from anime_mapping_db.importers.enrichment import (
     import_animeapi_enrichment,
     import_animethemes_enrichment,
 )
+from anime_mapping_db.importers.media_index import import_media_index_enrichment
 from anime_mapping_db.importers.wikidata import (
     import_wikidata_bahamut,
     import_wikidata_enrichment,
@@ -49,6 +50,7 @@ SUPPLEMENTAL_IMPORTERS = {
     "animethemes": import_animethemes_enrichment,
     "animeaggregations": import_animeaggregations_enrichment,
     "wikidata_multi": import_wikidata_enrichment,
+    "media_index": import_media_index_enrichment,
 }
 
 __all__ = [
@@ -59,6 +61,7 @@ __all__ = [
     "import_anime_lists",
     "import_animeaggregations_enrichment",
     "import_animeapi_enrichment",
+    "import_media_index_enrichment",
     "import_animap",
     "import_animethemes",
     "import_animethemes_enrichment",

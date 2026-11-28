@@ -24,6 +24,8 @@ For the project-wide distinction between Apache-2.0 source code and generated da
 | Wikidata multi-ID | Supplemental | Same CC0 Wikidata lineage as above. Adds only anchor-validated missing IDs/QIDs; QLever and WDQS are query backends, not separate evidence sources. |
 | nattadasu/animeApi | Supplemental | Compiled database is ODbL 1.0 + DbCL 1.0; software code is MIT. Builder consumes only the GitHub-hosted `v3/database/animeapi.tsv`, never AnimeAPI's REST service. |
 
+| anilifecommunity/media-index | Supplemental (opt-in; not in default releases) | MIT-0 covers code and original contributions, not the aggregated data. [Source policy](https://github.com/anilifecommunity/media-index/blob/main/docs/SOURCE-POLICY.md) explicitly distinguishes owner attestation from provider permission. Enable only after confirming applicable collection and redistribution rights. |
+
 ## Supplemental lineage policy
 
 AnimeAPI and AnimeAggregations contain data that can overlap with direct sources already used by Anime Mapping DB. Wikidata multi-ID is intentionally conservative because one Wikidata item can still represent a franchise/season concept differently from another catalogue. These sources therefore run only after the direct-source graph has been finalized once.
